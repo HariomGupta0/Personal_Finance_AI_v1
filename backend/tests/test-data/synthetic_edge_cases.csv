@@ -1,0 +1,11 @@
+Date,Description,Amount,Transaction Type,Ref No
+2026-09-01,Valid Expense - Office Supplies,-1500.00,DR,REF001
+2026-09-02,Valid Income - Salary,50000.00,CR,REF002
+2026-09-03,Refund from Amazon - Returned Headphones,2500.00,REFUND,REF003
+2026-09-04,Missing Amount Row,,DR,REF004
+2026-09-05,Invalid Amount Row,not_a_number,DR,REF005
+2026-09-01,Valid Expense - Office Supplies,-1500.00,DR,REF001
+2026-09-07,"Description, with commas and ""quoted text"" inside",3200.00,DR,REF007
+2026-09-08,Ambiguous Column Test Amount,4000.00,,REF008
+2026-09-09,Zero Amount Row,0.00,DR,REF009
+2026-09-10,Closing Balance Should Be Ignored,93421.00,BALANCE,REF010

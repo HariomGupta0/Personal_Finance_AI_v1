@@ -9,7 +9,8 @@ import {
   CheckCircle2,
   TrendingUp,
   Shield,
-  LogOut
+  LogOut,
+  Upload
 } from 'lucide-react';
 import KPICards from './components/KPICards';
 import ExpenseAnalytics from './components/ExpenseAnalytics';
@@ -17,6 +18,7 @@ import GoalManager from './components/GoalManager';
 import TransactionManager from './components/TransactionManager';
 import AssistantChat from './components/AssistantChat';
 import LoginScreen from './components/LoginScreen';
+import ImportManager from './components/ImportManager';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -226,6 +228,25 @@ export default function App() {
             >
               <MessageSquare size={15} /> AI Assistant
             </button>
+            <button
+              onClick={() => setActiveTab('import')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 14px',
+                borderRadius: '8px',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '0.85rem',
+                fontWeight: '600',
+                background: activeTab === 'import' ? 'var(--accent-primary)' : 'transparent',
+                color: activeTab === 'import' ? '#ffffff' : 'var(--text-muted)',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <Upload size={15} /> Import
+            </button>
           </div>
 
           <button
@@ -326,6 +347,12 @@ export default function App() {
                   </div>
                 </div>
               </div>
+            </div>
+          )}
+
+          {activeTab === 'import' && (
+            <div className="animate-fade-in">
+              <ImportManager onImportComplete={fetchAllData} />
             </div>
           )}
         </>

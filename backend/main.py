@@ -5,6 +5,7 @@ from backend.app.api.transactions import router as transactions_router
 from backend.app.api.goals import router as goals_router
 from backend.app.api.assistant import router as assistant_router
 from backend.app.api.auth import router as auth_router
+from backend.app.api.import_api import router as import_router
 
 app = FastAPI(
     title="Personal Finance AI Assistant API",
@@ -34,6 +35,7 @@ app.include_router(transactions_router)
 app.include_router(goals_router)
 app.include_router(assistant_router)
 app.include_router(auth_router)
+app.include_router(import_router)
 
 @app.get("/")
 def health_check():
