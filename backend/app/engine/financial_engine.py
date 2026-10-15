@@ -1,8 +1,36 @@
 from datetime import date, datetime
 
 
-def _is_in_reporting_month(record, reporting_date=None):
-    """Return whether a dated income/transaction belongs to the reporting month."""
+def _resolve_reporting_date(context, reporting_date=None):
+    if reporting_date is not None:
+        return reporting_date
+    today = date.today()
+    if not isinstance(context, dict):
+        return today
+    all_dates = []
+    for item in (context.get("transactions") or []) + (context.get("incomes") or []):
+        val = item.get("date")
+        if val:
+            if isinstance(val, datetime):
+                all_dates.append(val.date())
+            elif isinstance(val, date):
+                all_dates.append(val)
+            elif isinstance(val, str):
+                try:
+                    all_dates.append(date.fromisoformat(val))
+                except ValueError:
+                    pass
+    if not all_dates:
+        return today
+    if any((d.year, d.month) == (today.year, today.month) for d in all_dates):
+        return today
+    return max(all_dates)
+
+
+def _is_in_reporting_month(record, target_date=None):
+    """Return whether a dated income/transaction belongs to the target reporting month."""
+    if target_date is None:
+        target_date = date.today()
     value = record.get("date")
     if not value:
         return False
@@ -15,21 +43,22 @@ def _is_in_reporting_month(record, reporting_date=None):
             record_date = date.fromisoformat(str(value))
         except ValueError:
             return False
-    reporting_date = reporting_date or date.today()
-    return (record_date.year, record_date.month) == (reporting_date.year, reporting_date.month)
+    return (record_date.year, record_date.month) == (target_date.year, target_date.month)
 
 
 def _monthly_transactions(context, reporting_date=None):
+    target = _resolve_reporting_date(context, reporting_date)
     return [
         tx for tx in context.get("transactions", [])
-        if _is_in_reporting_month(tx, reporting_date)
+        if _is_in_reporting_month(tx, target)
     ]
 
 
 def _monthly_incomes(context, reporting_date=None):
+    target = _resolve_reporting_date(context, reporting_date)
     return [
         income for income in context.get("incomes", [])
-        if _is_in_reporting_month(income, reporting_date)
+        if _is_in_reporting_month(income, target)
     ]
 
 
@@ -242,6 +271,7 @@ def calculate_comprehensive_health(context, reporting_date=None):
     }
 
 def check_purchase_safety(context, purchase_amount, reporting_date=None):
+    target = _resolve_reporting_date(context, reporting_date)
     accounts = context.get("accounts", [])
     balance = sum(float(account.get("balance", 0)) for account in accounts)
 
@@ -249,13 +279,13 @@ def check_purchase_safety(context, purchase_amount, reporting_date=None):
         loan["emi"]
         for loan in context.get("loans", [])
         if loan.get("status") == "PENDING" and (
-            not loan.get("due_date") or _is_in_reporting_month({"date": loan["due_date"]}, reporting_date)
+            not loan.get("due_date") or _is_in_reporting_month({"date": loan["due_date"]}, target)
         )
     )
 
     monthly_expenses = sum(
         transaction["amount"]
-        for transaction in _monthly_transactions(context, reporting_date)
+        for transaction in _monthly_transactions(context, target)
         if transaction.get("type") == "EXPENSE"
     )
 

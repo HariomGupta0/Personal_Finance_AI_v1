@@ -20,6 +20,7 @@ NEO4J_DATABASE = os.getenv("NEO4J_DATABASE", "finance-ai-antigravity")
 # LLM Configuration
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 LLM_MODEL = os.getenv("LLM_MODEL", "openai/gpt-oss-20b")
+VISION_MODEL = os.getenv("VISION_MODEL", "qwen/qwen3.8-27b")
 
 # Application authentication. These must be configured in the deployment
 # environment; no browser-supplied user identifier is trusted by the API.

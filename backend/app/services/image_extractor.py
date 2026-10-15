@@ -17,10 +17,14 @@ from __future__ import annotations
 
 import base64
 import json
+import logging
 import re
 from typing import Optional
 
 from groq import Groq  # imported at module level so tests can mock it
+from backend.config import GROQ_API_KEY, VISION_MODEL
+
+logger = logging.getLogger(__name__)
 
 SUPPORTED_MIME_TYPES = {
     b"\xff\xd8\xff": "image/jpeg",
@@ -29,7 +33,12 @@ SUPPORTED_MIME_TYPES = {
     b"GIF8":         "image/gif",
 }
 
-VISION_MODEL = "llama-3.2-11b-vision-preview"  # Groq's vision model
+# Candidate vision models to try if the default/configured model is decommissioned or fails
+CANDIDATE_VISION_MODELS = [
+    VISION_MODEL,
+    "qwen/qwen3.8-27b",
+    "meta-llama/llama-4-scout-17b-16e-instruct",
+]
 
 EXTRACTION_PROMPT = """You are a financial document parser. Examine the image carefully and extract transaction information.
 
@@ -72,6 +81,41 @@ def _base64_encode_image(content: bytes) -> str:
     return base64.b64encode(content).decode("ascii")
 
 
+def _extract_via_ocr_fallback(content: bytes, client: Groq) -> Optional[dict]:
+    """Fallback mechanism using local pytesseract (if available) and text LLM."""
+    try:
+        import io
+        from PIL import Image
+        import pytesseract
+
+        img = Image.open(io.BytesIO(content))
+        text = pytesseract.image_to_string(img)
+        if not text or not text.strip():
+            return None
+
+        from backend.config import LLM_MODEL
+        prompt = f"{EXTRACTION_PROMPT}\n\nEXTRACT FROM THIS OCR TEXT:\n{text}"
+        response = client.chat.completions.create(
+            model=LLM_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=512,
+        )
+        raw_response = response.choices[0].message.content or ""
+
+        match = re.search(r"\{[\s\S]*\}", raw_response)
+        if match:
+            data = json.loads(match.group(0))
+            result = _sanitise_extraction(data)
+            result["raw_response"] = raw_response
+            result["extraction_success"] = True
+            result["source_type"] = "image"
+            result["warnings"].append("Extracted using fallback OCR text engine.")
+            return result
+    except Exception as exc:
+        logger.warning("OCR fallback unavailable or failed: %s", exc)
+    return None
+
+
 def extract_from_image(content: bytes) -> dict:
     """
     Extract financial transaction fields from an image.
@@ -93,50 +137,74 @@ def extract_from_image(content: bytes) -> dict:
     """
     mime_type = _detect_mime(content)  # raises ValueError for unsupported formats
 
-    from backend.config import GROQ_API_KEY
-
     client = Groq(api_key=GROQ_API_KEY, timeout=30.0)
-
     b64 = _base64_encode_image(content)
 
-    try:
-        response = client.chat.completions.create(
-            model=VISION_MODEL,
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:{mime_type};base64,{b64}",
+    raw_response = ""
+    last_exc = None
+
+    # Deduplicate candidate models while preserving order
+    tried = set()
+    models_to_try = []
+    for m in CANDIDATE_VISION_MODELS:
+        if m and m not in tried:
+            models_to_try.append(m)
+            tried.add(m)
+
+    for model_name in models_to_try:
+        try:
+            response = client.chat.completions.create(
+                model=model_name,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:{mime_type};base64,{b64}",
+                                },
                             },
-                        },
-                        {
-                            "type": "text",
-                            "text": EXTRACTION_PROMPT,
-                        },
-                    ],
-                }
-            ],
-            max_tokens=512,
-        )
-        raw_response = response.choices[0].message.content or ""
-    except Exception as exc:
+                            {
+                                "type": "text",
+                                "text": EXTRACTION_PROMPT,
+                            },
+                        ],
+                    }
+                ],
+                max_tokens=512,
+            )
+            raw_response = response.choices[0].message.content or ""
+            if raw_response:
+                break
+        except Exception as exc:
+            logger.warning("Vision model '%s' failed: %s", model_name, exc)
+            last_exc = exc
+
+    if not raw_response:
+        # Fallback to local OCR + Groq text model if vision API calls failed
+        ocr_result = _extract_via_ocr_fallback(content, client)
+        if ocr_result is not None:
+            return ocr_result
+
         return _fallback_result(
-            warnings=[f"Vision API call failed: {str(exc)[:200]}. Please enter transaction details manually."],
+            warnings=[f"Vision API call failed: {str(last_exc)[:200]}. Please enter transaction details manually."],
             raw_response="",
         )
 
     # Parse JSON from response
-    cleaned = re.sub(r"^```json\s*", "", raw_response, flags=re.MULTILINE)
-    cleaned = re.sub(r"```$", "", cleaned, flags=re.MULTILINE).strip()
-
-    try:
-        data = json.loads(cleaned)
-    except json.JSONDecodeError:
+    match = re.search(r"\{[\s\S]*\}", raw_response)
+    if not match:
         return _fallback_result(
             warnings=["Could not parse extraction response. Please enter transaction details manually."],
+            raw_response=raw_response,
+        )
+
+    try:
+        data = json.loads(match.group(0))
+    except json.JSONDecodeError:
+        return _fallback_result(
+            warnings=["Could not parse extraction response JSON. Please enter transaction details manually."],
             raw_response=raw_response,
         )
 
