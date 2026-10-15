@@ -122,7 +122,7 @@ User Query: "{question}"
 Return ONLY raw JSON. No explanation, no markdown.
 """
     try:
-        raw = ask_llm(prompt).strip()
+        raw = ask_llm(prompt)["content"].strip()
         raw = re.sub(r"^```json\s*", "", raw, flags=re.MULTILINE)
         raw = re.sub(r"```$", "", raw, flags=re.MULTILINE).strip()
         parsed = json.loads(raw)

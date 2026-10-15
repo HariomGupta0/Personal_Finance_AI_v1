@@ -38,16 +38,22 @@ def _base64_encode(value: bytes) -> str:
 
 
 def _sign(payload: str) -> str:
-    secret = SESSION_SECRET or "default_secret_key_change_in_production"
+    if not SESSION_SECRET:
+        raise RuntimeError(
+            "SESSION_SECRET is not configured. Set it in your .env file. "
+            "Generate with: python -c \"import secrets; print(secrets.token_hex(32))\""
+        )
     return _base64_encode(
-        hmac.new(secret.encode("utf-8"), payload.encode("utf-8"), hashlib.sha256).digest()
+        hmac.new(SESSION_SECRET.encode("utf-8"), payload.encode("utf-8"), hashlib.sha256).digest()
     )
 
 
 def create_session_token(user_id: str) -> str:
-    secret = SESSION_SECRET or "default_secret_key_change_in_production"
     payload = _base64_encode(
-        json.dumps({"sub": user_id, "exp": int(time.time()) + SESSION_TTL_SECONDS}, separators=(",", ":")).encode("utf-8")
+        json.dumps(
+            {"sub": user_id, "exp": int(time.time()) + SESSION_TTL_SECONDS},
+            separators=(",", ":"),
+        ).encode("utf-8")
     )
     return f"{payload}.{_sign(payload)}"
 

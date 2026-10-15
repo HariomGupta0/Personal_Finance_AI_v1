@@ -1,3 +1,6 @@
+import logging
+import time
+
 from backend.app.database.neo4j_service import Neo4jService
 from backend.app.nlu.question_parser import parse_question
 from backend.app.engine.financial_engine import (
@@ -8,16 +11,20 @@ from backend.app.engine.financial_engine import (
     calculate_category_expenses,
     calculate_debt_burden,
     calculate_comprehensive_health,
-    generate_financial_summary
+    generate_financial_summary,
 )
-from backend.app.services.response_generator import generate_explanation
+from backend.app.services.prompt_builder import build_financial_explanation_prompt
+from backend.app.services.llm_service import ask_llm
+
+logger = logging.getLogger(__name__)
+
 
 class GraphRAG:
 
     def __init__(self, db=None):
         self.db = db or Neo4jService()
 
-    def retrieve_subgraph(self, user_id, intent, entities=None):
+    def retrieve_subgraph(self, user_id: str, intent: str, entities: dict | None = None) -> dict:
         """
         Targeted retrieval of the exact subgraphs needed for a given intent.
         Avoids dumping the entire database.
@@ -45,7 +52,7 @@ class GraphRAG:
         else:
             return self.db.get_financial_context(user_id)
 
-    def execute_reasoning(self, intent, context, entities=None):
+    def execute_reasoning(self, intent: str, context: dict, entities: dict | None = None) -> dict:
         """
         Executes deterministic mathematical reasoning over the retrieved subgraph.
         """
@@ -70,13 +77,16 @@ class GraphRAG:
         elif intent == "CATEGORY_EXPENSE":
             target_cat = entities.get("category", "General")
             all_cat_stats = calculate_category_expenses(context)
-            matching_cat = next((c for c in all_cat_stats["categories"] if c["category"].lower() == target_cat.lower()), None)
+            matching_cat = next(
+                (c for c in all_cat_stats["categories"] if c["category"].lower() == target_cat.lower()),
+                None,
+            )
             return {
                 "requested_category": target_cat,
                 "category_spent": matching_cat["amount"] if matching_cat else 0.0,
                 "percentage_of_total": matching_cat["percentage"] if matching_cat else 0.0,
                 "total_expenses": all_cat_stats["total_expenses"],
-                "all_categories": all_cat_stats["categories"]
+                "all_categories": all_cat_stats["categories"],
             }
 
         elif intent == "DEBT_ANALYSIS":
@@ -91,7 +101,7 @@ class GraphRAG:
         else:
             return generate_financial_summary(context)
 
-    def construct_evidence_payload(self, intent, reasoning_result, context):
+    def construct_evidence_payload(self, intent: str, reasoning_result: dict, context: dict) -> dict:
         """
         Builds a verifiable evidence structure linking facts, calculations, and recommendations.
         """
@@ -105,7 +115,7 @@ class GraphRAG:
                 {"label": "Pending EMI Obligations", "value": f"{sym}{ev.get('pending_emi', 0):,}", "source": "EMI.amount"},
                 {"label": "Purchase Cost", "value": f"{sym}{ev.get('purchase_amount', 0):,}", "source": "User Query"},
                 {"label": "Post-Purchase Remaining Balance", "value": f"{sym}{ev.get('balance_after_purchase', 0):,}", "source": "Deterministic Math"},
-                {"label": "Recommended 3-Month Emergency Buffer", "value": f"{sym}{ev.get('emergency_requirement', 0):,}", "source": "Emergency Fund Formula"}
+                {"label": "Recommended 3-Month Emergency Buffer", "value": f"{sym}{ev.get('emergency_requirement', 0):,}", "source": "Emergency Fund Formula"},
             ]
 
         elif intent == "SAVINGS_ANALYSIS":
@@ -113,7 +123,7 @@ class GraphRAG:
                 {"label": "Total Monthly Income", "value": f"{sym}{reasoning_result.get('total_income', 0):,}", "source": "Income.amount"},
                 {"label": "Total Monthly Expenses", "value": f"{sym}{reasoning_result.get('total_expenses', 0):,}", "source": "Transaction.amount"},
                 {"label": "Net Monthly Savings", "value": f"{sym}{reasoning_result.get('savings', 0):,}", "source": "Deterministic Math"},
-                {"label": "Savings Rate", "value": f"{reasoning_result.get('savings_rate', 0)}%", "source": "Savings Formula"}
+                {"label": "Savings Rate", "value": f"{reasoning_result.get('savings_rate', 0)}%", "source": "Savings Formula"},
             ]
 
         elif intent == "EMERGENCY_RUNWAY_ANALYSIS":
@@ -121,13 +131,13 @@ class GraphRAG:
                 {"label": "Current Liquid Balance", "value": f"{sym}{reasoning_result.get('current_balance', 0):,}", "source": "Account.balance"},
                 {"label": "Monthly Expenses", "value": f"{sym}{reasoning_result.get('monthly_expenses', 0):,}", "source": "Transaction.amount"},
                 {"label": "Months of Runway", "value": f"{reasoning_result.get('runway_months', 0)} months", "source": "Runway Formula"},
-                {"label": "Buffer Health Status", "value": reasoning_result.get("status", "INSUFFICIENT"), "source": "Health Classifier"}
+                {"label": "Buffer Health Status", "value": reasoning_result.get("status", "INSUFFICIENT"), "source": "Health Classifier"},
             ]
 
         elif intent == "EXPENSE_BREAKDOWN":
             evidence_items = [
                 {"label": "Total Monthly Expenses", "value": f"{sym}{reasoning_result.get('total_expenses', 0):,}", "source": "Ledger Sum"},
-                {"label": "Highest Spending Category", "value": f"{reasoning_result.get('top_category', 'None')} ({sym}{reasoning_result.get('top_amount', 0):,})", "source": "Category Analytics"}
+                {"label": "Highest Spending Category", "value": f"{reasoning_result.get('top_category', 'None')} ({sym}{reasoning_result.get('top_amount', 0):,})", "source": "Category Analytics"},
             ]
 
         elif intent == "DEBT_ANALYSIS":
@@ -135,7 +145,7 @@ class GraphRAG:
                 {"label": "Total Outstanding Loan Principal", "value": f"{sym}{reasoning_result.get('total_outstanding_debt', 0):,}", "source": "Loan.outstanding"},
                 {"label": "Pending Monthly EMI", "value": f"{sym}{reasoning_result.get('monthly_emi', 0):,}", "source": "EMI.amount"},
                 {"label": "Debt-to-Income (DTI) Ratio", "value": f"{reasoning_result.get('dti_ratio', 0)}%", "source": "DTI Formula"},
-                {"label": "Debt Risk Assessment", "value": reasoning_result.get("assessment", "Healthy"), "source": "Risk Classifier"}
+                {"label": "Debt Risk Assessment", "value": reasoning_result.get("assessment", "Healthy"), "source": "Risk Classifier"},
             ]
 
         elif intent == "FINANCIAL_HEALTH":
@@ -144,37 +154,80 @@ class GraphRAG:
                 {"label": "Financial Grade", "value": f"Grade {reasoning_result.get('grade', 'B')}", "source": "Grading Engine"},
                 {"label": "Savings Rate", "value": f"{reasoning_result.get('savings_rate', 0)}%", "source": "Savings Model"},
                 {"label": "Emergency Runway", "value": f"{reasoning_result.get('runway_months', 0)} months", "source": "Runway Model"},
-                {"label": "DTI Ratio", "value": f"{reasoning_result.get('dti_ratio', 0)}%", "source": "Debt Model"}
+                {"label": "DTI Ratio", "value": f"{reasoning_result.get('dti_ratio', 0)}%", "source": "Debt Model"},
             ]
 
         return {
             "intent": intent,
             "facts": evidence_items,
-            "raw_result": reasoning_result
+            "raw_result": reasoning_result,
         }
 
-    def process_query(self, question, user_id="U001"):
+    def process_query(self, question: str, user_id: str = "U001") -> dict:
         """
         Complete GraphRAG pipeline:
-        NLU -> Targeted Subgraph Retrieval -> Deterministic Math -> Grounded Evidence -> LLM Explanation.
+        NLU → Targeted Subgraph Retrieval → Deterministic Math → Grounded Evidence → LLM Explanation.
+
+        Returns a response dict that includes:
+          - explanation      : LLM-generated natural language explanation
+          - intent           : Classified intent string
+          - math_result      : Raw deterministic calculation result
+          - evidence         : List of evidence cards (label/value/source)
+          - latency_breakdown: Per-stage latency in milliseconds
+          - tokens           : LLM token usage (prompt / completion / total)
         """
+        pipeline_start = time.perf_counter()
+
+        # ── Stage 1: NLU ─────────────────────────────────────────────────────
+        nlu_t0 = time.perf_counter()
         parsed = parse_question(question)
         intent = parsed["intent"]
+        nlu_ms = (time.perf_counter() - nlu_t0) * 1000
+
+        logger.info("pipeline_start | user=%s | intent=%s | question=%r", user_id, intent, question[:80])
 
         if intent == "UNKNOWN":
+            total_ms = (time.perf_counter() - pipeline_start) * 1000
+            logger.info("pipeline_done | user=%s | intent=UNKNOWN | total_ms=%.0f", user_id, total_ms)
             return {
                 "query": question,
                 "intent": "UNKNOWN",
                 "decision": None,
                 "math_result": None,
                 "evidence": [],
-                "explanation": "I'm sorry, I couldn't understand that financial question. You can ask about purchase affordability (e.g. 'Can I spend ₹15000 on a phone?'), savings rate, emergency runway, expenses breakdown, or financial health."
+                "explanation": (
+                    "I'm sorry, I couldn't understand that financial question. "
+                    "You can ask about purchase affordability (e.g. 'Can I spend ₹15000 on a phone?'), "
+                    "savings rate, emergency runway, expenses breakdown, or financial health."
+                ),
+                "latency_breakdown": {"nlu_ms": round(nlu_ms, 1), "graph_ms": 0, "engine_ms": 0, "llm_ms": 0, "total_ms": round(total_ms, 1)},
+                "tokens": {"prompt": 0, "completion": 0, "total": 0},
             }
 
+        # ── Stage 2: Graph retrieval ──────────────────────────────────────────
+        graph_t0 = time.perf_counter()
         context = self.retrieve_subgraph(user_id, intent, entities=parsed)
+        graph_ms = (time.perf_counter() - graph_t0) * 1000
+        logger.info("graph_retrieved | user=%s | intent=%s | graph_ms=%.0f", user_id, intent, graph_ms)
+
+        # ── Stage 3: Deterministic engine ────────────────────────────────────
+        engine_t0 = time.perf_counter()
         math_result = self.execute_reasoning(intent, context, entities=parsed)
+        engine_ms = (time.perf_counter() - engine_t0) * 1000
+
         evidence_payload = self.construct_evidence_payload(intent, math_result, context)
-        explanation = generate_explanation(math_result, question=question)
+
+        # ── Stage 4: LLM explanation ──────────────────────────────────────────
+        llm_t0 = time.perf_counter()
+        prompt = build_financial_explanation_prompt(math_result, question=question)
+        llm_result = ask_llm(prompt)
+        llm_ms = (time.perf_counter() - llm_t0) * 1000
+
+        total_ms = (time.perf_counter() - pipeline_start) * 1000
+        logger.info(
+            "pipeline_done | user=%s | intent=%s | nlu_ms=%.0f | graph_ms=%.0f | engine_ms=%.0f | llm_ms=%.0f | total_ms=%.0f",
+            user_id, intent, nlu_ms, graph_ms, engine_ms, llm_ms, total_ms,
+        )
 
         return {
             "query": question,
@@ -182,5 +235,17 @@ class GraphRAG:
             "entities": parsed,
             "math_result": math_result,
             "evidence": evidence_payload["facts"],
-            "explanation": explanation
+            "explanation": llm_result["content"],
+            "latency_breakdown": {
+                "nlu_ms": round(nlu_ms, 1),
+                "graph_ms": round(graph_ms, 1),
+                "engine_ms": round(engine_ms, 1),
+                "llm_ms": round(llm_ms, 1),
+                "total_ms": round(total_ms, 1),
+            },
+            "tokens": {
+                "prompt": llm_result["prompt_tokens"],
+                "completion": llm_result["completion_tokens"],
+                "total": llm_result["tokens_used"],
+            },
         }
