@@ -1,10 +1,56 @@
 import re
 import json
+from datetime import date
 from backend.app.nlu.transaction_extractor import infer_category
+
+MONTH_NAMES = {
+    "january": 1, "jan": 1, "february": 2, "feb": 2, "march": 3, "mar": 3,
+    "april": 4, "apr": 4, "may": 5, "june": 6, "jun": 6, "july": 7, "jul": 7,
+    "august": 8, "aug": 8, "september": 9, "sep": 9, "sept": 9, "october": 10,
+    "oct": 10, "november": 11, "nov": 11, "december": 12, "dec": 12
+}
+
+
+def extract_temporal_reporting_date(text: str) -> date | None:
+    """
+    Extracts an explicit month/year or relative month (e.g. 'last month') from natural language.
+    Returns a date object pointing to the 1st of that month, or None.
+    """
+    t_lower = text.lower()
+    today = date.today()
+
+    # Relative: "last month", "previous month"
+    if "last month" in t_lower or "previous month" in t_lower:
+        if today.month == 1:
+            return date(today.year - 1, 12, 1)
+        return date(today.year, today.month - 1, 1)
+
+    # Explicit: "september 2025" or "in september 2025"
+    m_full = re.search(r"\b(" + "|".join(MONTH_NAMES.keys()) + r")\s+(\d{4})\b", t_lower)
+    if m_full:
+        month_num = MONTH_NAMES[m_full.group(1)]
+        year_num = int(m_full.group(2))
+        return date(year_num, month_num, 1)
+
+    # ISO Year-Month: "2025-08"
+    m_iso = re.search(r"\b(\d{4})-(0[1-9]|1[0-2])\b", t_lower)
+    if m_iso:
+        return date(int(m_iso.group(1)), int(m_iso.group(2)), 1)
+
+    # Named month without year: "in september", "for august"
+    m_month = re.search(r"\b(?:in|for|during)\s+(" + "|".join(MONTH_NAMES.keys()) + r")\b", t_lower)
+    if m_month:
+        month_num = MONTH_NAMES[m_month.group(1)]
+        year = today.year if month_num <= today.month else today.year - 1
+        return date(year, month_num, 1)
+
+    return None
+
 
 def parse_question_rules(question):
     q = question.strip()
     q_lower = q.lower()
+    reporting_date = extract_temporal_reporting_date(q)
 
     # 1. Transaction Ingestion Detection (e.g. "I spent ₹500 on food today", "Paid 1200 for electricity bill")
     if any(q_lower.startswith(prefix) for prefix in ["i spent", "spent", "paid for", "bought", "received salary", "earned"]) or \
@@ -17,6 +63,7 @@ def parse_question_rules(question):
                     "intent": "TRANSACTION_INGESTION",
                     "amount": amt,
                     "category": infer_category(q_lower),
+                    "reporting_date": reporting_date,
                     "raw_query": q
                 }
             except ValueError:
@@ -33,6 +80,7 @@ def parse_question_rules(question):
             "intent": "PURCHASE_SAFETY",
             "amount": amt,
             "category": cat,
+            "reporting_date": reporting_date,
             "raw_query": q
         }
 
@@ -41,6 +89,7 @@ def parse_question_rules(question):
         return {
             "intent": "EMERGENCY_RUNWAY_ANALYSIS",
             "amount": None,
+            "reporting_date": reporting_date,
             "raw_query": q
         }
 
@@ -49,6 +98,7 @@ def parse_question_rules(question):
         return {
             "intent": "EMERGENCY_FUND_ANALYSIS",
             "amount": None,
+            "reporting_date": reporting_date,
             "raw_query": q
         }
 
@@ -60,6 +110,7 @@ def parse_question_rules(question):
             "intent": "CATEGORY_EXPENSE",
             "category": matched_cat,
             "amount": None,
+            "reporting_date": reporting_date,
             "raw_query": q
         }
 
@@ -68,6 +119,7 @@ def parse_question_rules(question):
         return {
             "intent": "EXPENSE_BREAKDOWN",
             "amount": None,
+            "reporting_date": reporting_date,
             "raw_query": q
         }
 
@@ -76,6 +128,7 @@ def parse_question_rules(question):
         return {
             "intent": "SAVINGS_ANALYSIS",
             "amount": None,
+            "reporting_date": reporting_date,
             "raw_query": q
         }
 
@@ -84,6 +137,7 @@ def parse_question_rules(question):
         return {
             "intent": "DEBT_ANALYSIS",
             "amount": None,
+            "reporting_date": reporting_date,
             "raw_query": q
         }
 
@@ -92,6 +146,7 @@ def parse_question_rules(question):
         return {
             "intent": "FINANCIAL_HEALTH",
             "amount": None,
+            "reporting_date": reporting_date,
             "raw_query": q
         }
 
@@ -100,6 +155,7 @@ def parse_question_rules(question):
         return {
             "intent": "FINANCIAL_SUMMARY",
             "amount": None,
+            "reporting_date": reporting_date,
             "raw_query": q
         }
 
@@ -121,11 +177,13 @@ You are a precise financial intent parser. Classify the user query into a JSON o
 User Query: "{question}"
 Return ONLY raw JSON. No explanation, no markdown.
 """
+    reporting_date = extract_temporal_reporting_date(question)
     try:
         raw = ask_llm(prompt)["content"].strip()
         raw = re.sub(r"^```json\s*", "", raw, flags=re.MULTILINE)
         raw = re.sub(r"```$", "", raw, flags=re.MULTILINE).strip()
         parsed = json.loads(raw)
+        parsed["reporting_date"] = reporting_date
         parsed["raw_query"] = question
         return parsed
     except Exception:
@@ -133,6 +191,7 @@ Return ONLY raw JSON. No explanation, no markdown.
             "intent": "UNKNOWN",
             "amount": None,
             "category": None,
+            "reporting_date": reporting_date,
             "raw_query": question
         }
 
@@ -146,5 +205,6 @@ def parse_question(question, use_llm_fallback=True):
         "intent": "UNKNOWN",
         "amount": None,
         "category": None,
+        "reporting_date": extract_temporal_reporting_date(question),
         "raw_query": question
     }

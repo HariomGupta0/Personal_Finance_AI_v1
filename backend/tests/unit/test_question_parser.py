@@ -129,3 +129,28 @@ class TestUnknownFallback:
         res = parse_question("Random irrelevant gibberish xyz abc", use_llm_fallback=False)
         assert res["intent"] == "UNKNOWN"
         assert res["amount"] is None
+
+
+class TestTemporalExtraction:
+    def test_explicit_month_year(self):
+        res = parse_question_rules("What was my savings rate in September 2025?")
+        assert res is not None
+        assert res["intent"] == "SAVINGS_ANALYSIS"
+        assert res["reporting_date"] is not None
+        assert res["reporting_date"].year == 2025
+        assert res["reporting_date"].month == 9
+
+    def test_last_month_reference(self):
+        res = parse_question_rules("Where did I spend the most last month?")
+        assert res is not None
+        assert res["intent"] == "EXPENSE_BREAKDOWN"
+        assert res["reporting_date"] is not None
+
+    def test_iso_month_reference(self):
+        res = parse_question_rules("How much did I spend on food in 2025-08?")
+        assert res is not None
+        assert res["intent"] == "CATEGORY_EXPENSE"
+        assert res["reporting_date"] is not None
+        assert res["reporting_date"].year == 2025
+        assert res["reporting_date"].month == 8
+

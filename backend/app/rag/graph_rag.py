@@ -58,25 +58,27 @@ class GraphRAG:
         """
         entities = entities or {}
 
+        reporting_date = entities.get("reporting_date")
+
         if intent == "PURCHASE_SAFETY":
             amount = entities.get("amount") or 0.0
             return check_purchase_safety(context, amount)
 
         elif intent == "SAVINGS_ANALYSIS":
-            return calculate_savings_rate(context)
+            return calculate_savings_rate(context, reporting_date=reporting_date)
 
         elif intent == "EMERGENCY_FUND_ANALYSIS":
-            return calculate_emergency_fund(context)
+            return calculate_emergency_fund(context, reporting_date=reporting_date)
 
         elif intent == "EMERGENCY_RUNWAY_ANALYSIS":
             return calculate_emergency_runway(context)
 
         elif intent == "EXPENSE_BREAKDOWN":
-            return calculate_category_expenses(context)
+            return calculate_category_expenses(context, reporting_date=reporting_date)
 
         elif intent == "CATEGORY_EXPENSE":
             target_cat = entities.get("category", "General")
-            all_cat_stats = calculate_category_expenses(context)
+            all_cat_stats = calculate_category_expenses(context, reporting_date=reporting_date)
             matching_cat = next(
                 (c for c in all_cat_stats["categories"] if c["category"].lower() == target_cat.lower()),
                 None,
@@ -96,10 +98,10 @@ class GraphRAG:
             return calculate_comprehensive_health(context)
 
         elif intent == "FINANCIAL_SUMMARY":
-            return generate_financial_summary(context)
+            return generate_financial_summary(context, reporting_date=reporting_date)
 
         else:
-            return generate_financial_summary(context)
+            return generate_financial_summary(context, reporting_date=reporting_date)
 
     def construct_evidence_payload(self, intent: str, reasoning_result: dict, context: dict) -> dict:
         """
