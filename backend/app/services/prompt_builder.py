@@ -1,9 +1,21 @@
-def build_financial_explanation_prompt(financial_result, question=None):
-    q_context = f"User Question: \"{question}\"\n" if question else ""
+def build_financial_explanation_prompt(financial_result, question=None, conversation_history=None):
+    q_context = f'User Question: "{question}"\n' if question else ""
+
+    history_context = ""
+    if conversation_history and isinstance(conversation_history, list):
+        formatted_turns = []
+        for turn in conversation_history[-4:]:  # last 4 turns for concise context window
+            role = turn.get("role", "user").capitalize()
+            content = turn.get("content", "")
+            if content:
+                formatted_turns.append(f"{role}: {content}")
+        if formatted_turns:
+            history_context = "Recent Conversation History (use for context on follow-ups):\n" + "\n".join(formatted_turns) + "\n\n"
+
     prompt = f"""
 You are an expert personal financial advisor who communicates with warmth, clarity, intelligence, and modern visual polish.
 
-{q_context}Explain the provided financial analysis to the user in an engaging, human, and easily scannable format.
+{history_context}{q_context}Explain the provided financial analysis to the user in an engaging, human, and easily scannable format.
 
 CORE COMMUNICATION RULES:
 1. TONE: Warm, direct, encouraging, and human—like a premier wealth advisor. Avoid robotic jargon, formula algebra (never write equations like "Income - Expenses = ₹39,000"), or stiff academic phrasing.

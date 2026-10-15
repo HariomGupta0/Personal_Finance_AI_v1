@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  neo4j:
+    image: neo4j:5.26-community
+    container_name: personal_finance_neo4j
+    ports:
+      - "7474:7474"  # HTTP Web Interface
+      - "7687:7687"  # Bolt Protocol
+    environment:
+      - NEO4J_AUTH=neo4j/finance_password_123
+      - NEO4J_PLUGINS=["apoc"]
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:7474 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - finance_network
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: personal_finance_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USERNAME=neo4j
+      - NEO4J_PASSWORD=finance_password_123
+      - NEO4J_DATABASE=neo4j
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - LLM_MODEL=${LLM_MODEL:-llama-3.3-70b-versatile}
+      - SESSION_SECRET=${SESSION_SECRET:-docker_default_session_secret_change_me_123}
+      - APP_USERNAME=${APP_USERNAME:-Rahul}
+      - APP_USER_ID=${APP_USER_ID:-U001}
+      - APP_PASSWORD=${APP_PASSWORD:-password123}
+    depends_on:
+      neo4j:
+        condition: service_healthy
+    networks:
+      - finance_network
+
+volumes:
+  neo4j_data:
+  neo4j_logs:
+
+networks:
+  finance_network:
+    driver: bridge

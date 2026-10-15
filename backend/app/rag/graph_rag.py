@@ -163,7 +163,7 @@ class GraphRAG:
             "raw_result": reasoning_result,
         }
 
-    def process_query(self, question: str, user_id: str = "U001") -> dict:
+    def process_query(self, question: str, user_id: str = "U001", conversation_history: list[dict] | None = None) -> dict:
         """
         Complete GraphRAG pipeline:
         NLU → Targeted Subgraph Retrieval → Deterministic Math → Grounded Evidence → LLM Explanation.
@@ -219,7 +219,7 @@ class GraphRAG:
 
         # ── Stage 4: LLM explanation ──────────────────────────────────────────
         llm_t0 = time.perf_counter()
-        prompt = build_financial_explanation_prompt(math_result, question=question)
+        prompt = build_financial_explanation_prompt(math_result, question=question, conversation_history=conversation_history)
         llm_result = ask_llm(prompt)
         llm_ms = (time.perf_counter() - llm_t0) * 1000
 
