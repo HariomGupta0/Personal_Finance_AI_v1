@@ -10,7 +10,9 @@ import {
   Target,
   BarChart3,
   Lightbulb,
-  Rocket
+  Rocket,
+  Zap,
+  RotateCcw
 } from 'lucide-react';
 
 const SUGGESTIONS = [
@@ -129,6 +131,22 @@ export default function AssistantChat() {
     scrollToBottom();
   }, [messages, loading]);
 
+  const handleClearHistory = async () => {
+    try {
+      await fetch('/api/assistant/clear-history', { method: 'POST' });
+    } catch {
+      // ignore
+    }
+    setMessages([
+      {
+        role: 'assistant',
+        text: 'Hello Rahul! Conversation history has been reset. What would you like to analyze next?',
+        evidence: [],
+        math_result: null
+      }
+    ]);
+  };
+
   const handleSend = async (queryText) => {
     const textToSend = queryText || input;
     if (!textToSend.trim() || loading) return;
@@ -138,11 +156,16 @@ export default function AssistantChat() {
     if (!queryText) setInput('');
     setLoading(true);
 
+    const historyPayload = messages
+      .filter(m => m.text && !m.text.startsWith('Error connecting'))
+      .slice(-4)
+      .map(m => ({ role: m.role, content: m.text }));
+
     try {
       const res = await fetch('/api/assistant/query', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: textToSend })
+        body: JSON.stringify({ question: textToSend, history: historyPayload })
       });
       const data = await res.json();
       if (!res.ok) {
@@ -156,7 +179,9 @@ export default function AssistantChat() {
           text: data.explanation || 'Analysis complete.',
           evidence: data.evidence || [],
           math_result: data.math_result,
-          intent: data.intent
+          intent: data.intent,
+          latency_breakdown: data.latency_breakdown,
+          tokens: data.tokens
         }
       ]);
     } catch (err) {
@@ -175,7 +200,7 @@ export default function AssistantChat() {
   };
 
   return (
-    <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', height: '620px', padding: '0', overflow: 'hidden' }}>
+    <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', height: '640px', padding: '0', overflow: 'hidden' }}>
       {/* Header */}
       <div style={{
         padding: '16px 20px',
@@ -194,7 +219,25 @@ export default function AssistantChat() {
             <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>GraphRAG Grounded • Deterministic Engine</p>
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button
+            onClick={handleClearHistory}
+            title="Reset conversation context"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '4px 10px',
+              borderRadius: '6px',
+              border: '1px solid var(--border-subtle)',
+              background: 'rgba(255, 255, 255, 0.04)',
+              color: 'var(--text-muted)',
+              fontSize: '0.72rem',
+              cursor: 'pointer'
+            }}
+          >
+            <RotateCcw size={11} /> Clear Thread
+          </button>
           <span className="badge badge-success" style={{ fontSize: '0.7rem' }}>
             <Database size={11} /> Neo4j Connected
           </span>
@@ -263,6 +306,42 @@ export default function AssistantChat() {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Telemetry & Latency Breakdown Badge */}
+            {msg.role === 'assistant' && msg.latency_breakdown && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '8px',
+                fontSize: '0.71rem',
+                color: 'var(--text-muted)',
+                padding: '4px 10px',
+                background: 'rgba(255, 255, 255, 0.02)',
+                borderRadius: '6px',
+                border: '1px solid rgba(255, 255, 255, 0.05)',
+                width: 'fit-content',
+                marginTop: '2px'
+              }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', color: '#10b981', fontWeight: '600' }}>
+                  <Zap size={11} /> {msg.latency_breakdown.total_ms}ms
+                </span>
+                <span>•</span>
+                <span>Graph: {msg.latency_breakdown.graph_ms}ms</span>
+                <span>•</span>
+                <span>Engine: {msg.latency_breakdown.engine_ms}ms</span>
+                <span>•</span>
+                <span>LLM: {msg.latency_breakdown.llm_ms}ms</span>
+                {msg.tokens && msg.tokens.total > 0 && (
+                  <>
+                    <span>•</span>
+                    <span style={{ color: 'var(--accent-primary)', fontWeight: '500' }}>
+                      {msg.tokens.total} tokens
+                    </span>
+                  </>
+                )}
               </div>
             )}
           </div>
