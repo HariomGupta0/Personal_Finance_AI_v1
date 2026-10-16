@@ -40,6 +40,7 @@ DATE_COLS = [
 DESC_COLS = [
     "description", "narration", "particulars", "remarks", "details",
     "transaction details", "transaction narration", "transaction description",
+    "name", "merchant", "payee", "beneficiary", "party", "party name", "mode",
 ]
 
 DEBIT_COLS = [
@@ -57,7 +58,8 @@ AMOUNT_COLS = [
 ]
 
 TYPE_COLS = [
-    "transaction type", "type", "dr/cr", "cr/dr", "debit/credit",
+    "transaction type", "type", "dr/cr", "cr/dr", "debit/credit", "drcr", "crdr",
+    "dr_cr", "cr_dr", "txn type", "entry type", "type of transaction",
 ]
 
 REF_COLS = [
@@ -250,7 +252,7 @@ def _infer_type_from_type_col(raw: str) -> Optional[str]:
     v = str(raw).strip().upper()
     if v in ("CR", "CREDIT", "INCOME", "DEP", "DEPOSIT", "IN"):
         return "INCOME"
-    if v in ("DR", "DEBIT", "EXPENSE", "WITHDRAWAL", "OUT", "WDL", "WD"):
+    if v in ("DR", "DB", "DEBIT", "EXPENSE", "WITHDRAWAL", "OUT", "WDL", "WD"):
         return "EXPENSE"
     if v in ("REFUND", "REV", "REVERSAL", "RETURN"):
         return "REFUND"
@@ -337,6 +339,18 @@ def parse_csv(
         description = ""
         if mapping.get("description"):
             description = str(row.get(mapping["description"], "")).strip()
+
+        # If description is empty or generic, check if name/mode columns exist to enrich it
+        if not description or description.startswith("Imported transaction"):
+            name_val = str(row.get("name", "")).strip() if "name" in row else ""
+            mode_val = str(row.get("mode", "")).strip() if "mode" in row else ""
+            if name_val and mode_val:
+                description = f"{mode_val} - {name_val}"
+            elif name_val:
+                description = name_val
+            elif mode_val:
+                description = mode_val
+
         if not description:
             description = f"Imported transaction (row {idx + 2})"
 
