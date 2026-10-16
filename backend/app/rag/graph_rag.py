@@ -13,6 +13,7 @@ from backend.app.engine.financial_engine import (
     calculate_comprehensive_health,
     generate_financial_summary,
 )
+from backend.config import DEFAULT_PROMPT_VERSION
 from backend.app.services.prompt_builder import build_financial_explanation_prompt
 from backend.app.services.llm_service import ask_llm, ask_llm_async
 
@@ -166,7 +167,13 @@ class GraphRAG:
             "raw_result": reasoning_result,
         }
 
-    def process_query(self, question: str, user_id: str = "U001", conversation_history: list[dict] | None = None) -> dict:
+    def process_query(
+        self,
+        question: str,
+        user_id: str = "U001",
+        conversation_history: list[dict] | None = None,
+        prompt_version: str | None = None,
+    ) -> dict:
         """
         Complete GraphRAG pipeline:
         NLU → Targeted Subgraph Retrieval → Deterministic Math → Grounded Evidence → LLM Explanation.
@@ -222,7 +229,13 @@ class GraphRAG:
 
         # ── Stage 4: LLM explanation ──────────────────────────────────────────
         llm_t0 = time.perf_counter()
-        prompt = build_financial_explanation_prompt(math_result, question=question, conversation_history=conversation_history)
+        used_version = prompt_version or DEFAULT_PROMPT_VERSION
+        prompt = build_financial_explanation_prompt(
+            math_result,
+            question=question,
+            conversation_history=conversation_history,
+            version=used_version,
+        )
         llm_result = ask_llm(prompt)
         llm_ms = (time.perf_counter() - llm_t0) * 1000
 
@@ -239,6 +252,7 @@ class GraphRAG:
             "math_result": math_result,
             "evidence": evidence_payload["facts"],
             "explanation": llm_result["content"],
+            "prompt_version": used_version,
             "latency_breakdown": {
                 "nlu_ms": round(nlu_ms, 1),
                 "graph_ms": round(graph_ms, 1),
@@ -258,6 +272,7 @@ class GraphRAG:
         question: str,
         user_id: str = "U001",
         conversation_history: list[dict] | None = None,
+        prompt_version: str | None = None,
     ) -> dict:
         """
         Asynchronous GraphRAG pipeline:
@@ -306,7 +321,13 @@ class GraphRAG:
 
         # ── Stage 4: Non-blocking Async LLM explanation ───────────────────────
         llm_t0 = time.perf_counter()
-        prompt = build_financial_explanation_prompt(math_result, question=question, conversation_history=conversation_history)
+        used_version = prompt_version or DEFAULT_PROMPT_VERSION
+        prompt = build_financial_explanation_prompt(
+            math_result,
+            question=question,
+            conversation_history=conversation_history,
+            version=used_version,
+        )
         llm_result = await ask_llm_async(prompt)
         llm_ms = (time.perf_counter() - llm_t0) * 1000
 
@@ -323,6 +344,7 @@ class GraphRAG:
             "math_result": math_result,
             "evidence": evidence_payload["facts"],
             "explanation": llm_result["content"],
+            "prompt_version": used_version,
             "latency_breakdown": {
                 "nlu_ms": round(nlu_ms, 1),
                 "graph_ms": round(graph_ms, 1),

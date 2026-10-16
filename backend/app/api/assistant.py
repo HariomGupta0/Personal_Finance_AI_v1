@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 
 from backend.app.api.deps import get_current_user_id, get_graph_rag
 from backend.app.rag.graph_rag import GraphRAG
+from backend.app.services.prompt_builder import list_prompt_versions
 
 router = APIRouter(prefix="/api/assistant", tags=["Assistant"])
 
@@ -26,6 +27,10 @@ class QueryRequest(BaseModel):
     history: list[ConversationTurn] = Field(
         default_factory=list,
         description="Optional client-managed history for multi-turn conversational follow-ups",
+    )
+    prompt_version: str | None = Field(
+        default=None,
+        description="Optional prompt template version to use (e.g. 'v1.0', 'v1.1'). Defaults to system configured version.",
     )
 
 
@@ -55,6 +60,7 @@ async def ask_assistant(
             question=payload.question,
             user_id=user_id,
             conversation_history=history_list,
+            prompt_version=payload.prompt_version,
         )
 
 
@@ -77,3 +83,12 @@ def clear_conversation_history(user_id: str = Depends(get_current_user_id)):
     """
     _user_conversation_store.pop(user_id, None)
     return {"status": "success", "message": "Conversation history reset"}
+
+
+@router.get("/prompt-versions")
+def get_prompt_versions():
+    """
+    List registered prompt template versions and indicate the active default.
+    """
+    return {"versions": list_prompt_versions()}
+
