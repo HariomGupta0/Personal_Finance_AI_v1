@@ -1,13 +1,15 @@
+import asyncio
 import logging
 import time
 
-from groq import Groq
+from groq import AsyncGroq, Groq
 
 from backend.config import GROQ_API_KEY, LLM_MODEL
 
 logger = logging.getLogger(__name__)
 
 _client: Groq | None = None
+_async_client: AsyncGroq | None = None
 
 
 def _get_client() -> Groq:
@@ -20,6 +22,108 @@ def _get_client() -> Groq:
             )
         _client = Groq(api_key=GROQ_API_KEY, timeout=20.0)
     return _client
+
+
+def _get_async_client() -> AsyncGroq:
+    """Lazy-init AsyncGroq client for non-blocking asynchronous calls."""
+    global _async_client
+    if _async_client is None:
+        if not GROQ_API_KEY:
+            raise RuntimeError(
+                "GROQ_API_KEY is not set. Add it to your .env file or environment."
+            )
+        _async_client = AsyncGroq(api_key=GROQ_API_KEY, timeout=20.0)
+    return _async_client
+
+
+async def ask_llm_async(
+    prompt: str,
+    model: str | None = None,
+    system_prompt: str | None = None,
+    temperature: float = 0.3,
+    max_tokens: int = 1024,
+    retries: int = 2,
+    fallback_text: str | None = None,
+) -> dict:
+    """
+    Non-blocking async call to Groq LLM with exponential-backoff retry.
+    """
+    use_model = model or LLM_MODEL
+
+    messages: list[dict] = []
+    if system_prompt:
+        messages.append({"role": "system", "content": system_prompt})
+    messages.append({"role": "user", "content": prompt})
+
+    last_exc: Exception | None = None
+
+    for attempt in range(retries + 1):
+        t0 = time.perf_counter()
+        try:
+            resp = await _get_async_client().chat.completions.create(
+                model=use_model,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+            )
+            latency_ms = (time.perf_counter() - t0) * 1000
+            usage = resp.usage
+
+            logger.info(
+                "async_llm_call | model=%s | prompt_tokens=%d | completion_tokens=%d | latency_ms=%.0f",
+                use_model,
+                usage.prompt_tokens,
+                usage.completion_tokens,
+                latency_ms,
+            )
+
+            return {
+                "content": resp.choices[0].message.content or "",
+                "tokens_used": usage.total_tokens,
+                "prompt_tokens": usage.prompt_tokens,
+                "completion_tokens": usage.completion_tokens,
+                "latency_ms": round(latency_ms, 1),
+                "model": use_model,
+                "error": None,
+            }
+
+        except Exception as exc:
+            last_exc = exc
+            if attempt < retries:
+                wait = 1.5 * (attempt + 1)
+                logger.warning(
+                    "async_llm_call failed attempt %d/%d (%s) — retrying in %.1fs",
+                    attempt + 1,
+                    retries,
+                    type(exc).__name__,
+                    wait,
+                )
+                await asyncio.sleep(wait)
+            else:
+                logger.error(
+                    "async_llm_call failed after %d retries: %s — %s",
+                    retries,
+                    type(exc).__name__,
+                    str(exc),
+                )
+
+    fallback_content = fallback_text or (
+        "🎯 **Financial Analysis Complete**\n"
+        "• All figures have been verified by the deterministic engine.\n"
+        "• Please refer to the evidence card below for exact amounts.\n"
+        "*(AI explanation temporarily unavailable — your financial data is unaffected.)*"
+    )
+
+    return {
+        "content": fallback_content,
+        "tokens_used": 0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "latency_ms": 0.0,
+        "model": use_model,
+        "error": str(last_exc),
+    }
+
 
 
 def ask_llm(
@@ -119,3 +223,10 @@ def ask_llm(
         "model": use_model,
         "error": str(last_exc),
     }
+
+
+# Alias for explicit synchronous usage
+ask_llm_sync = ask_llm
+
+__all__ = ["ask_llm", "ask_llm_async", "ask_llm_sync"]
+

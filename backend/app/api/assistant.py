@@ -30,15 +30,14 @@ class QueryRequest(BaseModel):
 
 
 @router.post("/query")
-def ask_assistant(
+async def ask_assistant(
     request: Request,
     payload: QueryRequest,
     user_id: str = Depends(get_current_user_id),
     graph_rag: GraphRAG = Depends(get_graph_rag),
 ):
-
     """
-    Process a natural language financial question through the GraphRAG pipeline.
+    Process a natural language financial question through the non-blocking async GraphRAG pipeline.
 
     Rate limit: 20 requests per minute per IP address.
     Supports multi-turn follow-ups via client-provided history or server-side session memory.
@@ -52,11 +51,12 @@ def ask_assistant(
         else:
             history_list = _user_conversation_store.get(user_id, [])
 
-        result = graph_rag.process_query(
+        result = await graph_rag.process_query_async(
             question=payload.question,
             user_id=user_id,
             conversation_history=history_list,
         )
+
 
         # Update server-side conversation store (keep last 6 turns)
         session_history = _user_conversation_store.setdefault(user_id, [])

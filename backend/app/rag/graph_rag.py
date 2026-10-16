@@ -14,9 +14,10 @@ from backend.app.engine.financial_engine import (
     generate_financial_summary,
 )
 from backend.app.services.prompt_builder import build_financial_explanation_prompt
-from backend.app.services.llm_service import ask_llm
+from backend.app.services.llm_service import ask_llm, ask_llm_async
 
 logger = logging.getLogger(__name__)
+
 
 
 class GraphRAG:
@@ -251,3 +252,88 @@ class GraphRAG:
                 "total": llm_result["tokens_used"],
             },
         }
+
+    async def process_query_async(
+        self,
+        question: str,
+        user_id: str = "U001",
+        conversation_history: list[dict] | None = None,
+    ) -> dict:
+        """
+        Asynchronous GraphRAG pipeline:
+        NLU → Targeted Subgraph Retrieval → Deterministic Math → Grounded Evidence → Non-blocking Async LLM.
+        """
+        pipeline_start = time.perf_counter()
+
+        # ── Stage 1: NLU ─────────────────────────────────────────────────────
+        nlu_t0 = time.perf_counter()
+        parsed = parse_question(question)
+        intent = parsed["intent"]
+        nlu_ms = (time.perf_counter() - nlu_t0) * 1000
+
+        logger.info("async_pipeline_start | user=%s | intent=%s | question=%r", user_id, intent, question[:80])
+
+        if intent == "UNKNOWN":
+            total_ms = (time.perf_counter() - pipeline_start) * 1000
+            logger.info("async_pipeline_done | user=%s | intent=UNKNOWN | total_ms=%.0f", user_id, total_ms)
+            return {
+                "query": question,
+                "intent": "UNKNOWN",
+                "decision": None,
+                "math_result": None,
+                "evidence": [],
+                "explanation": (
+                    "I'm sorry, I couldn't understand that financial question. "
+                    "You can ask about purchase affordability (e.g. 'Can I spend ₹15000 on a phone?'), "
+                    "savings rate, emergency runway, expenses breakdown, or financial health."
+                ),
+                "latency_breakdown": {"nlu_ms": round(nlu_ms, 1), "graph_ms": 0, "engine_ms": 0, "llm_ms": 0, "total_ms": round(total_ms, 1)},
+                "tokens": {"prompt": 0, "completion": 0, "total": 0},
+            }
+
+        # ── Stage 2: Graph retrieval ──────────────────────────────────────────
+        graph_t0 = time.perf_counter()
+        context = self.retrieve_subgraph(user_id, intent, entities=parsed)
+        graph_ms = (time.perf_counter() - graph_t0) * 1000
+        logger.info("async_graph_retrieved | user=%s | intent=%s | graph_ms=%.0f", user_id, intent, graph_ms)
+
+        # ── Stage 3: Deterministic engine ────────────────────────────────────
+        engine_t0 = time.perf_counter()
+        math_result = self.execute_reasoning(intent, context, entities=parsed)
+        engine_ms = (time.perf_counter() - engine_t0) * 1000
+
+        evidence_payload = self.construct_evidence_payload(intent, math_result, context)
+
+        # ── Stage 4: Non-blocking Async LLM explanation ───────────────────────
+        llm_t0 = time.perf_counter()
+        prompt = build_financial_explanation_prompt(math_result, question=question, conversation_history=conversation_history)
+        llm_result = await ask_llm_async(prompt)
+        llm_ms = (time.perf_counter() - llm_t0) * 1000
+
+        total_ms = (time.perf_counter() - pipeline_start) * 1000
+        logger.info(
+            "async_pipeline_done | user=%s | intent=%s | nlu_ms=%.0f | graph_ms=%.0f | engine_ms=%.0f | llm_ms=%.0f | total_ms=%.0f",
+            user_id, intent, nlu_ms, graph_ms, engine_ms, llm_ms, total_ms,
+        )
+
+        return {
+            "query": question,
+            "intent": intent,
+            "entities": parsed,
+            "math_result": math_result,
+            "evidence": evidence_payload["facts"],
+            "explanation": llm_result["content"],
+            "latency_breakdown": {
+                "nlu_ms": round(nlu_ms, 1),
+                "graph_ms": round(graph_ms, 1),
+                "engine_ms": round(engine_ms, 1),
+                "llm_ms": round(llm_ms, 1),
+                "total_ms": round(total_ms, 1),
+            },
+            "tokens": {
+                "prompt": llm_result["prompt_tokens"],
+                "completion": llm_result["completion_tokens"],
+                "total": llm_result["tokens_used"],
+            },
+        }
+
