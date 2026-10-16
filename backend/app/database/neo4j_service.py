@@ -751,3 +751,29 @@ class Neo4jService:
 
     def close(self):
         self.driver.close()
+
+
+_shared_service_instance: Neo4jService | None = None
+
+
+def get_neo4j_service(database: str | None = None) -> Neo4jService:
+    """
+    Lazy-initialized singleton Neo4jService instance for dependency injection.
+    Eliminates redundant connection handshakes and enables mocking.
+    """
+    global _shared_service_instance
+    if _shared_service_instance is None:
+        _shared_service_instance = Neo4jService(database=database)
+    return _shared_service_instance
+
+
+def close_neo4j_service():
+    """Cleanly close the shared Neo4j driver connection."""
+    global _shared_service_instance
+    if _shared_service_instance is not None:
+        try:
+            _shared_service_instance.close()
+        except Exception:
+            pass
+        _shared_service_instance = None
+

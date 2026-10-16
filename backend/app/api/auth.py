@@ -4,7 +4,7 @@ import hmac
 import json
 import time
 
-from fastapi import APIRouter, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from pydantic import BaseModel, Field
 
 from backend.config import (
@@ -15,7 +15,7 @@ from backend.config import (
     SESSION_SECRET,
     SESSION_TTL_SECONDS,
 )
-from backend.app.database.neo4j_service import Neo4jService
+from backend.app.database.neo4j_service import Neo4jService, get_neo4j_service
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 SESSION_COOKIE_NAME = "finance_session"
@@ -85,35 +85,39 @@ def _set_session_cookie(response: Response, token: str) -> None:
 
 
 @router.post("/signup", status_code=status.HTTP_201_CREATED)
-def signup(payload: SignupRequest, response: Response):
-    neo = Neo4jService()
+def signup(
+    payload: SignupRequest,
+    response: Response,
+    neo: Neo4jService = Depends(get_neo4j_service),
+):
     try:
         user_info = neo.create_user(
             username=payload.username,
             password=payload.password,
             name=payload.name,
-            initial_balance=payload.initial_balance
+            initial_balance=payload.initial_balance,
         )
     except ValueError as err:
         raise HTTPException(status_code=400, detail=str(err))
     except Exception as err:
         raise HTTPException(status_code=500, detail=f"Failed to create user: {str(err)}")
-    finally:
-        neo.close()
 
     user_id = user_info["user_id"]
     _set_session_cookie(response, create_session_token(user_id))
     return {
         "user_id": user_id,
         "username": user_info["username"],
-        "name": user_info["name"]
+        "name": user_info["name"],
     }
 
 
 @router.post("/login")
-def login(payload: LoginRequest, response: Response):
+def login(
+    payload: LoginRequest,
+    response: Response,
+    neo: Neo4jService = Depends(get_neo4j_service),
+):
     # 1. First attempt authentication against Neo4j User nodes
-    neo = Neo4jService()
     try:
         user = neo.authenticate_user(payload.username, payload.password)
         if user:
@@ -121,12 +125,10 @@ def login(payload: LoginRequest, response: Response):
             return {
                 "user_id": user["user_id"],
                 "username": user["username"],
-                "name": user["name"]
+                "name": user["name"],
             }
     except Exception:
         pass
-    finally:
-        neo.close()
 
     # 2. Fallback to demo environment credentials if configured
     if APP_PASSWORD and SESSION_SECRET:
@@ -145,7 +147,10 @@ def logout(response: Response):
 
 
 @router.get("/session")
-def session(request: Request):
+def session(
+    request: Request,
+    neo: Neo4jService = Depends(get_neo4j_service),
+):
     user_id = get_session_user_id(request.cookies.get(SESSION_COOKIE_NAME))
     if not user_id:
         raise HTTPException(status_code=401, detail="Authentication required")
@@ -154,18 +159,15 @@ def session(request: Request):
     if user_id == APP_USER_ID:
         return {"user_id": APP_USER_ID, "username": APP_USERNAME, "name": APP_USERNAME}
 
-    neo = Neo4jService()
     try:
         user = neo.get_user_by_id(user_id)
         if user:
             return {
                 "user_id": user["user_id"],
                 "username": user["username"],
-                "name": user["name"]
+                "name": user["name"],
             }
     except Exception:
         pass
-    finally:
-        neo.close()
 
     return {"user_id": user_id, "username": user_id, "name": user_id}

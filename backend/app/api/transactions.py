@@ -1,13 +1,17 @@
-from fastapi import APIRouter, HTTPException, Query, Depends
-from pydantic import BaseModel, Field, field_validator
 from typing import Optional
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field, field_validator
+
+from backend.app.api.deps import (
+    get_current_user_id,
+    get_ingestion_service,
+    get_neo4j_service,
+)
 from backend.app.database.neo4j_service import Neo4jService
 from backend.app.services.ingestion_service import IngestionService
-from backend.app.api.deps import get_current_user_id
 
 router = APIRouter(prefix="/api/transactions", tags=["Transactions"])
-db = Neo4jService()
-ingestion = IngestionService(db=db)
+
 
 class TransactionCreateSchema(BaseModel):
     account_id: Optional[str] = Field(None, description="Account ID")
@@ -28,33 +32,44 @@ class TransactionCreateSchema(BaseModel):
             raise ValueError("transaction_type must be EXPENSE or INCOME")
         return normalized
 
+
 class TransactionUpdateSchema(BaseModel):
     amount: Optional[float] = None
     description: Optional[str] = None
     category_name: Optional[str] = None
     date_str: Optional[str] = None
 
+
 @router.get("")
-def list_transactions(user_id: str = Depends(get_current_user_id), limit: int = Query(100, ge=1, le=1000)):
+def list_transactions(
+    user_id: str = Depends(get_current_user_id),
+    limit: int = Query(100, ge=1, le=1000),
+    db: Neo4jService = Depends(get_neo4j_service),
+):
     transactions = db.get_all_transactions(user_id, limit=limit)
     categories = db.get_categories()
     accounts = db.get_user_accounts(user_id)
     return {
         "transactions": transactions,
         "categories": categories,
-        "accounts": accounts
+        "accounts": accounts,
     }
 
+
 @router.post("")
-def create_transaction(payload: TransactionCreateSchema, user_id: str = Depends(get_current_user_id)):
+def create_transaction(
+    payload: TransactionCreateSchema,
+    user_id: str = Depends(get_current_user_id),
+    ingestion: IngestionService = Depends(get_ingestion_service),
+):
     try:
         if payload.natural_language_input:
             return ingestion.ingest_transaction_from_text(
                 text=payload.natural_language_input,
                 user_id=user_id,
-                account_id=payload.account_id
+                account_id=payload.account_id,
             )
-        
+
         if payload.amount is None or payload.amount <= 0:
             raise HTTPException(status_code=400, detail="Transaction amount must be greater than 0")
 
@@ -65,13 +80,19 @@ def create_transaction(payload: TransactionCreateSchema, user_id: str = Depends(
             description=payload.description or "Transaction",
             category_name=payload.category_name or "General",
             transaction_type=payload.transaction_type or "EXPENSE",
-            date_str=payload.date_str
+            date_str=payload.date_str,
         )
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
 @router.put("/{transaction_id}")
-def update_transaction(transaction_id: str, payload: TransactionUpdateSchema, user_id: str = Depends(get_current_user_id)):
+def update_transaction(
+    transaction_id: str,
+    payload: TransactionUpdateSchema,
+    user_id: str = Depends(get_current_user_id),
+    db: Neo4jService = Depends(get_neo4j_service),
+):
     try:
         updated = db.update_transaction(
             user_id=user_id,
@@ -79,23 +100,29 @@ def update_transaction(transaction_id: str, payload: TransactionUpdateSchema, us
             amount=payload.amount,
             description=payload.description,
             category_name=payload.category_name,
-            date_str=payload.date_str
+            date_str=payload.date_str,
         )
         return {
             "status": "SUCCESS",
-            "transaction": updated
+            "transaction": updated,
         }
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
 @router.delete("/{transaction_id}")
-def delete_transaction(transaction_id: str, user_id: str = Depends(get_current_user_id)):
+def delete_transaction(
+    transaction_id: str,
+    user_id: str = Depends(get_current_user_id),
+    db: Neo4jService = Depends(get_neo4j_service),
+):
     try:
         res = db.delete_transaction(user_id, transaction_id)
         return {
             "status": "SUCCESS",
             "message": f"Transaction '{transaction_id}' deleted successfully",
-            "restored_balance": res["restored_balance"]
+            "restored_balance": res["restored_balance"],
         }
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+

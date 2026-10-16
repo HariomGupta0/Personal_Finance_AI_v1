@@ -1,13 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
+from backend.app.api.deps import get_current_user_id, get_graph_rag
 from backend.app.rag.graph_rag import GraphRAG
-from backend.app.api.deps import get_current_user_id
 
 router = APIRouter(prefix="/api/assistant", tags=["Assistant"])
-
-# GraphRAG is instantiated once per process — Neo4j driver is reused.
-graph_rag = GraphRAG()
 
 # In-memory session conversation store: user_id -> list of turn dicts
 _user_conversation_store: dict[str, list[dict]] = {}
@@ -37,7 +34,9 @@ def ask_assistant(
     request: Request,
     payload: QueryRequest,
     user_id: str = Depends(get_current_user_id),
+    graph_rag: GraphRAG = Depends(get_graph_rag),
 ):
+
     """
     Process a natural language financial question through the GraphRAG pipeline.
 

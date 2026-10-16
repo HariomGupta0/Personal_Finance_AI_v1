@@ -23,7 +23,11 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from pydantic import BaseModel, Field, field_validator
 
-from backend.app.api.deps import get_current_user_id
+from backend.app.api.deps import (
+    get_current_user_id,
+    get_ingestion_service,
+    get_neo4j_service,
+)
 from backend.app.database.neo4j_service import Neo4jService
 from backend.app.services.csv_parser import CSVParseError, parse_csv
 from backend.app.services.image_extractor import (
@@ -44,14 +48,7 @@ MAX_IMAGE_BYTES = 10 * 1024 * 1024  # 10 MB
 
 
 # ---------------------------------------------------------------------------
-# Shared DB instances (same pattern as existing routers)
-# ---------------------------------------------------------------------------
 
-db = Neo4jService()
-ingestion = IngestionService(db=db)
-
-
-# ---------------------------------------------------------------------------
 # Pydantic schemas for confirm endpoint
 # ---------------------------------------------------------------------------
 
@@ -87,6 +84,7 @@ async def upload_csv(
     file: UploadFile = File(...),
     user_id: str = Depends(get_current_user_id),
     user_mapping: Optional[str] = None,   # JSON string of column mapping override
+    db: Neo4jService = Depends(get_neo4j_service),
 ):
     """
     Parse a bank statement CSV and return a preview for user confirmation.
@@ -163,6 +161,7 @@ async def upload_csv(
 async def upload_image(
     file: UploadFile = File(...),
     user_id: str = Depends(get_current_user_id),
+    db: Neo4jService = Depends(get_neo4j_service),
 ):
     """
     Extract transaction information from a receipt or payment screenshot.
@@ -232,6 +231,8 @@ async def upload_image(
 def confirm_import(
     payload: ConfirmImportRequest,
     user_id: str = Depends(get_current_user_id),
+    db: Neo4jService = Depends(get_neo4j_service),
+    ingestion: IngestionService = Depends(get_ingestion_service),
 ):
     """
     Persist confirmed rows to Neo4j.
