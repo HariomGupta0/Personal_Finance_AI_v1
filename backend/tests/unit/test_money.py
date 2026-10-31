@@ -8,6 +8,7 @@ import random
 import pytest
 
 from backend.app.core.money import (
+    div_paise,
     format_inr,
     from_paise,
     mul_paise,
@@ -168,3 +169,28 @@ def test_round_trip_property_10k_random():
         dec = from_paise(paise)
         expected_dec = Decimal(rupees_str).quantize(Decimal("0.01"))
         assert dec == expected_dec
+
+
+def test_div_paise():
+    assert div_paise(1000, 2) == 500
+    assert div_paise(1, 2) == 1  # 0.5 -> 1 (ROUND_HALF_UP)
+    assert div_paise(3, 2) == 2  # 1.5 -> 2
+    assert div_paise(100, 3) == 33  # 33.333... -> 33
+    assert div_paise(200, 3) == 67  # 66.666... -> 67
+    assert div_paise(-100, 3) == -33
+
+    with pytest.raises(ValueError, match="Divisor cannot be zero"):
+        div_paise(100, 0)
+
+    with pytest.raises(TypeError):
+        div_paise(100, 2.5)  # non-integer divisor
+
+    with pytest.raises(TypeError):
+        div_paise(100.5, 2)  # non-integer paise
+
+    with pytest.raises(TypeError):
+        div_paise(True, 2)
+
+    with pytest.raises(TypeError):
+        div_paise(100, False)
+

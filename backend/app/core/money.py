@@ -227,3 +227,38 @@ def format_inr(paise: int) -> str:
     sign = "-" if is_negative else ""
     return f"{sign}₹{grouped}.{cents:02d}"
 
+
+def div_paise(p: int, n: int) -> int:
+    """
+    Divide integer paise by an integer divisor n using Decimal and ROUND_HALF_UP.
+
+    Parameters
+    ----------
+    p : int
+        Amount in Paise (may be negative).
+    n : int
+        Integer divisor (must not be zero).
+
+    Returns
+    -------
+    int
+        Result in Paise rounded with ROUND_HALF_UP.
+
+    Raises
+    -------
+    TypeError
+        If p or n is not an integer or is a bool.
+    ValueError
+        If n is zero.
+    """
+    if isinstance(p, bool) or not isinstance(p, int):
+        raise TypeError(f"Expected int paise, got {type(p).__name__}")
+    if isinstance(n, bool) or not isinstance(n, int):
+        raise TypeError(f"Expected int divisor, got {type(n).__name__}")
+    if n == 0:
+        raise ValueError("Divisor cannot be zero")
+
+    result = (Decimal(p) / Decimal(n)).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+    return int(result)
+
+
