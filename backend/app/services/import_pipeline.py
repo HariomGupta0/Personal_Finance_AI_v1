@@ -130,16 +130,16 @@ def detect_duplicates(rows: list[dict], user_id: str, db) -> list[dict]:
     _EXACT_REF_QUERY = """
     MATCH (u:User {id: $user_id})-[:HAS_ACCOUNT]->(:Account)-[:MADE_TRANSACTION]->(t:Transaction)
     WHERE t.source_ref IS NOT NULL AND t.source_ref = $source_ref
-    RETURN t.id AS id, t.description AS description, t.amount AS amount, t.date AS date
+    RETURN t.id AS id, t.description AS description, round(toFloat(t.amount_paise) / 100.0, 2) AS amount, t.date AS date
     LIMIT 1
     """
     _CANDIDATE_QUERY = """
     MATCH (u:User {id: $user_id})-[:HAS_ACCOUNT]->(:Account)-[:MADE_TRANSACTION]->(t:Transaction)
-    WHERE t.amount = $amount
+    WHERE t.amount_paise = $amount_paise
       AND t.type = $tx_type
       AND date(t.date) >= date($date_from)
       AND date(t.date) <= date($date_to)
-    RETURN t.id AS id, t.description AS description, t.amount AS amount, t.date AS date
+    RETURN t.id AS id, t.description AS description, round(toFloat(t.amount_paise) / 100.0, 2) AS amount, t.date AS date
     LIMIT 3
     """
 
@@ -172,7 +172,8 @@ def detect_duplicates(rows: list[dict], user_id: str, db) -> list[dict]:
                     dt = datetime.strptime(tx_date, "%Y-%m-%d").date()
                     date_from = (dt - timedelta(days=1)).isoformat()
                     date_to = (dt + timedelta(days=1)).isoformat()
-                    result = session.run(_CANDIDATE_QUERY, user_id=user_id, amount=amount, tx_type=tx_type, date_from=date_from, date_to=date_to)
+                    amount_paise = to_paise(amount)
+                    result = session.run(_CANDIDATE_QUERY, user_id=user_id, amount_paise=amount_paise, tx_type=tx_type, date_from=date_from, date_to=date_to)
                     for rec in result:
                         d = dict(rec)
                         if isinstance(d.get("date"), Neo4jDate):

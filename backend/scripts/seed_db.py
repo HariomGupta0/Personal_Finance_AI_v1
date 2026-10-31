@@ -23,7 +23,8 @@ def seed_database():
         id: 'A001',
         bank: 'Demo Bank',
         account_type: 'Savings',
-        balance: 45000
+        balance: 45000,
+        balance_paise: 4500000
     }})
     CREATE (u)-[:HAS_ACCOUNT]->(a)
 
@@ -38,6 +39,7 @@ def seed_database():
         id: 'T001',
         description: 'Monthly Rent',
         amount: 12000,
+        amount_paise: 1200000,
         type: 'EXPENSE',
         date: date('{current_ym}-05')
     }})
@@ -45,6 +47,7 @@ def seed_database():
         id: 'T002',
         description: 'Grocery Shopping',
         amount: 4000,
+        amount_paise: 400000,
         type: 'EXPENSE',
         date: date('{current_ym}-07')
     }})
@@ -52,6 +55,7 @@ def seed_database():
         id: 'T003',
         description: 'Bus/Auto Travel',
         amount: 2000,
+        amount_paise: 200000,
         type: 'EXPENSE',
         date: date('{current_ym}-08')
     }})
@@ -59,6 +63,7 @@ def seed_database():
         id: 'T004',
         description: 'Electricity Bill',
         amount: 3000,
+        amount_paise: 300000,
         type: 'EXPENSE',
         date: date('{current_ym}-09')
     }})
@@ -81,6 +86,7 @@ def seed_database():
         id: 'I001',
         source: 'Salary',
         amount: 60000,
+        amount_paise: 6000000,
         date: date('{current_ym}-01')
     }})
     CREATE (u)-[:RECEIVED_INCOME]->(i)
@@ -90,11 +96,14 @@ def seed_database():
         id: 'L001',
         name: 'Personal Loan',
         principal: 200000,
-        outstanding: 150000
+        principal_paise: 20000000,
+        outstanding: 150000,
+        outstanding_paise: 15000000
     }})
     CREATE (e:EMI {{
         id: 'E001',
         amount: 10000,
+        amount_paise: 1000000,
         due_date: date('{current_ym}-10'),
         status: 'PENDING'
     }})
@@ -106,7 +115,9 @@ def seed_database():
         id: 'G001',
         name: 'Emergency Fund',
         target_amount: 100000,
+        target_amount_paise: 10000000,
         current_amount: 30000,
+        current_amount_paise: 3000000,
         target_date: date('{next_year}-03-01')
     }})
     CREATE (u)-[:HAS_GOAL]->(g)

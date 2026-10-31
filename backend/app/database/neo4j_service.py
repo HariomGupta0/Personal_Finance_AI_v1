@@ -8,6 +8,7 @@ from datetime import date, datetime, timedelta
 from neo4j import GraphDatabase
 from neo4j.time import Date
 from backend.config import NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD, NEO4J_DATABASE
+from backend.app.core.money import to_paise
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +55,9 @@ class Neo4jService:
         )
         try:
             self.init_schema_constraints(strict=False)
+            self.assert_money_migrated()
+        except RuntimeError:
+            raise
         except Exception as exc:
             logger.warning("Neo4j schema constraints initialization skipped or failed during startup: %s", exc)
 
@@ -76,13 +80,13 @@ class Neo4jService:
                 id: a.id,
                 bank: a.bank,
                 type: a.account_type,
-                balance: a.balance
+                balance: round(toFloat(a.balance_paise) / 100.0, 2)
             }) AS accounts,
 
             collect(DISTINCT {
                 id: t.id,
                 description: t.description,
-                amount: t.amount,
+                amount: round(toFloat(t.amount_paise) / 100.0, 2),
                 type: t.type,
                 date: t.date,
                 category: c.name
@@ -95,7 +99,7 @@ class Neo4jService:
             RETURN collect(DISTINCT {
                 id: i.id,
                 source: i.source,
-                amount: i.amount,
+                amount: round(toFloat(i.amount_paise) / 100.0, 2),
                 date: i.date
             }) AS incomes
         }
@@ -106,9 +110,9 @@ class Neo4jService:
             RETURN collect(DISTINCT {
                 loan_id: l.id,
                 loan: l.name,
-                outstanding: l.outstanding,
+                outstanding: round(toFloat(l.outstanding_paise) / 100.0, 2),
                 emi_id: e.id,
-                emi: e.amount,
+                emi: round(toFloat(e.amount_paise) / 100.0, 2),
                 due_date: e.due_date,
                 status: e.status
             }) AS loans
@@ -120,8 +124,8 @@ class Neo4jService:
             RETURN collect(DISTINCT {
                 id: g.id,
                 name: g.name,
-                target: g.target_amount,
-                current: g.current_amount,
+                target: round(toFloat(g.target_amount_paise) / 100.0, 2),
+                current: round(toFloat(g.current_amount_paise) / 100.0, 2),
                 target_date: g.target_date
             }) AS goals
         }
@@ -166,14 +170,14 @@ class Neo4jService:
         OPTIONAL MATCH (t)-[:BELONGS_TO]->(c:Category)
         WHERE t.date >= $start_date AND t.date <= $end_date
           AND t.type = 'EXPENSE'
-          AND t.amount > 0
+          AND t.amount_paise > 0
           AND NOT (toLower(coalesce(t.description, '')) CONTAINS 'transfer' 
                    OR toLower(coalesce(c.name, '')) = 'transfer')
           AND ($category IS NULL OR toLower(coalesce(c.name, '')) = toLower($category))
         RETURN collect(DISTINCT {
             id: t.id,
             description: t.description,
-            amount: t.amount,
+            amount: round(toFloat(t.amount_paise) / 100.0, 2),
             type: t.type,
             date: t.date,
             category: c.name,
@@ -218,19 +222,19 @@ class Neo4jService:
 
             collect(DISTINCT {
                 account: a.id,
-                balance: a.balance
+                balance: round(toFloat(a.balance_paise) / 100.0, 2)
             }) AS accounts,
 
             collect(DISTINCT {
                 loan: l.name,
-                emi: e.amount,
+                emi: round(toFloat(e.amount_paise) / 100.0, 2),
                 due_date: e.due_date,
                 status: e.status
             }) AS loans,
 
             collect(DISTINCT {
                 transaction: t.description,
-                amount: t.amount,
+                amount: round(toFloat(t.amount_paise) / 100.0, 2),
                 type: t.type,
                 category: c.name,
                 date: t.date
@@ -238,8 +242,8 @@ class Neo4jService:
 
             collect(DISTINCT {
                 goal: g.name,
-                target: g.target_amount,
-                current: g.current_amount
+                target: round(toFloat(g.target_amount_paise) / 100.0, 2),
+                current: round(toFloat(g.current_amount_paise) / 100.0, 2)
             }) AS goals
         """
 
@@ -272,13 +276,13 @@ class Neo4jService:
 
             collect(DISTINCT {
                 source: i.source,
-                amount: i.amount,
+                amount: round(toFloat(i.amount_paise) / 100.0, 2),
                 date: i.date
             }) AS incomes,
 
             collect(DISTINCT {
                 transaction: t.description,
-                amount: t.amount,
+                amount: round(toFloat(t.amount_paise) / 100.0, 2),
                 type: t.type,
                 date: t.date
             }) AS transactions
@@ -311,15 +315,15 @@ class Neo4jService:
 
             collect(DISTINCT {
                 transaction: t.description,
-                amount: t.amount,
+                amount: round(toFloat(t.amount_paise) / 100.0, 2),
                 type: t.type,
                 date: t.date
             }) AS transactions,
 
             collect(DISTINCT {
                 goal: g.name,
-                target: g.target_amount,
-                current: g.current_amount,
+                target: round(toFloat(g.target_amount_paise) / 100.0, 2),
+                current: round(toFloat(g.current_amount_paise) / 100.0, 2),
                 target_date: g.target_date
             }) AS goals
         """
@@ -353,26 +357,26 @@ class Neo4jService:
 
             collect(DISTINCT {
                 source: i.source,
-                amount: i.amount,
+                amount: round(toFloat(i.amount_paise) / 100.0, 2),
                 date: i.date
             }) AS incomes,
 
             collect(DISTINCT {
                 account: a.id,
-                balance: a.balance
+                balance: round(toFloat(a.balance_paise) / 100.0, 2)
             }) AS accounts,
 
             collect(DISTINCT {
                 transaction: t.description,
-                amount: t.amount,
+                amount: round(toFloat(t.amount_paise) / 100.0, 2),
                 type: t.type,
                 date: t.date
             }) AS transactions,
 
             collect(DISTINCT {
                 goal: g.name,
-                target: g.target_amount,
-                current: g.current_amount,
+                target: round(toFloat(g.target_amount_paise) / 100.0, 2),
+                current: round(toFloat(g.current_amount_paise) / 100.0, 2),
                 target_date: g.target_date
             }) AS goals
         """
@@ -443,12 +447,12 @@ class Neo4jService:
             RETURN collect(DISTINCT {
                 id: a.id,
                 bank: a.bank,
-                balance: a.balance
+                balance: round(toFloat(a.balance_paise) / 100.0, 2)
             }) AS accounts,
             collect(DISTINCT {
                 id: t.id,
                 description: t.description,
-                amount: t.amount,
+                amount: round(toFloat(t.amount_paise) / 100.0, 2),
                 type: t.type,
                 date: t.date,
                 category: c.name,
@@ -502,9 +506,9 @@ class Neo4jService:
             OPTIONAL MATCH (t)-[:BELONGS_TO]->(c:Category)
 
             RETURN
-                collect(DISTINCT {id: a.id, bank: a.bank, balance: a.balance}) AS accounts,
-                collect(DISTINCT {loan_id: l.id, loan: l.name, emi_id: e.id, emi: e.amount, due_date: e.due_date, status: e.status}) AS loans,
-                collect(DISTINCT {id: t.id, amount: t.amount, type: t.type, date: t.date, category: c.name}) AS transactions
+                collect(DISTINCT {id: a.id, bank: a.bank, balance: round(toFloat(a.balance_paise) / 100.0, 2)}) AS accounts,
+                collect(DISTINCT {loan_id: l.id, loan: l.name, emi_id: e.id, emi: round(toFloat(e.amount_paise) / 100.0, 2), due_date: e.due_date, status: e.status}) AS loans,
+                collect(DISTINCT {id: t.id, amount: round(toFloat(t.amount_paise) / 100.0, 2), type: t.type, date: t.date, category: c.name}) AS transactions
             """
             with self.driver.session(database=self.database) as session:
                 rec = session.run(query, user_id=user_id, ninety_days_ago=ninety_days_ago).single()
@@ -535,16 +539,16 @@ class Neo4jService:
                 collect(DISTINCT {
                     loan_id: l.id,
                     loan: l.name,
-                    outstanding: l.outstanding,
+                    outstanding: round(toFloat(l.outstanding_paise) / 100.0, 2),
                     emi_id: e.id,
-                    emi: e.amount,
+                    emi: round(toFloat(e.amount_paise) / 100.0, 2),
                     due_date: e.due_date,
                     status: e.status
                 }) AS loans,
                 collect(DISTINCT {
                     id: i.id,
                     source: i.source,
-                    amount: i.amount,
+                    amount: round(toFloat(i.amount_paise) / 100.0, 2),
                     date: i.date
                 }) AS incomes
             """
@@ -582,13 +586,13 @@ class Neo4jService:
                 collect(DISTINCT {
                     id: i.id,
                     source: i.source,
-                    amount: i.amount,
+                    amount: round(toFloat(i.amount_paise) / 100.0, 2),
                     date: i.date
                 }) AS incomes,
                 collect(DISTINCT {
                     id: t.id,
                     description: t.description,
-                    amount: t.amount,
+                    amount: round(toFloat(t.amount_paise) / 100.0, 2),
                     type: t.type,
                     date: t.date,
                     category: c.name
@@ -618,11 +622,11 @@ class Neo4jService:
             OPTIONAL MATCH (t)-[:BELONGS_TO]->(c:Category)
             RETURN
               count(t) AS total_historical,
-              collect(DISTINCT {id: a.id, bank: a.bank, balance: a.balance}) AS accounts,
+              collect(DISTINCT {id: a.id, bank: a.bank, balance: round(toFloat(a.balance_paise) / 100.0, 2)}) AS accounts,
               collect({
                   id: t.id,
                   description: t.description,
-                  amount: t.amount,
+                  amount: round(toFloat(t.amount_paise) / 100.0, 2),
                   type: t.type,
                   date: t.date,
                   merchant: t.merchant,
@@ -661,20 +665,22 @@ class Neo4jService:
         elif intent == "TOP_TRANSACTIONS":
             amount_min = entities.get("amount_min")
             amount_max = entities.get("amount_max")
+            amount_min_paise = to_paise(amount_min) if amount_min is not None else None
+            amount_max_paise = to_paise(amount_max) if amount_max is not None else None
             query = """
             MATCH (u:User {id: $user_id})-[:HAS_ACCOUNT]->(a:Account)-[:MADE_TRANSACTION]->(t:Transaction)
             WHERE t.type = 'EXPENSE'
               AND ($date_from IS NULL OR date(t.date) >= date($date_from))
               AND ($date_to IS NULL OR date(t.date) <= date($date_to))
-              AND ($amount_min IS NULL OR t.amount >= $amount_min)
-              AND ($amount_max IS NULL OR t.amount <= $amount_max)
+              AND ($amount_min_paise IS NULL OR t.amount_paise >= $amount_min_paise)
+              AND ($amount_max_paise IS NULL OR t.amount_paise <= $amount_max_paise)
             OPTIONAL MATCH (t)-[:BELONGS_TO]->(c:Category)
             RETURN
-              collect(DISTINCT {id: a.id, bank: a.bank, balance: a.balance}) AS accounts,
+              collect(DISTINCT {id: a.id, bank: a.bank, balance: round(toFloat(a.balance_paise) / 100.0, 2)}) AS accounts,
               collect({
                   id: t.id,
                   description: t.description,
-                  amount: t.amount,
+                  amount: round(toFloat(t.amount_paise) / 100.0, 2),
                   type: t.type,
                   date: t.date,
                   merchant: t.merchant,
@@ -689,8 +695,8 @@ class Neo4jService:
                     user_id=user_id,
                     date_from=date_from,
                     date_to=date_to,
-                    amount_min=amount_min,
-                    amount_max=amount_max,
+                    amount_min_paise=amount_min_paise,
+                    amount_max_paise=amount_max_paise,
                 ).single()
                 if rec:
                     accounts = convert_dates([a for a in rec["accounts"] if a.get("id")])
@@ -738,7 +744,7 @@ class Neo4jService:
             raise ValueError("user_id must be a non-empty string")
         query = """
         MATCH (u:User {id: $user_id})-[:HAS_ACCOUNT]->(a:Account)
-        RETURN a.id AS id, a.bank AS bank, a.account_type AS account_type, a.balance AS balance
+        RETURN a.id AS id, a.bank AS bank, a.account_type AS account_type, round(toFloat(a.balance_paise) / 100.0, 2) AS balance
         """
         with self.driver.session(database=self.database) as session:
             result = session.run(query, user_id=user_id)
@@ -751,7 +757,7 @@ class Neo4jService:
         query = """
         MATCH (u:User {id: $user_id})-[:HAS_ACCOUNT]->(a:Account)-[:MADE_TRANSACTION]->(t:Transaction)
         OPTIONAL MATCH (t)-[:BELONGS_TO]->(c:Category)
-        RETURN t.id AS id, t.description AS description, t.amount AS amount,
+        RETURN t.id AS id, t.description AS description, round(toFloat(t.amount_paise) / 100.0, 2) AS amount,
                t.type AS type, t.date AS date, c.name AS category, a.id AS account_id, a.bank AS bank
         ORDER BY t.date DESC
         LIMIT $limit
@@ -793,6 +799,8 @@ class Neo4jService:
         transaction_id = f"T_{uuid.uuid4().hex[:8].upper()}"
         category_id = f"C_{uuid.uuid4().hex[:6].upper()}"
 
+        amount_paise = to_paise(amount)
+
         if not fingerprint:
             from backend.app.services.fingerprint import compute_transaction_fingerprint
             fingerprint = compute_transaction_fingerprint(
@@ -813,7 +821,8 @@ class Neo4jService:
             id: $transaction_id,
             fingerprint: $fingerprint,
             description: $description,
-            amount: $amount,
+            amount_paise: $amount_paise,
+            amount: toFloat($amount_paise) / 100.0,
             type: $transaction_type,
             date: date($date_str)
         })
@@ -821,17 +830,20 @@ class Neo4jService:
         CREATE (a)-[:MADE_TRANSACTION]->(t)
         CREATE (t)-[:BELONGS_TO]->(c)
 
-        SET a.balance = a.balance + (CASE WHEN $transaction_type = 'INCOME' THEN $amount ELSE -$amount END)
+        WITH a, t, c,
+             (CASE WHEN $transaction_type = 'INCOME' THEN $amount_paise ELSE -$amount_paise END) AS delta_paise
+        SET a.balance_paise = a.balance_paise + delta_paise,
+            a.balance = toFloat(a.balance_paise + delta_paise) / 100.0
 
         RETURN t.id AS transaction_id,
                t.fingerprint AS fingerprint,
                t.description AS description,
-               t.amount AS amount,
+               round(toFloat(t.amount_paise) / 100.0, 2) AS amount,
                t.type AS type,
                t.date AS date,
                c.name AS category,
                a.id AS account_id,
-               a.balance AS new_balance
+               round(toFloat(a.balance_paise) / 100.0, 2) AS new_balance
         """
 
         with self.driver.session(database=self.database) as session:
@@ -844,6 +856,7 @@ class Neo4jService:
                 transaction_id=transaction_id,
                 fingerprint=fingerprint,
                 description=description,
+                amount_paise=amount_paise,
                 amount=amount,
                 transaction_type=transaction_type,
                 date_str=date_str
@@ -858,32 +871,39 @@ class Neo4jService:
         find_query = """
         MATCH (u:User {id: $user_id})-[:HAS_ACCOUNT]->(a:Account)-[:MADE_TRANSACTION]->(t:Transaction {id: $transaction_id})
         OPTIONAL MATCH (t)-[r:BELONGS_TO]->(c:Category)
-        RETURN t.amount AS old_amount, t.type AS type, a.id AS account_id, c.name AS old_category
+        RETURN t.amount_paise AS old_amount_paise, t.amount AS old_amount, t.type AS type, a.id AS account_id, c.name AS old_category
         """
         with self.driver.session(database=self.database) as session:
             res = session.run(find_query, user_id=user_id, transaction_id=transaction_id).single()
             if not res:
                 raise ValueError(f"Transaction with id '{transaction_id}' not found")
-            old_amount = res["old_amount"]
+            old_amount_paise = res["old_amount_paise"]
+            if old_amount_paise is None and res.get("old_amount") is not None:
+                old_amount_paise = to_paise(res["old_amount"])
             tx_type = res["type"]
             account_id = res["account_id"]
 
-        amount_diff = 0
+        amount_diff_paise = 0
+        amount_paise = None
         if amount is not None:
             if amount <= 0:
                 raise ValueError(f"Updated amount must be positive. Received: {amount}")
-            amount_diff = amount - old_amount
+            amount_paise = to_paise(amount)
+            amount_diff_paise = amount_paise - old_amount_paise
 
         category_id = f"C_{uuid.uuid4().hex[:6].upper()}"
 
         update_query = """
         MATCH (u:User {id: $user_id})-[:HAS_ACCOUNT]->(a:Account {id: $account_id})-[:MADE_TRANSACTION]->(t:Transaction {id: $transaction_id})
         
-        SET t.amount = CASE WHEN $amount IS NOT NULL THEN $amount ELSE t.amount END,
+        SET t.amount_paise = CASE WHEN $amount_paise IS NOT NULL THEN $amount_paise ELSE t.amount_paise END,
+            t.amount = CASE WHEN $amount_paise IS NOT NULL THEN toFloat($amount_paise) / 100.0 ELSE t.amount END,
             t.description = CASE WHEN $description IS NOT NULL THEN $description ELSE t.description END,
             t.date = CASE WHEN $date_str IS NOT NULL THEN date($date_str) ELSE t.date END
 
-        SET a.balance = a.balance - (CASE WHEN $tx_type = 'EXPENSE' THEN $amount_diff ELSE -$amount_diff END)
+        WITH t, a, (CASE WHEN $tx_type = 'EXPENSE' THEN $amount_diff_paise ELSE -$amount_diff_paise END) AS delta_paise
+        SET a.balance_paise = a.balance_paise - delta_paise,
+            a.balance = toFloat(a.balance_paise - delta_paise) / 100.0
 
         WITH t, a
         CALL (t) {
@@ -901,12 +921,12 @@ class Neo4jService:
         OPTIONAL MATCH (t)-[:BELONGS_TO]->(c_current:Category)
         RETURN t.id AS transaction_id,
                t.description AS description,
-               t.amount AS amount,
+               round(toFloat(t.amount_paise) / 100.0, 2) AS amount,
                t.type AS type,
                t.date AS date,
                c_current.name AS category,
                a.id AS account_id,
-               a.balance AS new_balance
+               round(toFloat(a.balance_paise) / 100.0, 2) AS new_balance
         """
 
         category_clean = category_name.strip().title() if category_name else None
@@ -917,8 +937,9 @@ class Neo4jService:
                 transaction_id=transaction_id,
                 user_id=user_id,
                 account_id=account_id,
+                amount_paise=amount_paise,
                 amount=amount,
-                amount_diff=amount_diff,
+                amount_diff_paise=amount_diff_paise,
                 tx_type=tx_type,
                 description=description,
                 date_str=date_str,
@@ -931,10 +952,12 @@ class Neo4jService:
     def delete_transaction(self, user_id, transaction_id):
         query = """
         MATCH (u:User {id: $user_id})-[:HAS_ACCOUNT]->(a:Account)-[:MADE_TRANSACTION]->(t:Transaction {id: $transaction_id})
-        WITH a, t, t.amount AS amount, t.type AS type
-        SET a.balance = a.balance + (CASE WHEN type = 'EXPENSE' THEN amount ELSE -amount END)
+        WITH a, t, t.amount_paise AS amount_paise, t.type AS type
+        WITH a, t, (CASE WHEN type = 'EXPENSE' THEN amount_paise ELSE -amount_paise END) AS delta_paise
+        SET a.balance_paise = a.balance_paise + delta_paise,
+            a.balance = toFloat(a.balance_paise + delta_paise) / 100.0
         DETACH DELETE t
-        RETURN a.id AS account_id, a.balance AS restored_balance
+        RETURN a.id AS account_id, round(toFloat(a.balance_paise) / 100.0, 2) AS restored_balance
         """
         with self.driver.session(database=self.database) as session:
             result = session.run(query, user_id=user_id, transaction_id=transaction_id)
@@ -958,13 +981,15 @@ class Neo4jService:
                 account_id = accounts[0]["id"]
 
         income_id = f"I_{uuid.uuid4().hex[:8].upper()}"
+        amount_paise = to_paise(amount)
 
         query = """
         MATCH (u:User {id: $user_id})
         CREATE (i:Income {
             id: $income_id,
             source: $source,
-            amount: $amount,
+            amount_paise: $amount_paise,
+            amount: toFloat($amount_paise) / 100.0,
             date: date($date_str)
         })
         CREATE (u)-[:RECEIVED_INCOME]->(i)
@@ -972,10 +997,11 @@ class Neo4jService:
         WITH u, i
         OPTIONAL MATCH (u)-[:HAS_ACCOUNT]->(a:Account {id: $account_id})
         FOREACH (_ IN CASE WHEN a IS NOT NULL THEN [1] ELSE [] END |
-            SET a.balance = a.balance + $amount
+            SET a.balance_paise = a.balance_paise + $amount_paise,
+                a.balance = toFloat(a.balance_paise + $amount_paise) / 100.0
         )
 
-        RETURN i.id AS income_id, i.source AS source, i.amount AS amount, i.date AS date
+        RETURN i.id AS income_id, i.source AS source, round(toFloat(i.amount_paise) / 100.0, 2) AS amount, i.date AS date
         """
         with self.driver.session(database=self.database) as session:
             result = session.run(
@@ -983,6 +1009,7 @@ class Neo4jService:
                 user_id=user_id,
                 income_id=income_id,
                 source=source,
+                amount_paise=amount_paise,
                 amount=amount,
                 date_str=date_str,
                 account_id=account_id
@@ -994,17 +1021,27 @@ class Neo4jService:
         if not user_id or not isinstance(user_id, str):
             raise ValueError("user_id must be a non-empty string")
         goal_id = f"G_{uuid.uuid4().hex[:8].upper()}"
+        target_amount_paise = to_paise(target_amount)
+        current_amount_paise = to_paise(current_amount) if current_amount is not None else None
+
         query = """
         MATCH (u:User {id: $user_id})
         MERGE (u)-[:HAS_GOAL]->(g:Goal {name: $name})
           ON CREATE SET g.id = $goal_id,
-                        g.target_amount = $target_amount,
-                        g.current_amount = coalesce($current_amount, 0),
+                        g.target_amount_paise = $target_amount_paise,
+                        g.target_amount = toFloat($target_amount_paise) / 100.0,
+                        g.current_amount_paise = coalesce($current_amount_paise, 0),
+                        g.current_amount = toFloat(coalesce($current_amount_paise, 0)) / 100.0,
                         g.target_date = CASE WHEN $target_date IS NOT NULL THEN date($target_date) ELSE date('2027-01-01') END
-          ON MATCH SET g.target_amount = $target_amount,
-                       g.current_amount = CASE WHEN $current_amount IS NOT NULL THEN $current_amount ELSE g.current_amount END,
+          ON MATCH SET g.target_amount_paise = $target_amount_paise,
+                       g.target_amount = toFloat($target_amount_paise) / 100.0,
+                       g.current_amount_paise = CASE WHEN $current_amount_paise IS NOT NULL THEN $current_amount_paise ELSE g.current_amount_paise END,
+                       g.current_amount = CASE WHEN $current_amount_paise IS NOT NULL THEN toFloat($current_amount_paise) / 100.0 ELSE g.current_amount END,
                        g.target_date = CASE WHEN $target_date IS NOT NULL THEN date($target_date) ELSE g.target_date END
-        RETURN g.id AS id, g.name AS name, g.target_amount AS target_amount, g.current_amount AS current_amount, g.target_date AS target_date
+        RETURN g.id AS id, g.name AS name,
+               round(toFloat(g.target_amount_paise) / 100.0, 2) AS target_amount,
+               round(toFloat(g.current_amount_paise) / 100.0, 2) AS current_amount,
+               g.target_date AS target_date
         """
         with self.driver.session(database=self.database) as session:
             result = session.run(
@@ -1012,7 +1049,9 @@ class Neo4jService:
                 user_id=user_id,
                 goal_id=goal_id,
                 name=name,
+                target_amount_paise=target_amount_paise,
                 target_amount=target_amount,
+                current_amount_paise=current_amount_paise,
                 current_amount=current_amount,
                 target_date=target_date
             )
@@ -1037,16 +1076,23 @@ class Neo4jService:
         if not user_id or not isinstance(user_id, str):
             raise ValueError("user_id must be a non-empty string")
         loan_id = f"L_{uuid.uuid4().hex[:8].upper()}"
+        principal_paise = to_paise(principal)
+        outstanding_paise = to_paise(outstanding)
+
         query = """
         MATCH (u:User {id: $user_id})
         CREATE (l:Loan {
             id: $loan_id,
             name: $name,
-            principal: $principal,
-            outstanding: $outstanding
+            principal_paise: $principal_paise,
+            principal: toFloat($principal_paise) / 100.0,
+            outstanding_paise: $outstanding_paise,
+            outstanding: toFloat($outstanding_paise) / 100.0
         })
         CREATE (u)-[:HAS_LOAN]->(l)
-        RETURN l.id AS id, l.name AS name, l.principal AS principal, l.outstanding AS outstanding
+        RETURN l.id AS id, l.name AS name,
+               round(toFloat(l.principal_paise) / 100.0, 2) AS principal,
+               round(toFloat(l.outstanding_paise) / 100.0, 2) AS outstanding
         """
         with self.driver.session(database=self.database) as session:
             result = session.run(
@@ -1054,7 +1100,9 @@ class Neo4jService:
                 user_id=user_id,
                 loan_id=loan_id,
                 name=name,
+                principal_paise=principal_paise,
                 principal=principal,
+                outstanding_paise=outstanding_paise,
                 outstanding=outstanding
             )
             record = result.single()
@@ -1065,6 +1113,8 @@ class Neo4jService:
         if not due_date:
             due_date = date.today().isoformat()
 
+        amount_paise = to_paise(amount)
+
         query = """
         MATCH (l:Loan {id: $loan_id})
         WHERE $user_id IS NULL OR EXISTS {
@@ -1072,18 +1122,20 @@ class Neo4jService:
         }
         CREATE (e:EMI {
             id: $emi_id,
-            amount: $amount,
+            amount_paise: $amount_paise,
+            amount: toFloat($amount_paise) / 100.0,
             due_date: date($due_date),
             status: $status
         })
         CREATE (l)-[:HAS_EMI]->(e)
-        RETURN e.id AS id, e.amount AS amount, e.due_date AS due_date, e.status AS status
+        RETURN e.id AS id, round(toFloat(e.amount_paise) / 100.0, 2) AS amount, e.due_date AS due_date, e.status AS status
         """
         with self.driver.session(database=self.database) as session:
             result = session.run(
                 query,
                 loan_id=loan_id,
                 emi_id=emi_id,
+                amount_paise=amount_paise,
                 amount=amount,
                 due_date=due_date,
                 status=status,
@@ -1107,9 +1159,10 @@ class Neo4jService:
             MATCH (:User {id: $user_id})-[:HAS_ACCOUNT]->(a)
         }
         FOREACH (_ IN CASE WHEN a IS NOT NULL AND $status = 'PAID' THEN [1] ELSE [] END |
-            SET a.balance = a.balance - e.amount
+            SET a.balance_paise = a.balance_paise - e.amount_paise,
+                a.balance = toFloat(a.balance_paise - e.amount_paise) / 100.0
         )
-        RETURN e.id AS id, e.amount AS amount, e.status AS status
+        RETURN e.id AS id, round(toFloat(e.amount_paise) / 100.0, 2) AS amount, e.status AS status
         """
         with self.driver.session(database=self.database) as session:
             result = session.run(query, emi_id=emi_id, status=status, account_id=account_id, user_id=user_id)
@@ -1119,16 +1172,18 @@ class Neo4jService:
             return dict(record)
 
     def update_account_balance(self, account_id, new_balance, user_id=None):
+        new_balance_paise = to_paise(new_balance)
         query = """
         MATCH (a:Account {id: $account_id})
         WHERE $user_id IS NULL OR EXISTS {
             MATCH (:User {id: $user_id})-[:HAS_ACCOUNT]->(a)
         }
-        SET a.balance = $new_balance
-        RETURN a.id AS id, a.bank AS bank, a.balance AS balance
+        SET a.balance_paise = $new_balance_paise,
+            a.balance = toFloat($new_balance_paise) / 100.0
+        RETURN a.id AS id, a.bank AS bank, round(toFloat(a.balance_paise) / 100.0, 2) AS balance
         """
         with self.driver.session(database=self.database) as session:
-            result = session.run(query, account_id=account_id, new_balance=new_balance, user_id=user_id)
+            result = session.run(query, account_id=account_id, new_balance_paise=new_balance_paise, new_balance=new_balance, user_id=user_id)
             record = result.single()
             if not record:
                 raise ValueError(f"Account '{account_id}' not found or unauthorized for user")
@@ -1147,6 +1202,7 @@ class Neo4jService:
             if existing:
                 raise ValueError("Username already exists")
 
+            initial_balance_paise = to_paise(initial_balance)
             create_query = """
             CREATE (u:User {
                 id: $user_id,
@@ -1160,7 +1216,8 @@ class Neo4jService:
                 id: $account_id,
                 bank: $bank_name,
                 account_type: 'Savings',
-                balance: $initial_balance
+                balance_paise: $initial_balance_paise,
+                balance: toFloat($initial_balance_paise) / 100.0
             })
             CREATE (u)-[:HAS_ACCOUNT]->(a)
 
@@ -1172,7 +1229,7 @@ class Neo4jService:
             MERGE (c6:Category {name: 'Healthcare'}) ON CREATE SET c6.id = 'C006'
             MERGE (c7:Category {name: 'Entertainment'}) ON CREATE SET c7.id = 'C007'
 
-            RETURN u.id AS user_id, u.username AS username, u.name AS name, a.id AS account_id, a.balance AS balance
+            RETURN u.id AS user_id, u.username AS username, u.name AS name, a.id AS account_id, round(toFloat(a.balance_paise) / 100.0, 2) AS balance
             """
             result = session.run(
                 create_query,
@@ -1183,6 +1240,7 @@ class Neo4jService:
                 salt=salt,
                 account_id=account_id,
                 bank_name=bank_name,
+                initial_balance_paise=initial_balance_paise,
                 initial_balance=float(initial_balance)
             )
             record = result.single()
@@ -1223,6 +1281,42 @@ class Neo4jService:
                 return dict(record)
             return None
 
+    def assert_money_migrated(self) -> None:
+        """
+        Fail-fast validation to guarantee all graph nodes with legacy money properties
+        have the corresponding *_paise property.
+        Raises RuntimeError telling the operator to run scripts/migrate_money_to_paise.py.
+        """
+        check_specs = [
+            ("Account", "balance", "balance_paise"),
+            ("Transaction", "amount", "amount_paise"),
+            ("Income", "amount", "amount_paise"),
+            ("Loan", "principal", "principal_paise"),
+            ("Loan", "outstanding", "outstanding_paise"),
+            ("EMI", "amount", "amount_paise"),
+            ("Goal", "target_amount", "target_amount_paise"),
+            ("Goal", "current_amount", "current_amount_paise"),
+        ]
+        unmigrated = {}
+        with self.driver.session(database=self.database) as session:
+            for label, legacy_prop, target_prop in check_specs:
+                q = f"""
+                MATCH (n:{label})
+                WHERE n.{legacy_prop} IS NOT NULL AND n.{target_prop} IS NULL
+                RETURN count(n) AS cnt
+                """
+                res = session.run(q).single()
+                cnt = res["cnt"] if res else 0
+                if cnt > 0:
+                    unmigrated[f"{label}.{legacy_prop} -> {target_prop}"] = cnt
+
+        if unmigrated:
+            details = ", ".join(f"{k}: {v} nodes" for k, v in unmigrated.items())
+            raise RuntimeError(
+                f"Fail-fast check failed: unmigrated money properties found in database ({details}). "
+                "Please run: python -m backend.scripts.migrate_money_to_paise --apply"
+            )
+
     def init_schema_constraints(self, strict: bool = False) -> dict[str, str]:
         """
         Idempotently ensure unique constraints and performance indexes exist.
@@ -1251,6 +1345,10 @@ class Neo4jService:
         ]
         results: dict[str, str] = {}
         with self.driver.session(database=self.database) as session:
+            try:
+                session.run("CREATE INDEX txn_amount_paise_idx IF NOT EXISTS FOR (t:Transaction) ON (t.amount_paise)")
+            except Exception as exc:
+                logger.debug("txn_amount_paise_idx verification: %s", exc)
             for q in queries:
                 try:
                     session.run(q)
@@ -1278,8 +1376,8 @@ class Neo4jService:
         WHERE (t.fingerprint IS NOT NULL AND t.fingerprint = c.fingerprint)
            OR (c.source_ref IS NOT NULL AND t.source_ref = c.source_ref)
            OR (
-                c.amount > 0
-                AND abs(t.amount - c.amount) < 0.001
+                c.amount_paise > 0
+                AND t.amount_paise = c.amount_paise
                 AND t.type = c.type
                 AND date(t.date) >= date(c.date_from)
                 AND date(t.date) <= date(c.date_to)
@@ -1287,7 +1385,7 @@ class Neo4jService:
         RETURN c.row_index AS row_index,
                t.id AS id,
                t.description AS description,
-               t.amount AS amount,
+               round(toFloat(t.amount_paise) / 100.0, 2) AS amount,
                t.date AS date,
                t.source_ref AS source_ref,
                (CASE WHEN t.fingerprint IS NOT NULL AND t.fingerprint = c.fingerprint THEN 'EXACT_FINGERPRINT'
@@ -1305,11 +1403,13 @@ class Neo4jService:
                 d_from, d_to = d_str, d_str
 
             amt = float(r.get("amount") or 0.0)
+            amt_paise = to_paise(amt)
             candidates.append({
                 "row_index": i,
                 "fingerprint": r.get("fingerprint"),
                 "source_ref": r.get("source_ref"),
                 "amount": amt,
+                "amount_paise": amt_paise,
                 "type": (r.get("type") or "EXPENSE").upper(),
                 "date_from": d_from,
                 "date_to": d_to,
@@ -1413,10 +1513,12 @@ class Neo4jService:
                 continue
             seen_fingerprints.add(fp)
 
+            amt_paise = to_paise(amt)
             prepared.append({
                 "id": r.get("id") or f"T_{uuid.uuid4().hex[:8].upper()}",
                 "fingerprint": fp,
                 "date": date_str,
+                "amount_paise": amt_paise,
                 "amount": amt,
                 "type": tx_type,
                 "description": desc,
@@ -1449,7 +1551,8 @@ class Neo4jService:
         MERGE (t:Transaction {fingerprint: r.fingerprint})
           ON CREATE SET
             t.id = r.id,
-            t.amount = r.amount,
+            t.amount_paise = r.amount_paise,
+            t.amount = toFloat(r.amount_paise) / 100.0,
             t.date = date(r.date),
             t.type = r.type,
             t.description = r.description,
@@ -1472,10 +1575,13 @@ class Neo4jService:
         FOREACH (t IN new_txns | REMOVE t._batch_id)
 
         WITH a, size(new_txns) AS inserted_count,
-             reduce(s = 0.0, nt IN new_txns | s + (CASE WHEN nt.type = 'INCOME' THEN nt.amount ELSE -nt.amount END)) AS net_delta
+             reduce(s = 0, nt IN new_txns | s + (CASE WHEN nt.type = 'INCOME' THEN nt.amount_paise ELSE -nt.amount_paise END)) AS net_delta_paise
 
-        SET a.balance = a.balance + net_delta
-        RETURN inserted_count, net_delta, a.balance AS new_balance
+        SET a.balance_paise = a.balance_paise + net_delta_paise,
+            a.balance = toFloat(a.balance_paise + net_delta_paise) / 100.0
+        RETURN inserted_count,
+               round(toFloat(net_delta_paise) / 100.0, 2) AS net_delta,
+               round(toFloat(a.balance_paise) / 100.0, 2) AS new_balance
         """
 
         def _execute_write_tx(tx):
