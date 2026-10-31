@@ -832,8 +832,9 @@ class Neo4jService:
 
         WITH a, t, c,
              (CASE WHEN $transaction_type = 'INCOME' THEN $amount_paise ELSE -$amount_paise END) AS delta_paise
-        SET a.balance_paise = a.balance_paise + delta_paise,
-            a.balance = toFloat(a.balance_paise + delta_paise) / 100.0
+        WITH a, t, c, (a.balance_paise + delta_paise) AS new_bal_paise
+        SET a.balance_paise = new_bal_paise,
+            a.balance = toFloat(new_bal_paise) / 100.0
 
         RETURN t.id AS transaction_id,
                t.fingerprint AS fingerprint,
@@ -902,8 +903,9 @@ class Neo4jService:
             t.date = CASE WHEN $date_str IS NOT NULL THEN date($date_str) ELSE t.date END
 
         WITH t, a, (CASE WHEN $tx_type = 'EXPENSE' THEN $amount_diff_paise ELSE -$amount_diff_paise END) AS delta_paise
-        SET a.balance_paise = a.balance_paise - delta_paise,
-            a.balance = toFloat(a.balance_paise - delta_paise) / 100.0
+        WITH t, a, (a.balance_paise - delta_paise) AS new_bal_paise
+        SET a.balance_paise = new_bal_paise,
+            a.balance = toFloat(new_bal_paise) / 100.0
 
         WITH t, a
         CALL (t) {
@@ -958,8 +960,9 @@ class Neo4jService:
         MATCH (u:User {id: $user_id})-[:HAS_ACCOUNT]->(a:Account)-[:MADE_TRANSACTION]->(t:Transaction {id: $transaction_id})
         WITH a, t, t.amount_paise AS amount_paise, t.type AS type
         WITH a, t, (CASE WHEN type = 'EXPENSE' THEN amount_paise ELSE -amount_paise END) AS delta_paise
-        SET a.balance_paise = a.balance_paise + delta_paise,
-            a.balance = toFloat(a.balance_paise + delta_paise) / 100.0
+        WITH a, t, (a.balance_paise + delta_paise) AS new_bal_paise
+        SET a.balance_paise = new_bal_paise,
+            a.balance = toFloat(new_bal_paise) / 100.0
         DETACH DELETE t
         RETURN a.id AS account_id, round(toFloat(a.balance_paise) / 100.0, 2) AS restored_balance
         """
@@ -1000,9 +1003,10 @@ class Neo4jService:
 
         WITH u, i
         OPTIONAL MATCH (u)-[:HAS_ACCOUNT]->(a:Account {id: $account_id})
+        WITH u, i, a, (CASE WHEN a IS NOT NULL THEN a.balance_paise + $amount_paise ELSE null END) AS new_bal_paise
         FOREACH (_ IN CASE WHEN a IS NOT NULL THEN [1] ELSE [] END |
-            SET a.balance_paise = a.balance_paise + $amount_paise,
-                a.balance = toFloat(a.balance_paise + $amount_paise) / 100.0
+            SET a.balance_paise = new_bal_paise,
+                a.balance = toFloat(new_bal_paise) / 100.0
         )
 
         RETURN i.id AS income_id, i.source AS source, round(toFloat(i.amount_paise) / 100.0, 2) AS amount, i.date AS date
@@ -1162,9 +1166,10 @@ class Neo4jService:
         WHERE $user_id IS NULL OR EXISTS {
             MATCH (:User {id: $user_id})-[:HAS_ACCOUNT]->(a)
         }
+        WITH e, a, (CASE WHEN a IS NOT NULL THEN a.balance_paise - e.amount_paise ELSE null END) AS new_bal_paise
         FOREACH (_ IN CASE WHEN a IS NOT NULL AND $status = 'PAID' THEN [1] ELSE [] END |
-            SET a.balance_paise = a.balance_paise - e.amount_paise,
-                a.balance = toFloat(a.balance_paise - e.amount_paise) / 100.0
+            SET a.balance_paise = new_bal_paise,
+                a.balance = toFloat(new_bal_paise) / 100.0
         )
         RETURN e.id AS id, round(toFloat(e.amount_paise) / 100.0, 2) AS amount, e.status AS status
         """
@@ -1580,9 +1585,10 @@ class Neo4jService:
 
         WITH a, size(new_txns) AS inserted_count,
              reduce(s = 0, nt IN new_txns | s + (CASE WHEN nt.type = 'INCOME' THEN nt.amount_paise ELSE -nt.amount_paise END)) AS net_delta_paise
+        WITH a, inserted_count, net_delta_paise, (a.balance_paise + net_delta_paise) AS new_bal_paise
 
-        SET a.balance_paise = a.balance_paise + net_delta_paise,
-            a.balance = toFloat(a.balance_paise + net_delta_paise) / 100.0
+        SET a.balance_paise = new_bal_paise,
+            a.balance = toFloat(new_bal_paise) / 100.0
         RETURN inserted_count,
                round(toFloat(net_delta_paise) / 100.0, 2) AS net_delta,
                round(toFloat(a.balance_paise) / 100.0, 2) AS new_balance
