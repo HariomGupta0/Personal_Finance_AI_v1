@@ -186,3 +186,44 @@ def ratio(num_paise: int, den_paise: int) -> float | None:
         return None
 
     return float(num_paise / den_paise)
+
+
+def format_inr(paise: int) -> str:
+    """
+    Format integer paise into Indian currency string format.
+    Example: 12000050 -> "₹1,20,000.50"
+
+    Parameters
+    ----------
+    paise : int
+        Amount in Paise (may be negative).
+
+    Returns
+    -------
+    str
+        Formatted string with Indian comma grouping and ₹ symbol.
+    """
+    if isinstance(paise, bool) or not isinstance(paise, int):
+        raise TypeError(f"Expected int paise, got {type(paise).__name__}")
+
+    is_negative = paise < 0
+    abs_paise = abs(paise)
+    rupees = abs_paise // 100
+    cents = abs_paise % 100
+
+    r_str = str(rupees)
+    if len(r_str) <= 3:
+        grouped = r_str
+    else:
+        last3 = r_str[-3:]
+        remaining = r_str[:-3]
+        groups = []
+        while remaining:
+            groups.append(remaining[-2:])
+            remaining = remaining[:-2]
+        groups.reverse()
+        grouped = ",".join(groups) + "," + last3
+
+    sign = "-" if is_negative else ""
+    return f"{sign}₹{grouped}.{cents:02d}"
+

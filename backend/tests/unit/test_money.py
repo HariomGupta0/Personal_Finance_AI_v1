@@ -8,6 +8,7 @@ import random
 import pytest
 
 from backend.app.core.money import (
+    format_inr,
     from_paise,
     mul_paise,
     paise_to_float,
@@ -134,6 +135,23 @@ def test_ratio():
         ratio(100, 200.0)
     with pytest.raises(TypeError):
         ratio(True, 100)
+
+
+def test_format_inr():
+    assert format_inr(12000050) == "₹1,20,000.50"
+    assert format_inr(10000000) == "₹1,00,000.00"
+    assert format_inr(0) == "₹0.00"
+    assert format_inr(50) == "₹0.50"
+    assert format_inr(50000) == "₹500.00"
+    assert format_inr(150000) == "₹1,500.00"
+    assert format_inr(-50000) == "-₹500.00"
+    assert format_inr(-12000050) == "-₹1,20,000.50"
+    assert format_inr(10**11) == "₹1,00,00,00,000.00"
+
+    with pytest.raises(TypeError):
+        format_inr(123.45)
+    with pytest.raises(TypeError):
+        format_inr(True)
 
 
 def test_round_trip_property_10k_random():
