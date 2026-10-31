@@ -64,3 +64,26 @@ def test_api_goals_list_with_mock_db(override_dependencies):
     data = resp.json()
     assert "goals" in data
     assert len(data["goals"]) == len(MOCK_CONTEXT.get("goals", []))
+
+
+def test_api_goal_create_and_delete(override_dependencies):
+    from backend.app.api.deps import get_ingestion_service
+    mock_ingestion = MagicMock()
+    mock_ingestion.ingest_goal.return_value = {
+        "status": "SUCCESS",
+        "goal": {"name": "Vacation Fund", "target_amount": 50000.0, "current_amount": 10000.0},
+    }
+    mock_ingestion.remove_goal.return_value = {"status": "SUCCESS", "deleted": True}
+    app.dependency_overrides[get_ingestion_service] = lambda: mock_ingestion
+
+    post_resp = client.post("/api/goals", json={
+        "name": "Vacation Fund",
+        "target_amount": 50000.0,
+        "current_amount": 10000.0,
+    })
+    assert post_resp.status_code == 200
+    assert post_resp.json()["status"] == "SUCCESS"
+
+    del_resp = client.delete("/api/goals/Vacation Fund")
+    assert del_resp.status_code == 200
+    assert del_resp.json()["deleted"] is True
