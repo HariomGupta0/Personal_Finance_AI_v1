@@ -89,3 +89,35 @@ def get_health(
         raise HTTPException(status_code=404, detail=f"User '{user_id}' not found")
     return calculate_comprehensive_health(context)
 
+
+@router.get("/plan")
+async def get_financial_plan_endpoint(
+    refresh: bool = False,
+    user_id: str = Depends(get_current_user_id),
+    db: Neo4jService = Depends(get_neo4j_service),
+):
+    """
+    Generate or retrieve a data-driven personalized financial plan for the user.
+    """
+    context = db.get_financial_context(user_id)
+    if not context:
+        raise HTTPException(status_code=404, detail=f"User '{user_id}' not found")
+    from backend.app.services.financial_planner import generate_financial_plan
+    return await generate_financial_plan(context=context, user_id=user_id, force_refresh=refresh)
+
+
+@router.post("/plan")
+async def post_financial_plan_endpoint(
+    user_id: str = Depends(get_current_user_id),
+    db: Neo4jService = Depends(get_neo4j_service),
+):
+    """
+    Explicitly re-generate a personalized financial plan.
+    """
+    context = db.get_financial_context(user_id)
+    if not context:
+        raise HTTPException(status_code=404, detail=f"User '{user_id}' not found")
+    from backend.app.services.financial_planner import generate_financial_plan
+    return await generate_financial_plan(context=context, user_id=user_id, force_refresh=True)
+
+

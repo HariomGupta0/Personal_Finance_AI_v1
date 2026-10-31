@@ -5,9 +5,9 @@ from datetime import date, timedelta
 CATEGORY_KEYWORDS = {
     "Housing": ["rent", "maintenance", "landlord", "apartment", "mortgage"],
     "Food": ["food", "groceries", "grocery", "restaurant", "swiggy", "zomato", "dinner", "lunch", "breakfast", "snacks", "cafe", "coffee"],
-    "Transport": ["travel", "bus", "auto", "metro", "cab", "uber", "ola", "petrol", "diesel", "fuel", "train", "flight", "taxi"],
+    "Transport": ["travel", "bus", "auto", "metro", "cab", "uber", "ola", "petrol", "diesel", "fuel", "train", "flight", "taxi", "car", "bike", "vehicle"],
     "Utilities": ["electricity", "water", "wifi", "internet", "gas", "recharge", "phone bill", "utility", "power bill"],
-    "Shopping": ["shopping", "clothes", "shirt", "shoes", "amazon", "flipkart", "electronics", "gadget", "laptop", "mobile"],
+    "Shopping": ["shopping", "clothes", "shirt", "shoes", "amazon", "flipkart", "electronics", "gadget", "laptop", "mobile", "phone", "smartphone", "iphone"],
     "Entertainment": ["movie", "cinema", "netflix", "prime", "hotstar", "game", "outing", "concert"],
     "Healthcare": ["doctor", "medicine", "pharmacy", "hospital", "clinic", "health", "dental"],
     "Education": ["tuition", "books", "course", "fees", "school", "college", "exam"]
@@ -24,7 +24,7 @@ EXPENSE_KEYWORDS = [
 def infer_category(text):
     text_lower = text.lower()
     for cat, keywords in CATEGORY_KEYWORDS.items():
-        if any(kw in text_lower for kw in keywords):
+        if cat.lower() in text_lower or any(kw in text_lower for kw in keywords):
             return cat
     return "Miscellaneous"
 

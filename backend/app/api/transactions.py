@@ -60,9 +60,19 @@ def list_transactions(
 def create_transaction(
     payload: TransactionCreateSchema,
     user_id: str = Depends(get_current_user_id),
+    db: Neo4jService = Depends(get_neo4j_service),
     ingestion: IngestionService = Depends(get_ingestion_service),
 ):
     try:
+        if payload.account_id:
+            user_accounts = db.get_user_accounts(user_id)
+            user_account_ids = {a["id"] for a in user_accounts}
+            if payload.account_id not in user_account_ids:
+                raise HTTPException(
+                    status_code=403,
+                    detail=f"Access denied: Account '{payload.account_id}' does not belong to authenticated user.",
+                )
+
         if payload.natural_language_input:
             return ingestion.ingest_transaction_from_text(
                 text=payload.natural_language_input,
@@ -82,6 +92,8 @@ def create_transaction(
             transaction_type=payload.transaction_type or "EXPENSE",
             date_str=payload.date_str,
         )
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -106,6 +118,12 @@ def update_transaction(
             "status": "SUCCESS",
             "transaction": updated,
         }
+    except HTTPException:
+        raise
+    except ValueError as e:
+        if "not found" in str(e).lower():
+            raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -123,6 +141,12 @@ def delete_transaction(
             "message": f"Transaction '{transaction_id}' deleted successfully",
             "restored_balance": res["restored_balance"],
         }
+    except HTTPException:
+        raise
+    except ValueError as e:
+        if "not found" in str(e).lower():
+            raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 

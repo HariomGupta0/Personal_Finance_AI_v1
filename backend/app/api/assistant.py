@@ -13,7 +13,7 @@ _user_conversation_store: dict[str, list[dict]] = {}
 
 class ConversationTurn(BaseModel):
     role: str = Field(..., description="'user' or 'assistant'")
-    content: str = Field(..., description="Turn text content")
+    content: str = Field(..., description="Turn text content", max_length=10000)
 
 
 class QueryRequest(BaseModel):
@@ -21,8 +21,8 @@ class QueryRequest(BaseModel):
         ...,
         description="Natural language financial question",
         json_schema_extra={"example": "Can I spend ₹15,000 on a phone?"},
-        min_length=3,
-        max_length=500,
+        min_length=1,
+        max_length=1000,
     )
     history: list[ConversationTurn] = Field(
         default_factory=list,
@@ -32,6 +32,11 @@ class QueryRequest(BaseModel):
         default=None,
         description="Optional prompt template version to use (e.g. 'v1.0', 'v1.1'). Defaults to system configured version.",
     )
+
+
+def get_conversation_history(user_id: str) -> list[dict]:
+    """Retrieve current session conversation history for a user."""
+    return list(_user_conversation_store.get(user_id, []))
 
 
 @router.post("/query")
@@ -44,15 +49,19 @@ async def ask_assistant(
     """
     Process a natural language financial question through the non-blocking async GraphRAG pipeline.
 
-    Rate limit: 20 requests per minute per IP address.
     Supports multi-turn follow-ups via client-provided history or server-side session memory.
-    Returns the LLM explanation, deterministic math result, evidence cards,
-    per-stage latency breakdown, and LLM token usage.
+    Always recalculates using current authorized financial data from the database.
+    Distinguishes new questions from follow-ups and clarifies missing or ambiguous information.
+    Previous assistant responses or user assertions in chat history are never treated as authoritative facts.
     """
     try:
         # Resolve conversation history: prefer client payload if provided, else use session cache
         if payload.history:
-            history_list = [{"role": t.role, "content": t.content} for t in payload.history]
+            history_list = []
+            for t in payload.history:
+                role = str(t.role).strip().lower()
+                if role in ["user", "assistant"]:
+                    history_list.append({"role": role, "content": str(t.content)[:1000]})
         else:
             history_list = _user_conversation_store.get(user_id, [])
 
@@ -63,12 +72,11 @@ async def ask_assistant(
             prompt_version=payload.prompt_version,
         )
 
-
-        # Update server-side conversation store (keep last 6 turns)
+        # Update server-side conversation store (keep last 6 turns, max 1000 chars per turn)
         session_history = _user_conversation_store.setdefault(user_id, [])
-        session_history.append({"role": "user", "content": payload.question})
+        session_history.append({"role": "user", "content": payload.question[:1000]})
         if result.get("explanation"):
-            session_history.append({"role": "assistant", "content": result["explanation"]})
+            session_history.append({"role": "assistant", "content": result["explanation"][:1000]})
         _user_conversation_store[user_id] = session_history[-6:]
 
         return result
@@ -91,4 +99,5 @@ def get_prompt_versions():
     List registered prompt template versions and indicate the active default.
     """
     return {"versions": list_prompt_versions()}
+
 

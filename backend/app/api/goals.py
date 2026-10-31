@@ -50,3 +50,20 @@ def create_or_update_goal(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
+@router.delete("/{goal_name}")
+def delete_goal(
+    goal_name: str,
+    user_id: str = Depends(get_current_user_id),
+    ingestion: IngestionService = Depends(get_ingestion_service),
+):
+    try:
+        res = ingestion.remove_goal(user_id=user_id, name=goal_name)
+        if not res.get("deleted"):
+            raise HTTPException(status_code=404, detail=f"Goal '{goal_name}' not found")
+        return res
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+

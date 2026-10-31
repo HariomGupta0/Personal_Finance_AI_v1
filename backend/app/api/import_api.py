@@ -40,6 +40,10 @@ from backend.app.services.ingestion_service import IngestionService
 
 logger = logging.getLogger(__name__)
 
+# Module-level references kept for test mocking compatibility
+db = None
+ingestion = None
+
 router = APIRouter(prefix="/api/import", tags=["Import"])
 
 # Limits
@@ -58,6 +62,9 @@ class ConfirmRow(BaseModel):
     amount: float = Field(..., gt=0)
     type: str = Field(..., description="EXPENSE or INCOME")
     category: Optional[str] = Field(None, max_length=100)
+    category_source: Optional[str] = Field(None, max_length=50)
+    clean_merchant: Optional[str] = Field(None, max_length=100)
+    fingerprint: Optional[str] = Field(None, max_length=100)
     account_id: Optional[str] = None
     source_ref: Optional[str] = Field(None, max_length=200)
     source_type: Optional[str] = Field(None, max_length=50)
@@ -73,6 +80,7 @@ class ConfirmRow(BaseModel):
 
 class ConfirmImportRequest(BaseModel):
     rows: List[ConfirmRow] = Field(..., min_length=1)
+    import_id: Optional[str] = Field(None, description="Optional idempotency key / import job identifier")
 
 
 # ---------------------------------------------------------------------------
@@ -96,6 +104,20 @@ async def upload_csv(
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail=f"CSV file exceeds {MAX_CSV_BYTES // (1024 * 1024)} MB limit.",
+        )
+
+    # Empty check
+    if not content or len(content.strip()) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Uploaded file is empty.",
+        )
+
+    # Binary check (null bytes indicate binary/executable files)
+    if b"\x00" in content[:1024]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Binary file detected. Only plain-text CSV, TSV, or TXT statements are supported.",
         )
 
     # Filename extension check (soft — not a security boundary)
@@ -130,30 +152,71 @@ async def upload_csv(
         db=db,
     )
 
+    accepted_rows = pipeline_result.get("accepted_rows", [])
+    duplicate_rows = pipeline_result.get("duplicate_rows", [])
+    skipped_rows = parse_result.get("skipped_rows", [])
+    parse_errors = parse_result.get("errors", [])
+    invalid_rows = pipeline_result.get("invalid_rows", [])
+
+    all_rejected = [
+        {
+            "row_index": e.get("row_index", 0),
+            "error": e.get("error", ""),
+            "reason": e.get("reason", e.get("error", "")),
+            "raw": e.get("raw", {}),
+        }
+        for e in parse_errors
+    ] + [
+        {
+            "row_index": inv.get("row_index", 0),
+            "error": inv.get("error", ""),
+            "reason": inv.get("error", ""),
+            "raw": inv.get("row", {}),
+        }
+        for inv in invalid_rows
+    ]
+
+    total_rows = len(accepted_rows) + len(duplicate_rows) + len(skipped_rows) + len(all_rejected)
+
+    stats = {
+        "total_rows": total_rows,
+        "accepted_count": len(accepted_rows),
+        "duplicate_count": len(duplicate_rows),
+        "skipped_count": len(skipped_rows),
+        "rejected_count": len(all_rejected),
+        # Backward compatibility
+        "valid": len(pipeline_result["valid_rows"]),
+        "invalid": len(invalid_rows),
+        "parse_errors": len(parse_errors),
+        "possible_duplicates": sum(
+            1 for r in pipeline_result["valid_rows"]
+            if r.get("duplicate_status") == "POSSIBLE_DUPLICATE"
+        ),
+        "confirmed_duplicates": sum(
+            1 for r in pipeline_result["valid_rows"]
+            if r.get("duplicate_status") == "CONFIRMED_DUPLICATE"
+        ),
+    }
+
     return {
         "status": "PARSED",
         "filename": filename,
         "columns": parse_result["columns"],
         "mapping": parse_result["mapping"],
         "ambiguous": parse_result["ambiguous"],
+        "date_ambiguity": parse_result.get("date_ambiguity", False),
+        "unrecognized_columns": parse_result.get("unrecognized_columns", []),
         "valid_rows": pipeline_result["valid_rows"],
-        "invalid_rows": pipeline_result["invalid_rows"],
+        "accepted_rows": accepted_rows,
+        "duplicate_rows": duplicate_rows,
+        "rejected_rows": all_rejected,
+        "skipped_rows": skipped_rows,
         "warnings": parse_result["warnings"] + pipeline_result["warnings"],
-        "stats": {
-            "total_rows": len(parse_result["rows"]) + len(parse_result["errors"]),
-            "parse_errors": len(parse_result["errors"]),
-            "valid": len(pipeline_result["valid_rows"]),
-            "invalid": len(pipeline_result["invalid_rows"]),
-            "possible_duplicates": sum(
-                1 for r in pipeline_result["valid_rows"]
-                if r.get("duplicate_status") == "POSSIBLE_DUPLICATE"
-            ),
-            "confirmed_duplicates": sum(
-                1 for r in pipeline_result["valid_rows"]
-                if r.get("duplicate_status") == "CONFIRMED_DUPLICATE"
-            ),
-        },
-        "parse_errors": parse_result["errors"],
+        "confirmation_required": True,
+        "stats": stats,
+        # Backward compatibility
+        "invalid_rows": invalid_rows,
+        "parse_errors": parse_errors,
     }
 
 
@@ -236,15 +299,114 @@ def confirm_import(
 ):
     """
     Persist confirmed rows to Neo4j.
-
-    Only rows explicitly selected and confirmed by the user are saved.
-    Any row that fails to save is reported individually — partial saves are allowed
-    but the overall status reflects failures.
+    Uses high-speed batch UNWIND insertion with idempotency constraints.
     """
+    if not payload.rows:
+        return {"status": "SUCCESS", "saved": 0, "failed": 0, "results": []}
+
+    user_accounts = db.get_user_accounts(user_id)
+    if not user_accounts:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"No account found for user '{user_id}'. Please create an account before importing transactions.",
+        )
+    user_account_ids = {a["id"] for a in user_accounts}
+
+    account_id = payload.rows[0].account_id
+    if account_id:
+        if account_id not in user_account_ids:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Access denied: Account '{account_id}' does not belong to authenticated user.",
+            )
+    else:
+        account_id = user_accounts[0]["id"]
+
+    for r in payload.rows:
+        if r.account_id and r.account_id not in user_account_ids:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Access denied: Transaction specifies account '{r.account_id}' which does not belong to authenticated user.",
+            )
+        r.account_id = account_id
+
+    from collections import Counter
+    from backend.app.services.fingerprint import compute_transaction_fingerprint
+    from backend.app.services.merchant_normalizer import normalize_narration
+
+    occurrence_counter = Counter()
+    batch_rows = []
+
+    for r in payload.rows:
+        row_dict = r.model_dump()
+        tx_type = r.type
+        amt = round(float(r.amount), 2)
+        desc = r.description
+        source_ref = r.source_ref
+
+        tuple_key = (r.date, amt, tx_type, desc.lower(), str(source_ref or "").lower())
+        occ = occurrence_counter[tuple_key]
+        occurrence_counter[tuple_key] += 1
+
+        fp = r.fingerprint or compute_transaction_fingerprint(
+            account_id=account_id or "A001",
+            date_str=r.date,
+            amount=amt,
+            tx_type=tx_type,
+            description=desc,
+            source_ref=source_ref,
+            occurrence_index=occ,
+        )
+        row_dict["fingerprint"] = fp
+
+        if not row_dict.get("clean_merchant"):
+            norm = normalize_narration(desc, tx_type)
+            row_dict["clean_merchant"] = norm.clean_merchant
+            row_dict.setdefault("category_source", norm.category_source)
+
+        batch_rows.append(row_dict)
+
+    if hasattr(db, "batch_add_transactions"):
+        try:
+            batch_result = db.batch_add_transactions(
+                user_id=user_id,
+                account_id=account_id,
+                rows=batch_rows,
+                import_id=payload.import_id,
+            )
+            is_repeat = (batch_result["inserted"] == 0 and batch_result["skipped"] > 0)
+            return {
+                "status": "SUCCESS",
+                "saved": batch_result["inserted"],
+                "skipped_duplicates": batch_result["skipped"],
+                "failed": 0,
+                "net_balance_delta": batch_result["net_balance_delta"],
+                "import_id": batch_result["import_id"],
+                "idempotent": True,
+                "is_repeat_confirmation": is_repeat,
+                "message": (
+                    f"Successfully imported {batch_result['inserted']} new transaction(s)."
+                    + (f" Skipped {batch_result['skipped']} duplicate(s)." if batch_result["skipped"] > 0 else "")
+                    + (" (Safe repeat: no duplicate balances applied)" if is_repeat else "")
+                ),
+                "results": [
+                    {
+                        "status": "SAVED",
+                        "type": r["type"],
+                        "description": r["description"],
+                        "amount": r["amount"],
+                        "fingerprint": r["fingerprint"],
+                    }
+                    for r in batch_rows
+                ],
+            }
+        except Exception as exc:
+            logger.warning("Batch insertion failed, falling back to sequential ingestion: %s", exc)
+
+    # Fallback to sequential row-by-row if batch is not supported or failed
     results = []
     saved = 0
     failed = 0
-
     for row in payload.rows:
         try:
             if row.type == "INCOME":
@@ -255,18 +417,7 @@ def confirm_import(
                     date_str=row.date,
                     account_id=row.account_id,
                 )
-                # Store source_ref on the income node if available
-                if row.source_ref and record.get("income", {}).get("income_id"):
-                    _attach_source_ref(
-                        db, "Income", record["income"]["income_id"], row.source_ref, row.source_type
-                    )
-                results.append({
-                    "status": "SAVED",
-                    "type": "INCOME",
-                    "description": row.description,
-                    "amount": row.amount,
-                    "record": record.get("income"),
-                })
+                results.append({"status": "SAVED", "type": "INCOME", "description": row.description, "amount": row.amount, "record": record.get("income")})
             else:
                 record = ingestion.ingest_transaction(
                     user_id=user_id,
@@ -277,41 +428,14 @@ def confirm_import(
                     transaction_type=row.type,
                     date_str=row.date,
                 )
-                tx = record.get("transaction", {})
-                # Store source_ref on the transaction node if available
-                if row.source_ref and tx.get("transaction_id"):
-                    _attach_source_ref(
-                        db, "Transaction", tx["transaction_id"], row.source_ref, row.source_type
-                    )
-                results.append({
-                    "status": "SAVED",
-                    "type": row.type,
-                    "description": row.description,
-                    "amount": row.amount,
-                    "record": tx,
-                })
+                results.append({"status": "SAVED", "type": row.type, "description": row.description, "amount": row.amount, "record": record.get("transaction")})
             saved += 1
-
         except Exception as exc:
-            logger.error(
-                "Failed to save import row (user=%s, desc=%s): %s",
-                user_id,
-                row.description[:40] if row.description else "?",
-                type(exc).__name__,
-            )
-            results.append({
-                "status": "FAILED",
-                "type": row.type,
-                "description": row.description,
-                "amount": row.amount,
-                "error": str(exc),
-            })
             failed += 1
-
-    overall = "SUCCESS" if failed == 0 else ("PARTIAL" if saved > 0 else "FAILED")
+            results.append({"status": "FAILED", "type": row.type, "description": row.description, "amount": row.amount, "error": str(exc)})
 
     return {
-        "status": overall,
+        "status": "SUCCESS" if failed == 0 else ("PARTIAL" if saved > 0 else "FAILED"),
         "saved": saved,
         "failed": failed,
         "results": results,
