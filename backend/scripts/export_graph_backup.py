@@ -27,6 +27,10 @@ except ImportError:
     Neo4jDateTime = type("Neo4jDateTime", (), {})
     Neo4jTime = type("Neo4jTime", (), {})
 
+ROOT_DIR = Path(__file__).resolve().parent.parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
 from backend.config import NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD, NEO4J_DATABASE
 
 logger = logging.getLogger("export_graph_backup")
