@@ -915,7 +915,11 @@ class Neo4jService:
             MERGE (new_c:Category {name: $category_name})
               ON CREATE SET new_c.id = $category_id
             MERGE (t)-[:BELONGS_TO]->(new_c)
-            RETURN new_c.name AS final_category
+            RETURN true AS _cat_updated
+            UNION
+            WITH t
+            WHERE $category_name IS NULL
+            RETURN false AS _cat_updated
         }
 
         OPTIONAL MATCH (t)-[:BELONGS_TO]->(c_current:Category)
