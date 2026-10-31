@@ -6,15 +6,19 @@ in financial_engine.py and financial_planner.py with fixed, hard-coded fixtures.
 from __future__ import annotations
 
 import asyncio
+from datetime import date
 import json
 from pathlib import Path
 import sys
 from typing import Any
+from unittest.mock import patch
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+import backend.app.engine.financial_engine as financial_engine
+import backend.app.services.financial_planner as financial_planner
 from backend.app.engine.financial_engine import (
     calculate_category_expenses,
     calculate_comprehensive_health,
@@ -134,6 +138,14 @@ FIXTURES = {
 }
 
 
+class _FrozenDate(date):
+    """Freeze fallback date.today() to 2026-10-31 so golden fixtures are deterministic across calendar months."""
+
+    @classmethod
+    def today(cls):
+        return date(2026, 10, 31)
+
+
 def run_all_functions(fixture: dict[str, Any]) -> dict[str, Any]:
     context = {
         "accounts": fixture.get("accounts", []),
@@ -144,41 +156,42 @@ def run_all_functions(fixture: dict[str, Any]) -> dict[str, Any]:
     }
     purchase_amt = fixture.get("purchase_amount", 1000.0)
 
-    plan = asyncio.run(
-        generate_financial_plan(
-            context=context,
-            user_id="U001",
-            force_refresh=True,
-            use_ai=False,
+    with patch.object(financial_engine, "date", _FrozenDate), patch.object(financial_planner, "date", _FrozenDate):
+        plan = asyncio.run(
+            generate_financial_plan(
+                context=context,
+                user_id="U001",
+                force_refresh=True,
+                use_ai=False,
+            )
         )
-    )
-    # Normalize runtime wall-clock timestamp for reproducible golden comparisons
-    if isinstance(plan, dict) and "generated_at" in plan:
-        plan["generated_at"] = "2026-10-15T10:00:00.000000"
+        # Normalize runtime wall-clock timestamp for reproducible golden comparisons
+        if isinstance(plan, dict) and "generated_at" in plan:
+            plan["generated_at"] = "2026-10-15T10:00:00.000000"
 
-    return {
-        "savings_rate": calculate_savings_rate(context, reporting_date=FIXED_DATE),
-        "emergency_fund": calculate_emergency_fund(context, reporting_date=FIXED_DATE),
-        "emergency_runway": calculate_emergency_runway(context, reporting_date=FIXED_DATE),
-        "debt_burden": calculate_debt_burden(context, reporting_date=FIXED_DATE),
-        "purchase_safety": check_purchase_safety(context, purchase_amount=purchase_amt, reporting_date=FIXED_DATE),
-        "category_expenses": calculate_category_expenses(context, reporting_date=FIXED_DATE),
-        "merchant_expenses_swiggy": calculate_merchant_expenses(context, merchant_name="Swiggy", reporting_date=FIXED_DATE),
-        "top_transactions": calculate_top_transactions(context, limit=5, reporting_date=FIXED_DATE),
-        "period_comparison": calculate_period_comparison(
-            context,
-            period_a_start=f"{PREV_MONTH}-01",
-            period_a_end=f"{PREV_MONTH}-30",
-            period_b_start=f"{CURR_MONTH}-01",
-            period_b_end=f"{CURR_MONTH}-31",
-            first_mentioned="Sep 2026",
-            second_mentioned="Oct 2026",
-        ),
-        "spending_trends": calculate_spending_trends(context, num_months=6, end_date=FIXED_DATE),
-        "comprehensive_health": calculate_comprehensive_health(context, reporting_date=FIXED_DATE),
-        "financial_summary": generate_financial_summary(context, reporting_date=FIXED_DATE),
-        "financial_plan": plan,
-    }
+        return {
+            "savings_rate": calculate_savings_rate(context, reporting_date=FIXED_DATE),
+            "emergency_fund": calculate_emergency_fund(context, reporting_date=FIXED_DATE),
+            "emergency_runway": calculate_emergency_runway(context, reporting_date=FIXED_DATE),
+            "debt_burden": calculate_debt_burden(context, reporting_date=FIXED_DATE),
+            "purchase_safety": check_purchase_safety(context, purchase_amount=purchase_amt, reporting_date=FIXED_DATE),
+            "category_expenses": calculate_category_expenses(context, reporting_date=FIXED_DATE),
+            "merchant_expenses_swiggy": calculate_merchant_expenses(context, merchant_name="Swiggy", reporting_date=FIXED_DATE),
+            "top_transactions": calculate_top_transactions(context, limit=5, reporting_date=FIXED_DATE),
+            "period_comparison": calculate_period_comparison(
+                context,
+                period_a_start=f"{PREV_MONTH}-01",
+                period_a_end=f"{PREV_MONTH}-30",
+                period_b_start=f"{CURR_MONTH}-01",
+                period_b_end=f"{CURR_MONTH}-31",
+                first_mentioned="Sep 2026",
+                second_mentioned="Oct 2026",
+            ),
+            "spending_trends": calculate_spending_trends(context, num_months=6, end_date=FIXED_DATE),
+            "comprehensive_health": calculate_comprehensive_health(context, reporting_date=FIXED_DATE),
+            "financial_summary": generate_financial_summary(context, reporting_date=FIXED_DATE),
+            "financial_plan": plan,
+        }
 
 
 def make_golden_baseline(output_path: Path | None = None) -> Path:
