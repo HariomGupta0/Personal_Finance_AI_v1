@@ -2,6 +2,8 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field, field_validator
 
+from backend.app.core.money import normalize_rupees
+
 from backend.app.api.deps import (
     get_current_user_id,
     get_ingestion_service,
@@ -22,6 +24,16 @@ class TransactionCreateSchema(BaseModel):
     date_str: Optional[str] = Field(None, description="Date in YYYY-MM-DD")
     natural_language_input: Optional[str] = Field(None, description="Natural language input e.g. 'I spent ₹5000 on food today'")
 
+    @field_validator("amount", mode="before")
+    @classmethod
+    def _normalize_amount(cls, v):
+        if v is None:
+            return v
+        try:
+            return normalize_rupees(v)
+        except Exception:
+            return v
+
     @field_validator("transaction_type")
     @classmethod
     def validate_transaction_type(cls, value):
@@ -38,6 +50,16 @@ class TransactionUpdateSchema(BaseModel):
     description: Optional[str] = None
     category_name: Optional[str] = None
     date_str: Optional[str] = None
+
+    @field_validator("amount", mode="before")
+    @classmethod
+    def _normalize_update_amount(cls, v):
+        if v is None:
+            return v
+        try:
+            return normalize_rupees(v)
+        except Exception:
+            return v
 
 
 @router.get("")

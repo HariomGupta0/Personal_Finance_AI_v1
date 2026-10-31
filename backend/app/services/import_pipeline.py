@@ -16,6 +16,8 @@ import re
 from datetime import date, datetime, timedelta
 from typing import Optional
 
+from backend.app.core.money import normalize_rupees, to_paise
+
 # ---------------------------------------------------------------------------
 # Category inference (reuses same logic as transaction_extractor.py)
 # ---------------------------------------------------------------------------
@@ -67,7 +69,7 @@ def _validate_row(row: dict, idx: int) -> Optional[str]:
     if amount is None:
         return f"Row {idx}: Amount is missing."
     try:
-        amt = float(amount)
+        amt = normalize_rupees(amount)
     except (TypeError, ValueError):
         return f"Row {idx}: Amount '{amount}' is not a valid number."
     if amt <= 0:
@@ -147,7 +149,10 @@ def detect_duplicates(rows: list[dict], user_id: str, db) -> list[dict]:
         source_ref = row.get("source_ref")
         tx_type = str(row.get("type", "EXPENSE")).upper()
         tx_date = row.get("date") or date.today().isoformat()
-        amount = float(row.get("amount", 0))
+        try:
+            amount = normalize_rupees(row.get("amount", 0))
+        except Exception:
+            amount = 0.0
         matches = []
         status = "OK"
 
@@ -249,10 +254,12 @@ def run_pipeline(
             invalid_rows.append({"row": row, "error": error})
         else:
             # Deterministic fingerprint with occurrence tracking
-            amt = float(row.get("amount") or 0.0)
-            tuple_key = (str(row.get("date")), round(amt, 2), tx_type, norm.clean_merchant.lower(), str(row.get("source_ref") or "").lower())
+            amt = normalize_rupees(row.get("amount") or 0.0)
+            amt_paise = to_paise(amt)
+            tuple_key = (str(row.get("date")), amt_paise, tx_type, norm.clean_merchant.lower(), str(row.get("source_ref") or "").lower())
             occ = occurrence_counter[tuple_key]
             occurrence_counter[tuple_key] += 1
+            row["amount"] = amt
 
             row["fingerprint"] = compute_transaction_fingerprint(
                 account_id=account_id,

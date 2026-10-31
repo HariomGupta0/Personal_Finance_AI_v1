@@ -1,6 +1,8 @@
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+from backend.app.core.money import normalize_rupees
 
 from backend.app.api.deps import (
     get_current_user_id,
@@ -18,6 +20,16 @@ class GoalSchema(BaseModel):
     target_amount: float = Field(..., description="Target Amount in ₹")
     current_amount: Optional[float] = Field(None, description="Current Saved Amount in ₹")
     target_date: Optional[str] = Field(None, description="Target Date in YYYY-MM-DD")
+
+    @field_validator("target_amount", "current_amount", mode="before")
+    @classmethod
+    def _normalize_goal_amounts(cls, v):
+        if v is None:
+            return v
+        try:
+            return normalize_rupees(v)
+        except Exception:
+            return v
 
 
 @router.get("")

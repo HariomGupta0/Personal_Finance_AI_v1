@@ -5,7 +5,9 @@ import json
 import time
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+from backend.app.core.money import normalize_rupees
 
 from backend.config import (
     APP_PASSWORD,
@@ -31,6 +33,16 @@ class SignupRequest(BaseModel):
     password: str = Field(..., min_length=4, max_length=256)
     name: str | None = Field(default=None, max_length=100)
     initial_balance: float = Field(default=0.0, ge=0.0)
+
+    @field_validator("initial_balance", mode="before")
+    @classmethod
+    def _normalize_initial_balance(cls, v):
+        if v is None:
+            return v
+        try:
+            return normalize_rupees(v)
+        except Exception:
+            return v
 
 
 def _base64_encode(value: bytes) -> str:

@@ -28,6 +28,7 @@ from backend.app.api.deps import (
     get_ingestion_service,
     get_neo4j_service,
 )
+from backend.app.core.money import normalize_rupees, to_paise
 from backend.app.database.neo4j_service import Neo4jService
 from backend.app.services.csv_parser import CSVParseError, parse_csv
 from backend.app.services.image_extractor import (
@@ -68,6 +69,16 @@ class ConfirmRow(BaseModel):
     account_id: Optional[str] = None
     source_ref: Optional[str] = Field(None, max_length=200)
     source_type: Optional[str] = Field(None, max_length=50)
+
+    @field_validator("amount", mode="before")
+    @classmethod
+    def _normalize_amount(cls, v):
+        if v is None:
+            return v
+        try:
+            return normalize_rupees(v)
+        except Exception:
+            return v
 
     @field_validator("type")
     @classmethod
@@ -340,11 +351,12 @@ def confirm_import(
     for r in payload.rows:
         row_dict = r.model_dump()
         tx_type = r.type
-        amt = round(float(r.amount), 2)
+        amt = normalize_rupees(r.amount)
+        amt_paise = to_paise(amt)
         desc = r.description
         source_ref = r.source_ref
 
-        tuple_key = (r.date, amt, tx_type, desc.lower(), str(source_ref or "").lower())
+        tuple_key = (r.date, amt_paise, tx_type, desc.lower(), str(source_ref or "").lower())
         occ = occurrence_counter[tuple_key]
         occurrence_counter[tuple_key] += 1
 

@@ -259,3 +259,26 @@ def test_differential_more_than_two_decimals_ties():
         # Assert new_val is exactly the ROUND_HALF_UP 2-decimal float of raw
         expected = float(Decimal(raw).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
         assert new_val == expected
+
+
+def test_transaction_extractor_llm_json_amount_safety():
+    """
+    Test that None, 'abc', '', 'NaN', True, -5, 0 all return None from
+    extract_transaction_llm without raising exceptions.
+    """
+    import json
+    from unittest.mock import patch
+    from backend.app.nlu.transaction_extractor import extract_transaction_llm
+
+    test_vals = [None, "abc", "", "NaN", True, -5, 0]
+    for val in test_vals:
+        fake_payload = json.dumps({
+            "amount": val,
+            "description": "Coffee",
+            "category": "Food",
+            "type": "EXPENSE",
+        })
+        with patch("backend.app.services.llm_service.ask_llm", return_value=fake_payload):
+            res = extract_transaction_llm("dummy text")
+            assert res is None, f"Expected None for amount {val!r}, got {res}"
+
