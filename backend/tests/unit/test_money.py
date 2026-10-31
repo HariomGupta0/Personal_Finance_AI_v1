@@ -12,6 +12,7 @@ from backend.app.core.money import (
     format_inr,
     from_paise,
     mul_paise,
+    normalize_rupees,
     paise_to_float,
     ratio,
     round_nearest_paise,
@@ -53,15 +54,7 @@ def test_string_parsing_currency_symbols():
     assert to_paise("₹ 1,00,000.50") == 10000050
 
 
-def test_negative_values_raise_value_error():
-    with pytest.raises(ValueError):
-        to_paise(-10)
-    with pytest.raises(ValueError):
-        to_paise(-0.01)
-    with pytest.raises(ValueError):
-        to_paise(Decimal("-5.00"))
-    with pytest.raises(ValueError):
-        to_paise("-1500.00")
+def test_invalid_inputs_raise_value_error():
     with pytest.raises(ValueError):
         to_paise("(1234.56)")
 
@@ -227,5 +220,44 @@ def test_round_nearest_paise():
 
     with pytest.raises(TypeError):
         round_nearest_paise(5000, False)
+
+
+def test_negative_to_paise_conversions():
+    """
+    Test negative amounts in to_paise for refunds and overdraft/negative balances.
+    Under Decimal ROUND_HALF_UP, ties round away from zero:
+      -0.005 rounds to -0.01 (-1 paise)
+      -2.675 rounds to -2.68 (-268 paise)
+    """
+    assert to_paise(-2500.00) == -250000
+    assert to_paise("-2500.00") == -250000
+    assert to_paise(Decimal("-2500.00")) == -250000
+    assert to_paise(-10) == -1000
+    assert to_paise("-1500.00") == -150000
+    assert to_paise(Decimal("-5.00")) == -500
+
+    # Small negative amounts
+    assert to_paise(-0.01) == -1
+    assert to_paise("-0.01") == -1
+    assert to_paise(Decimal("-0.01")) == -1
+
+    # Ties round away from zero
+    assert to_paise(-0.005) == -1
+    assert to_paise(Decimal("-0.005")) == -1
+    assert to_paise(-2.675) == -268
+    assert to_paise(Decimal("-2.675")) == -268
+
+
+def test_normalize_rupees():
+    """
+    Test normalize_rupees converts any rupee input to clean 2-decimal float without float arithmetic.
+    """
+    assert normalize_rupees("1234.565") == 1234.57
+    assert normalize_rupees(1234.56) == 1234.56
+    assert normalize_rupees("₹ 1,00,000.50") == 100000.50
+    assert normalize_rupees(-2500.005) == -2500.01
+    assert normalize_rupees(0) == 0.0
+    assert normalize_rupees(0.1 + 0.2) == 0.30
+
 
 

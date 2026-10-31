@@ -1,6 +1,9 @@
 import re
 import json
 from datetime import date
+from decimal import Decimal
+
+from backend.app.core.money import normalize_rupees
 from backend.app.nlu.transaction_extractor import infer_category
 
 MONTH_NAMES = {
@@ -106,11 +109,11 @@ def extract_top_n_and_thresholds(text: str) -> dict | None:
     )
     if m_between:
         try:
-            a1 = float(m_between.group(1).replace(",", ""))
-            a2 = float(m_between.group(2).replace(",", ""))
+            a1 = normalize_rupees(Decimal(m_between.group(1).replace(",", "")))
+            a2 = normalize_rupees(Decimal(m_between.group(2).replace(",", "")))
             amount_min = min(a1, a2)
             amount_max = max(a1, a2)
-        except ValueError:
+        except (ValueError, Exception):
             pass
     else:
         # Above / Over / More than: "above ₹5,000", "over 5000"
@@ -120,8 +123,8 @@ def extract_top_n_and_thresholds(text: str) -> dict | None:
         )
         if m_above:
             try:
-                amount_min = float(m_above.group(1).replace(",", ""))
-            except ValueError:
+                amount_min = normalize_rupees(Decimal(m_above.group(1).replace(",", "")))
+            except (ValueError, Exception):
                 pass
 
         # Below / Under / Less than: "under ₹2,000", "below 1500"
@@ -131,8 +134,8 @@ def extract_top_n_and_thresholds(text: str) -> dict | None:
         )
         if m_below:
             try:
-                amount_max = float(m_below.group(1).replace(",", ""))
-            except ValueError:
+                amount_max = normalize_rupees(Decimal(m_below.group(1).replace(",", "")))
+            except (ValueError, Exception):
                 pass
 
     return {
@@ -442,14 +445,14 @@ def extract_candidate_amounts(text: str, exclude_years: list[int] | None = None)
         re.IGNORECASE,
     )
     for m in mult_pattern.finditer(t_lower):
-        num = float(m.group(1))
+        num_dec = Decimal(m.group(1))
         unit = m.group(2).lower()
         if unit in ["k", "thousand"]:
-            amounts.append(round(num * 1000, 2))
+            amounts.append(normalize_rupees(num_dec * Decimal("1000")))
         elif unit in ["lakh", "lakhs", "lac", "lacs"]:
-            amounts.append(round(num * 100000, 2))
+            amounts.append(normalize_rupees(num_dec * Decimal("100000")))
         elif unit in ["crore", "crores", "cr"]:
-            amounts.append(round(num * 10000000, 2))
+            amounts.append(normalize_rupees(num_dec * Decimal("10000000")))
         matched_spans.append(m.span())
 
     # 2. Currency prefixed numbers: e.g. ₹15,000, Rs. 20000
@@ -459,11 +462,11 @@ def extract_candidate_amounts(text: str, exclude_years: list[int] | None = None)
             continue
         val_str = m.group(1).replace(",", "")
         try:
-            val = float(val_str)
+            val = normalize_rupees(Decimal(val_str))
             if val not in amounts and val > 0:
                 amounts.append(val)
             matched_spans.append(m.span())
-        except ValueError:
+        except (ValueError, Exception):
             pass
 
     # 3. Bare numbers: e.g. "for 50000", "50000"
@@ -476,7 +479,7 @@ def extract_candidate_amounts(text: str, exclude_years: list[int] | None = None)
             continue
         val_str = m.group(0).replace(",", "")
         try:
-            val = float(val_str)
+            val = normalize_rupees(Decimal(val_str))
             if val <= 0:
                 continue
             # Filter out 4-digit years (1990-2099)
@@ -488,7 +491,7 @@ def extract_candidate_amounts(text: str, exclude_years: list[int] | None = None)
             if val not in amounts:
                 amounts.append(val)
                 matched_spans.append(m.span())
-        except ValueError:
+        except (ValueError, Exception):
             pass
 
     return amounts

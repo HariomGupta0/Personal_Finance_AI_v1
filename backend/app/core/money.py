@@ -21,11 +21,13 @@ _STRIP_REGEX = re.compile(r"(?i)\brs\.?|\binr\b|[₹,\s]")
 def to_paise(value: Any) -> int:
     """
     Convert a rupee value (int, float, str, Decimal) to integer paise.
+    Supports both positive and negative values (refunds, negative balances).
+    Negative ties round away from zero with ROUND_HALF_UP (e.g. -0.005 -> -1 paise, -2.675 -> -268 paise).
 
     Parameters
     ----------
     value : int | float | str | Decimal
-        A monetary amount in Rupees (must be non-negative).
+        A monetary amount in Rupees (can be positive, zero, or negative).
 
     Returns
     -------
@@ -35,7 +37,7 @@ def to_paise(value: Any) -> int:
     Raises
     -------
     ValueError
-        If value is None, bool, negative, NaN, Inf, parenthesised negative like (1234.56),
+        If value is None, bool, NaN, Inf, parenthesised negative like (1234.56),
         or an unparseable string.
     """
     if value is None or isinstance(value, bool):
@@ -47,11 +49,9 @@ def to_paise(value: Any) -> int:
             raise ValueError("Empty string cannot be converted to paise")
         if "(" in raw or ")" in raw:
             raise ValueError(f"Parenthesised negative values are not supported: {value}")
-        if "-" in raw:
-            raise ValueError(f"Negative values are not supported: {value}")
 
         cleaned = _STRIP_REGEX.sub("", raw).strip()
-        if not cleaned:
+        if not cleaned or cleaned in ("-", "+"):
             raise ValueError(f"No numeric value found in: {value}")
 
         try:
@@ -75,11 +75,27 @@ def to_paise(value: Any) -> int:
     else:
         raise ValueError(f"Unsupported type for to_paise: {type(value).__name__}")
 
-    if d < 0:
-        raise ValueError(f"Negative values are not supported in to_paise: {value}")
-
     rounded = d.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
     return int(rounded * 100)
+
+
+def normalize_rupees(value: Any) -> float:
+    """
+    Convert any rupee input (int, float, str, Decimal) to a rupee float that is exactly
+    the 2-decimal ROUND_HALF_UP value, using Decimal without float arithmetic, by routing
+    through to_paise and paise_to_float.
+
+    Parameters
+    ----------
+    value : int | float | str | Decimal
+        Monetary amount in Rupees.
+
+    Returns
+    -------
+    float
+        Clean 2-decimal rupee float.
+    """
+    return paise_to_float(to_paise(value))
 
 
 def from_paise(p: int) -> Decimal:

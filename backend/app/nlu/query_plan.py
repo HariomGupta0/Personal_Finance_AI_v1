@@ -9,7 +9,9 @@ arbitrary LLM-generated Cypher injection.
 from datetime import date
 from enum import Enum
 from typing import Optional, List
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+from backend.app.core.money import normalize_rupees
 
 
 class OperationType(str, Enum):
@@ -82,6 +84,16 @@ class ExpenditureQueryPlan(BaseModel):
         ge=0.0,
         description="Maximum transaction threshold filter"
     )
+
+    @field_validator("amount", "amount_min", "amount_max", mode="before")
+    @classmethod
+    def _normalize_amount_fields(cls, v):
+        if v is None:
+            return None
+        try:
+            return normalize_rupees(v)
+        except (ValueError, TypeError):
+            return None
     sort_by: str = Field(
         default="date",
         description="Attribute to sort results by ('amount', 'date')"
@@ -246,21 +258,21 @@ def create_query_plan_from_parsed(parsed: dict) -> ExpenditureQueryPlan:
     amt = parsed.get("amount")
     if amt is not None:
         try:
-            amt = float(amt)
+            amt = normalize_rupees(amt)
         except (ValueError, TypeError):
             amt = None
 
     amt_min = parsed.get("amount_min")
     if amt_min is not None:
         try:
-            amt_min = max(0.0, float(amt_min))
+            amt_min = max(0.0, normalize_rupees(amt_min))
         except (ValueError, TypeError):
             amt_min = None
 
     amt_max = parsed.get("amount_max")
     if amt_max is not None:
         try:
-            amt_max = max(0.0, float(amt_max))
+            amt_max = max(0.0, normalize_rupees(amt_max))
         except (ValueError, TypeError):
             amt_max = None
 

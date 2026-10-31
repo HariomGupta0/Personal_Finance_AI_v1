@@ -28,6 +28,8 @@ from typing import Optional
 
 import pandas as pd
 
+from backend.app.core.money import normalize_rupees
+
 # ---------------------------------------------------------------------------
 # Column name aliases
 # ---------------------------------------------------------------------------
@@ -112,6 +114,7 @@ def _parse_amount(raw) -> Optional[float]:
     Parse an amount cell.
     Returns None if the cell is blank / None / truly unreadable.
     Never returns 0.0 for a missing value.
+    Uses Decimal and normalize_rupees; never uses float arithmetic.
     """
     if raw is None or (isinstance(raw, float) and pd.isna(raw)):
         return None
@@ -123,9 +126,18 @@ def _parse_amount(raw) -> Optional[float]:
     # Handle parenthesised negatives like (1234.56)
     if cleaned.startswith("(") and cleaned.endswith(")"):
         cleaned = "-" + cleaned[1:-1]
+    # Handle trailing minus like 1234.56- -> -1234.56
+    if cleaned.endswith("-") and not cleaned.startswith("-"):
+        cleaned = "-" + cleaned[:-1]
+    # Handle Dr / Cr suffix if present
+    if cleaned.upper().endswith("DR"):
+        cleaned = "-" + cleaned[:-2].strip()
+    elif cleaned.upper().endswith("CR"):
+        cleaned = cleaned[:-2].strip()
+
     try:
-        val = float(cleaned)
-    except ValueError:
+        val = normalize_rupees(cleaned)
+    except Exception:
         return None
     return val  # Keep sign as-is; direction inferred later
 
