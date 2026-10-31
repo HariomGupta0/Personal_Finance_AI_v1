@@ -14,6 +14,7 @@ from backend.app.core.money import (
     mul_paise,
     paise_to_float,
     ratio,
+    round_nearest_paise,
     to_paise,
 )
 
@@ -193,4 +194,38 @@ def test_div_paise():
 
     with pytest.raises(TypeError):
         div_paise(100, False)
+
+
+def test_round_nearest_paise():
+    # 50 rupees = 5000 paise
+    assert round_nearest_paise(0, 5000) == 0
+    assert round_nearest_paise(2499, 5000) == 0
+    assert round_nearest_paise(2500, 5000) == 5000  # half up
+    assert round_nearest_paise(4999, 5000) == 5000
+    assert round_nearest_paise(5000, 5000) == 5000
+    assert round_nearest_paise(7499, 5000) == 5000
+    assert round_nearest_paise(7500, 5000) == 10000  # half up
+    assert round_nearest_paise(360000, 5000) == 360000
+    assert round_nearest_paise(120109, 5000) == 120000
+    assert round_nearest_paise(89999, 5000) == 90000
+
+    # Custom steps
+    assert round_nearest_paise(45, 10) == 50
+    assert round_nearest_paise(44, 10) == 40
+
+    with pytest.raises(ValueError, match="Step must be positive"):
+        round_nearest_paise(100, 0)
+
+    with pytest.raises(ValueError, match="Step must be positive"):
+        round_nearest_paise(100, -5000)
+
+    with pytest.raises(ValueError, match="Amount must be non-negative"):
+        round_nearest_paise(-100, 5000)
+
+    with pytest.raises(TypeError):
+        round_nearest_paise(True, 5000)
+
+    with pytest.raises(TypeError):
+        round_nearest_paise(5000, False)
+
 

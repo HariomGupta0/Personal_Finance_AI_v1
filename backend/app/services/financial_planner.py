@@ -19,11 +19,20 @@ Guarantees:
 
 from __future__ import annotations
 
+from decimal import Decimal
 import json
 import logging
 from datetime import date, datetime
 from typing import Any, Optional
 
+from backend.app.core.money import (
+    div_paise,
+    mul_paise,
+    paise_to_float,
+    ratio,
+    round_nearest_paise,
+    to_paise,
+)
 from backend.app.engine.financial_engine import (
     calculate_category_expenses,
     calculate_comprehensive_health,
@@ -39,6 +48,40 @@ from backend.app.engine.financial_engine import (
 from backend.app.services.llm_service import ask_llm_async
 
 logger = logging.getLogger(__name__)
+
+
+def _parse_paise(val: Any, allow_negative: bool = False) -> int:
+    """Safely convert a rupee value (int, float, str, Decimal) to integer paise."""
+    if val is None or isinstance(val, bool):
+        return 0
+    try:
+        if isinstance(val, (int, float, Decimal)):
+            if allow_negative and val < 0:
+                return -to_paise(-val)
+            if val < 0:
+                return 0
+            return to_paise(val)
+        if isinstance(val, str):
+            s = val.strip()
+            if allow_negative and s.startswith("-"):
+                return -to_paise(s[1:])
+            return to_paise(s)
+        return to_paise(val)
+    except (ValueError, TypeError):
+        return 0
+
+
+def _get_amount_paise(record: dict, key: str = "amount", allow_negative: bool = False) -> int:
+    """Extract integer paise from a record, checking *_paise first, then falling back to rupee field."""
+    if not isinstance(record, dict):
+        return 0
+    paise_key = f"{key}_paise"
+    if paise_key in record:
+        p_val = record[paise_key]
+        if isinstance(p_val, int) and not isinstance(p_val, bool):
+            return p_val if allow_negative else max(0, p_val)
+    return _parse_paise(record.get(key, 0), allow_negative=allow_negative)
+
 
 # Categories generally considered essential needs
 ESSENTIAL_CATEGORIES = {
@@ -71,40 +114,41 @@ def _detect_recurring_commitments(context: dict, reporting_date: Optional[date] 
 
     # 1. EMIs from active loans
     for loan in context.get("loans", []):
-        emi_amt = float(loan.get("emi", 0))
-        if emi_amt > 0:
+        emi_paise = _get_amount_paise(loan, "emi")
+        if emi_paise > 0:
             recurring.append({
                 "type": "EMI",
                 "name": loan.get("loan") or f"Loan ({loan.get('id', 'EMI')})",
-                "amount": emi_amt,
+                "amount": paise_to_float(emi_paise),
                 "due_date": loan.get("due_date"),
                 "status": loan.get("status", "ACTIVE"),
             })
 
     # 2. Frequent subscriptions/bills from monthly transactions
     monthly_txs = _monthly_transactions(context, reporting_date)
-    desc_amounts: dict[str, list[float]] = {}
+    desc_amounts_paise: dict[str, list[int]] = {}
     for tx in monthly_txs:
         if tx.get("type") == "EXPENSE":
             desc = (tx.get("description") or "").strip()
-            amt = float(tx.get("amount", 0))
-            if desc and amt > 0:
-                desc_amounts.setdefault(desc, []).append(amt)
+            amt_p = _get_amount_paise(tx)
+            if desc and amt_p > 0:
+                desc_amounts_paise.setdefault(desc, []).append(amt_p)
 
     # Detect known subscription/utility terms
     recurring_keywords = [
         "netflix", "spotify", "prime", "hotstar", "wifi", "broadband",
         "airtel", "jio", "bescom", "tneb", "electricity", "rent", "maintenance", "gym", "insurance"
     ]
-    for desc, amounts in desc_amounts.items():
+    for desc, amounts_paise in desc_amounts_paise.items():
         lower_desc = desc.lower()
         if any(kw in lower_desc for kw in recurring_keywords):
             # Avoid duplicating loans
             if not any(r["name"].lower() in lower_desc for r in recurring):
+                avg_paise = div_paise(sum(amounts_paise), len(amounts_paise))
                 recurring.append({
                     "type": "SUBSCRIPTION/BILL",
                     "name": desc,
-                    "amount": round(sum(amounts) / len(amounts), 2),
+                    "amount": paise_to_float(avg_paise),
                     "frequency": "Monthly",
                 })
 
@@ -120,55 +164,59 @@ def _calculate_budget_limits(
     """
     Compute category-wise recommended monthly spending limits and potential savings.
     Preserves non-discretionary expenses while suggesting achievable cuts on discretionary categories.
+    All calculations run on integer paise. Discretionary limits round to nearest 5000 paise (₹50).
     """
+    total_income_paise = _parse_paise(total_income)
+    total_expenses_paise = _parse_paise(total_expenses)
     budget_items = []
-    total_potential_savings = 0.0
+    total_potential_savings_paise = 0
 
     # Determine reduction aggressive level based on user's current savings rate
     # If savings rate < 0% (deficit): 25% reduction on discretionary
     # If 0% <= savings rate < 20%: 15-20% reduction on discretionary
     # If savings rate >= 20%: 10% optimization
     if savings_rate < 0:
-        disc_cut_factor = 0.25
+        disc_cut_factor = Decimal("0.25")
     elif savings_rate < 20:
-        disc_cut_factor = 0.20
+        disc_cut_factor = Decimal("0.20")
     else:
-        disc_cut_factor = 0.10
+        disc_cut_factor = Decimal("0.10")
 
     for item in category_breakdown:
         cat = item["category"]
-        current_spent = float(item["amount"])
+        current_spent_paise = _get_amount_paise(item, "amount")
         is_disc = _is_discretionary_category(cat)
 
-        if is_disc and current_spent > 0:
-            reduction = round(current_spent * disc_cut_factor, 2)
-            # Round limit to nearest 50 for clean human budgeting
-            rec_limit = max(0.0, round((current_spent - reduction) / 50) * 50)
-            potential = round(current_spent - rec_limit, 2)
+        if is_disc and current_spent_paise > 0:
+            reduction_paise = mul_paise(current_spent_paise, disc_cut_factor)
+            target_paise = max(0, current_spent_paise - reduction_paise)
+            # Round limit to nearest 5000 paise (₹50) using Decimal ROUND_HALF_UP
+            rec_limit_paise = round_nearest_paise(target_paise, 5000)
+            potential_paise = max(0, current_spent_paise - rec_limit_paise)
         else:
             # Essential categories are preserved
-            rec_limit = current_spent
-            potential = 0.0
+            rec_limit_paise = current_spent_paise
+            potential_paise = 0
 
-        total_potential_savings += potential
+        total_potential_savings_paise += potential_paise
         pct_of_expenses = item.get("percentage", 0.0)
 
         budget_items.append({
             "category": cat,
-            "current_spending": current_spent,
-            "recommended_limit": rec_limit,
-            "potential_savings": potential,
+            "current_spending": paise_to_float(current_spent_paise),
+            "recommended_limit": paise_to_float(rec_limit_paise),
+            "potential_savings": paise_to_float(potential_paise),
             "percentage_of_expenses": pct_of_expenses,
             "is_discretionary": is_disc,
-            "status": "OVER_BUDGET" if potential > 0 else "WITHIN_BUDGET",
+            "status": "OVER_BUDGET" if potential_paise > 0 else "WITHIN_BUDGET",
         })
 
-    recommended_total_budget = round(max(0.0, total_expenses - total_potential_savings), 2)
+    recommended_total_budget_paise = max(0, total_expenses_paise - total_potential_savings_paise)
 
     return {
-        "current_total_expenses": total_expenses,
-        "recommended_total_budget": recommended_total_budget,
-        "total_potential_savings": round(total_potential_savings, 2),
+        "current_total_expenses": paise_to_float(total_expenses_paise),
+        "recommended_total_budget": paise_to_float(recommended_total_budget_paise),
+        "total_potential_savings": paise_to_float(total_potential_savings_paise),
         "categories": budget_items,
     }
 
@@ -183,40 +231,50 @@ def _calculate_savings_and_emergency_targets(
 ) -> dict:
     """
     Calculate realistic monthly savings and time-to-target for emergency fund.
+    All calculations run on integer paise.
     """
-    # Realistic monthly savings = existing surplus + potential budget trim
-    base_surplus = max(0.0, current_savings)
-    realistic_monthly_savings = base_surplus + potential_budget_savings
+    savings_paise = _parse_paise(current_savings, allow_negative=True)
+    base_surplus_paise = max(0, savings_paise)
+    pot_savings_paise = _parse_paise(potential_budget_savings)
+    realistic_monthly_savings_paise = base_surplus_paise + pot_savings_paise
 
-    if total_income > 0:
+    income_paise = _parse_paise(total_income)
+    if income_paise > 0:
         # Cap realistic savings proposal at 40% of income so it stays achievable
-        realistic_monthly_savings = min(realistic_monthly_savings, round(total_income * 0.40, 2))
+        cap_paise = mul_paise(income_paise, Decimal("0.40"))
+        realistic_monthly_savings_paise = min(realistic_monthly_savings_paise, cap_paise)
 
-    emergency_shortfall = float(emergency_fund_data.get("shortfall", 0.0))
-    recommended_fund = float(emergency_fund_data.get("recommended_fund", 0.0))
-    current_fund = float(emergency_fund_data.get("current_fund", 0.0))
+    recommended_fund_paise = _get_amount_paise(emergency_fund_data, "recommended_fund")
+    current_fund_paise = _get_amount_paise(emergency_fund_data, "current_fund")
 
     # Also check liquid account balance if explicit goal isn't set
-    total_balance = sum(float(a.get("balance", 0.0)) for a in accounts)
-    effective_cushion = max(current_fund, total_balance)
-    effective_shortfall = max(0.0, recommended_fund - effective_cushion)
+    total_balance_paise = sum(
+        _get_amount_paise(a, "balance", allow_negative=True)
+        for a in accounts
+        if isinstance(a, dict)
+    )
+    effective_cushion_paise = max(current_fund_paise, total_balance_paise)
+    effective_shortfall_paise = max(0, recommended_fund_paise - effective_cushion_paise)
 
-    if effective_shortfall == 0:
+    realistic_monthly_savings_rupees = paise_to_float(realistic_monthly_savings_paise)
+
+    if effective_shortfall_paise == 0:
         timeline_months = 0.0
         timeline_text = "Target Achieved (You have 3+ months of essential reserves)"
-    elif realistic_monthly_savings > 0:
-        timeline_months = round(effective_shortfall / realistic_monthly_savings, 1)
-        timeline_text = f"~{timeline_months} months at ₹{realistic_monthly_savings:,.2f}/month"
+    elif realistic_monthly_savings_paise > 0:
+        r = ratio(effective_shortfall_paise, realistic_monthly_savings_paise)
+        timeline_months = round(r, 1) if r is not None else None
+        timeline_text = f"~{timeline_months} months at ₹{realistic_monthly_savings_rupees:,.2f}/month"
     else:
         timeline_months = None
         timeline_text = "Needs expense reduction or income addition to establish savings rate"
 
     return {
-        "current_monthly_savings": current_savings,
-        "recommended_monthly_savings": round(realistic_monthly_savings, 2),
-        "emergency_fund_3mo_target": recommended_fund,
-        "emergency_fund_current": effective_cushion,
-        "emergency_fund_shortfall": round(effective_shortfall, 2),
+        "current_monthly_savings": paise_to_float(savings_paise),
+        "recommended_monthly_savings": realistic_monthly_savings_rupees,
+        "emergency_fund_3mo_target": paise_to_float(recommended_fund_paise),
+        "emergency_fund_current": paise_to_float(effective_cushion_paise),
+        "emergency_fund_shortfall": paise_to_float(effective_shortfall_paise),
         "estimated_months_to_target": timeline_months,
         "timeline_text": timeline_text,
     }
@@ -280,8 +338,15 @@ def _generate_deterministic_fallback(
         })
 
     # Insight 2: Discretionary vs Essential
-    disc_total = sum(c["current_spending"] for c in budget_data.get("categories", []) if c["is_discretionary"])
-    disc_pct = (disc_total / expenses * 100) if expenses > 0 else 0.0
+    disc_total_paise = sum(
+        _get_amount_paise(c, "current_spending")
+        for c in budget_data.get("categories", [])
+        if c.get("is_discretionary")
+    )
+    expenses_paise = _parse_paise(expenses)
+    r_disc = ratio(disc_total_paise, expenses_paise)
+    disc_pct = (r_disc * 100.0) if r_disc is not None else 0.0
+    disc_total = paise_to_float(disc_total_paise)
     insights.append({
         "topic": "Discretionary Spending",
         "text": f"Discretionary lifestyle spending (Dining, Shopping, Entertainment) constitutes {disc_pct:.1f}% (₹{disc_total:,.2f}) of your monthly budget.",
@@ -298,7 +363,8 @@ def _generate_deterministic_fallback(
             "category": "Debt",
         })
     elif recurring_items:
-        rec_sum = sum(r.get("amount", 0.0) for r in recurring_items)
+        rec_sum_paise = sum(_get_amount_paise(r) for r in recurring_items)
+        rec_sum = paise_to_float(rec_sum_paise)
         insights.append({
             "topic": "Recurring Subscriptions",
             "text": f"You have {len(recurring_items)} recurring bills and subscriptions totaling ~₹{rec_sum:,.2f}/month.",
@@ -554,15 +620,19 @@ async def generate_financial_plan(
     runway_data = calculate_emergency_runway(context, reporting_date)
     health_data = calculate_comprehensive_health(context, reporting_date)
 
-    total_income = float(summary.get("income", 0.0))
-    total_expenses = float(summary.get("expenses", 0.0))
-    current_savings = float(summary.get("savings", 0.0))
+    total_income_paise = _get_amount_paise(summary, "income")
+    total_expenses_paise = _get_amount_paise(summary, "expenses")
+    current_savings_paise = _get_amount_paise(summary, "savings", allow_negative=True)
     savings_rate = float(summary.get("savings_rate", 0.0))
+
+    total_income = paise_to_float(total_income_paise)
+    total_expenses = paise_to_float(total_expenses_paise)
+    current_savings = paise_to_float(current_savings_paise)
 
     # 2. Limitations & Missing Data Detection
     limitations: list[str] = []
     transactions = context.get("transactions", [])
-    if total_income == 0.0:
+    if total_income_paise == 0:
         limitations.append(
             f"No monthly income was detected in your statement. Budget limits and savings goals are computed "
             f"against your observed expense outflow of ₹{total_expenses:,.2f}. Please record your monthly salary "
@@ -586,7 +656,8 @@ async def generate_financial_plan(
 
     # 4. Recurring Commitments
     recurring_items = _detect_recurring_commitments(context, reporting_date)
-    total_recurring_monthly = sum(r.get("amount", 0.0) for r in recurring_items)
+    total_recurring_monthly_paise = sum(_get_amount_paise(r) for r in recurring_items)
+    total_recurring_monthly = paise_to_float(total_recurring_monthly_paise)
 
     # 5. Savings & Emergency Fund Target Timeline
     savings_targets = _calculate_savings_and_emergency_targets(

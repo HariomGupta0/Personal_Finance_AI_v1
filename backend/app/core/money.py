@@ -262,3 +262,41 @@ def div_paise(p: int, n: int) -> int:
     return int(result)
 
 
+def round_nearest_paise(p: int, step: int = 5000) -> int:
+    """
+    Round an integer amount in paise to the nearest multiple of step paise (default 5000 paise = ₹50),
+    using Decimal arithmetic with ROUND_HALF_UP.
+
+    Parameters
+    ----------
+    p : int
+        Amount in Paise (non-negative).
+    step : int
+        Step multiple in Paise (default 5000 = ₹50). Must be positive.
+
+    Returns
+    -------
+    int
+        Amount in Paise rounded to the nearest multiple of step.
+
+    Raises
+    -------
+    TypeError
+        If p or step is not an integer or is a bool.
+    ValueError
+        If step <= 0 or p < 0.
+    """
+    if isinstance(p, bool) or not isinstance(p, int):
+        raise TypeError(f"Expected int paise, got {type(p).__name__}")
+    if isinstance(step, bool) or not isinstance(step, int):
+        raise TypeError(f"Expected int step, got {type(step).__name__}")
+    if step <= 0:
+        raise ValueError("Step must be positive")
+    if p < 0:
+        raise ValueError("Amount must be non-negative")
+
+    steps = (Decimal(p) / Decimal(step)).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+    return int(steps) * step
+
+
+
