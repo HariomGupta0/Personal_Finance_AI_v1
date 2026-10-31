@@ -19,6 +19,36 @@ import TransactionManager from './components/TransactionManager';
 import AssistantChat from './components/AssistantChat';
 import LoginScreen from './components/LoginScreen';
 import ImportManager from './components/ImportManager';
+import FinancialPlan from './components/FinancialPlan';
+
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, errorInfo) {
+    console.error('UI Render Error caught by ErrorBoundary:', error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="glass-card" style={{ maxWidth: 600, margin: '40px auto', padding: 32, textAlign: 'center' }}>
+          <h3 style={{ color: '#f87171', marginBottom: 12 }}>Display Error Caught</h3>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginBottom: 20 }}>
+            {this.state.error?.message || 'An unexpected rendering error occurred in this view.'}
+          </p>
+          <button className="btn-primary" onClick={() => { this.setState({ hasError: false }); window.location.reload(); }}>
+            Reload Page
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -27,10 +57,27 @@ export default function App() {
   const [debt, setDebt] = useState(null);
   const [emergency, setEmergency] = useState(null);
   const [transactions, setTransactions] = useState([]);
+  const [financialPlan, setFinancialPlan] = useState(null);
+  const [planLoading, setPlanLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [user, setUser] = useState(null);
   const [authChecking, setAuthChecking] = useState(true);
+
+  const fetchFinancialPlan = async (forceRefresh = false) => {
+    try {
+      setPlanLoading(true);
+      const url = forceRefresh ? '/api/finance/plan?refresh=true' : '/api/finance/plan';
+      const res = await fetch(url);
+      if (res.ok) {
+        setFinancialPlan(await res.json());
+      }
+    } catch (err) {
+      console.error('Error fetching financial plan:', err);
+    } finally {
+      setPlanLoading(false);
+    }
+  };
 
   const fetchAllData = async () => {
     try {
@@ -51,6 +98,8 @@ export default function App() {
         const txData = await txRes.json();
         setTransactions(txData.transactions || []);
       }
+      // Also refresh the personalized financial plan asynchronously
+      fetchFinancialPlan();
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
     } finally {
@@ -108,6 +157,7 @@ export default function App() {
     setDebt(null);
     setEmergency(null);
     setTransactions([]);
+    setFinancialPlan(null);
   };
 
   if (authChecking) {
@@ -283,7 +333,7 @@ export default function App() {
           <div>Connecting to Neo4j Knowledge Graph & Loading Financial Engine...</div>
         </div>
       ) : (
-        <>
+        <ErrorBoundary>
           {activeTab === 'dashboard' && (
             <div className="animate-fade-in">
               {/* Primary KPI Summary Row */}
@@ -300,6 +350,15 @@ export default function App() {
                 transactions={transactions}
                 onAddTransaction={handleAddTransaction}
                 onDeleteTransaction={handleDeleteTransaction}
+              />
+
+              {/* AI-Powered Personalized Financial Plan */}
+              <FinancialPlan
+                plan={financialPlan}
+                loading={planLoading}
+                onRefresh={() => fetchFinancialPlan(true)}
+                onOpenImport={() => setActiveTab('import')}
+                onDataChange={fetchAllData}
               />
             </div>
           )}
@@ -352,10 +411,18 @@ export default function App() {
 
           {activeTab === 'import' && (
             <div className="animate-fade-in">
-              <ImportManager onImportComplete={fetchAllData} />
+              <ImportManager
+                onImportComplete={async () => {
+                  await fetchAllData();
+                  await fetchFinancialPlan(true);
+                }}
+                onViewPlan={() => {
+                  setActiveTab('dashboard');
+                }}
+              />
             </div>
           )}
-        </>
+        </ErrorBoundary>
       )}
     </div>
   );

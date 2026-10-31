@@ -7,7 +7,9 @@ import {
   ArrowUpRight, 
   ArrowDownRight, 
   Search, 
-  Filter 
+  Filter,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 
 export default function TransactionManager({ transactions, onAddTransaction, onDeleteTransaction }) {
@@ -15,6 +17,7 @@ export default function TransactionManager({ transactions, onAddTransaction, onD
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [rowLimit, setRowLimit] = useState(10);
   const sym = "₹";
 
   const handleNlSubmit = async (e) => {
@@ -38,6 +41,10 @@ export default function TransactionManager({ transactions, onAddTransaction, onD
     return matchesSearch && matchesCategory;
   });
 
+  const displayedTransactions = rowLimit === 'ALL'
+    ? filteredTransactions
+    : filteredTransactions.slice(0, Number(rowLimit));
+
   return (
     <div className="glass-card" style={{ marginTop: '28px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '14px' }}>
@@ -53,6 +60,30 @@ export default function TransactionManager({ transactions, onAddTransaction, onD
 
         {/* Search & Filter */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          {/* Row limit dropdown */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Show:</span>
+            <select 
+              value={rowLimit}
+              onChange={(e) => setRowLimit(e.target.value === 'ALL' ? 'ALL' : Number(e.target.value))}
+              style={{
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: '8px',
+                padding: '6px 10px',
+                color: 'var(--text-main)',
+                fontSize: '0.82rem',
+                outline: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              <option value={10} style={{ background: '#111827', color: '#fff' }}>10 rows</option>
+              <option value={25} style={{ background: '#111827', color: '#fff' }}>25 rows</option>
+              <option value={50} style={{ background: '#111827', color: '#fff' }}>50 rows</option>
+              <option value="ALL" style={{ background: '#111827', color: '#fff' }}>All ({filteredTransactions.length})</option>
+            </select>
+          </div>
+
           <div style={{ position: 'relative' }}>
             <Search size={14} style={{ position: 'absolute', left: '10px', top: '10px', color: 'var(--text-dim)' }} />
             <input 
@@ -127,7 +158,7 @@ export default function TransactionManager({ transactions, onAddTransaction, onD
                 </td>
               </tr>
             ) : (
-              filteredTransactions.map((tx) => {
+              displayedTransactions.map((tx) => {
                 const isExpense = tx.type === 'EXPENSE';
                 return (
                   <tr key={tx.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', transition: 'background 0.15s ease' }}>
@@ -175,6 +206,48 @@ export default function TransactionManager({ transactions, onAddTransaction, onD
           </tbody>
         </table>
       </div>
+
+      {/* Pagination & Collapse/Expand Footer */}
+      {filteredTransactions.length > 10 && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginTop: '16px',
+          paddingTop: '14px',
+          borderTop: '1px solid var(--border-subtle)',
+          flexWrap: 'wrap',
+          gap: '12px'
+        }}>
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+            Showing <strong style={{ color: 'var(--text-main)' }}>{displayedTransactions.length}</strong> of <strong style={{ color: 'var(--text-main)' }}>{filteredTransactions.length}</strong> total transactions
+          </span>
+
+          <div style={{ display: 'flex', gap: '8px' }}>
+            {rowLimit !== 'ALL' && displayedTransactions.length < filteredTransactions.length ? (
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => setRowLimit('ALL')}
+                style={{ fontSize: '0.78rem', padding: '6px 14px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                title="Expand to see all transactions"
+              >
+                <ChevronDown size={14} color="var(--accent-secondary)" /> Show All ({filteredTransactions.length})
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => setRowLimit(10)}
+                style={{ fontSize: '0.78rem', padding: '6px 14px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                title="Collapse view back to recent 10 transactions"
+              >
+                <ChevronUp size={14} color="var(--accent-primary)" /> Collapse to Recent 10
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

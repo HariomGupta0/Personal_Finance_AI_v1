@@ -14,6 +14,7 @@ import {
   Eye,
   Send,
   RefreshCw,
+  Sparkles,
 } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
@@ -26,9 +27,9 @@ const fmt = (n) => parseFloat(n || 0).toLocaleString('en-IN', { minimumFractionD
 function Badge({ label, color }) {
   const colors = {
     success: { bg: 'rgba(16,185,129,0.15)', color: '#34d399', border: 'rgba(16,185,129,0.3)' },
-    danger:  { bg: 'rgba(239,68,68,0.15)',  color: '#f87171', border: 'rgba(239,68,68,0.3)' },
+    danger: { bg: 'rgba(239,68,68,0.15)', color: '#f87171', border: 'rgba(239,68,68,0.3)' },
     warning: { bg: 'rgba(245,158,11,0.15)', color: '#fbbf24', border: 'rgba(245,158,11,0.3)' },
-    info:    { bg: 'rgba(99,102,241,0.15)', color: '#818cf8', border: 'rgba(99,102,241,0.3)' },
+    info: { bg: 'rgba(99,102,241,0.15)', color: '#818cf8', border: 'rgba(99,102,241,0.3)' },
   };
   const s = colors[color] || colors.info;
   return (
@@ -53,10 +54,10 @@ function Spinner() {
 
 function Alert({ type, children }) {
   const cfg = {
-    error:   { bg: 'rgba(239,68,68,0.08)',  border: 'rgba(239,68,68,0.3)',   color: '#f87171' },
-    warning: { bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.3)',  color: '#fbbf24' },
-    success: { bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.3)',  color: '#34d399' },
-    info:    { bg: 'rgba(99,102,241,0.08)', border: 'rgba(99,102,241,0.3)',  color: '#818cf8' },
+    error: { bg: 'rgba(239,68,68,0.08)', border: 'rgba(239,68,68,0.3)', color: '#f87171' },
+    warning: { bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.3)', color: '#fbbf24' },
+    success: { bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.3)', color: '#34d399' },
+    info: { bg: 'rgba(99,102,241,0.08)', border: 'rgba(99,102,241,0.3)', color: '#818cf8' },
   };
   const c = cfg[type] || cfg.info;
   return (
@@ -65,7 +66,7 @@ function Alert({ type, children }) {
       padding: '10px 14px', fontSize: '0.82rem', color: c.color, lineHeight: 1.5,
       display: 'flex', gap: 8, alignItems: 'flex-start'
     }}>
-      {type === 'error'   && <XCircle size={15} style={{ flexShrink: 0, marginTop: 1 }} />}
+      {type === 'error' && <XCircle size={15} style={{ flexShrink: 0, marginTop: 1 }} />}
       {type === 'warning' && <AlertTriangle size={15} style={{ flexShrink: 0, marginTop: 1 }} />}
       {type === 'success' && <CheckCircle2 size={15} style={{ flexShrink: 0, marginTop: 1 }} />}
       <span>{children}</span>
@@ -82,8 +83,8 @@ function Steps({ current }) {
   return (
     <div style={{ display: 'flex', gap: 0, marginBottom: 24, alignItems: 'center' }}>
       {steps.map((s, i) => {
-        const done    = i < current;
-        const active  = i === current;
+        const done = i < current;
+        const active = i === current;
         const pending = i > current;
         return (
           <React.Fragment key={s}>
@@ -120,10 +121,10 @@ function DropZone({ mode, onFile, disabled }) {
   const inputRef = useRef();
   const [dragging, setDragging] = useState(false);
   const accept = mode === 'csv' ? '.csv,.tsv,.txt' : '.jpg,.jpeg,.png,.webp,.gif';
-  const label  = mode === 'csv'
+  const label = mode === 'csv'
     ? 'Drop your bank statement CSV here or click to browse'
     : 'Drop a receipt / UPI screenshot here or click to browse';
-  const hint  = mode === 'csv'
+  const hint = mode === 'csv'
     ? 'Supports: debit/credit, narration/withdrawal, standard HDFC/SBI/ICICI formats · Max 5 MB'
     : 'Supports: JPEG, PNG, WebP, GIF · Max 10 MB';
 
@@ -162,7 +163,7 @@ function DropZone({ mode, onFile, disabled }) {
 
 function PreviewTable({ rows, selectedIds, onToggle, onToggleAll, onEdit }) {
   const allSelected = rows.every(r => selectedIds.has(r._id));
-  const dupCount    = rows.filter(r => r.duplicate_status === 'POSSIBLE_DUPLICATE').length;
+  const dupCount = rows.filter(r => r.duplicate_status === 'POSSIBLE_DUPLICATE').length;
   const confirmedDup = rows.filter(r => r.duplicate_status === 'CONFIRMED_DUPLICATE').length;
 
   return (
@@ -202,9 +203,9 @@ function PreviewTable({ rows, selectedIds, onToggle, onToggleAll, onEdit }) {
           <tbody>
             {rows.map((row) => {
               const isSelected = selectedIds.has(row._id);
-              const isDup      = row.duplicate_status === 'POSSIBLE_DUPLICATE';
-              const isConfDup  = row.duplicate_status === 'CONFIRMED_DUPLICATE';
-              const isIncome   = row.type === 'INCOME';
+              const isDup = row.duplicate_status === 'POSSIBLE_DUPLICATE';
+              const isConfDup = row.duplicate_status === 'CONFIRMED_DUPLICATE';
+              const isIncome = row.type === 'INCOME';
 
               return (
                 <tr key={row._id}
@@ -241,7 +242,7 @@ function PreviewTable({ rows, selectedIds, onToggle, onToggleAll, onEdit }) {
                   </td>
                   <td style={{ padding: '10px 10px', textAlign: 'center' }}>
                     {isConfDup && <Badge label="Duplicate" color="danger" />}
-                    {isDup     && <Badge label="Review"    color="warning" />}
+                    {isDup && <Badge label="Review" color="warning" />}
                     {!isDup && !isConfDup && <Badge label="OK" color="success" />}
                   </td>
                   <td style={{ padding: '10px 10px', textAlign: 'center' }}>
@@ -310,7 +311,7 @@ function RowEditor({ row, onSave, onCancel }) {
       </div>
       <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
         <button className="btn-secondary" style={{ padding: '6px 14px', fontSize: '0.8rem' }} onClick={onCancel}>Cancel</button>
-        <button className="btn-primary"   style={{ padding: '6px 14px', fontSize: '0.8rem' }} onClick={() => onSave(form)}>Save</button>
+        <button className="btn-primary" style={{ padding: '6px 14px', fontSize: '0.8rem' }} onClick={() => onSave(form)}>Save</button>
       </div>
     </div>
   );
@@ -383,7 +384,7 @@ function ImageReviewForm({ extraction, onSave, onCancel }) {
       </div>
       <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
         <button className="btn-secondary" style={{ padding: '6px 14px', fontSize: '0.8rem' }} onClick={onCancel}>Cancel</button>
-        <button className="btn-primary"   style={{ padding: '6px 14px', fontSize: '0.8rem' }}
+        <button className="btn-primary" style={{ padding: '6px 14px', fontSize: '0.8rem' }}
           disabled={!form.amount || !form.date || !form.description}
           onClick={() => onSave(form)}>
           Confirm &amp; Import
@@ -397,7 +398,7 @@ function ImageReviewForm({ extraction, onSave, onCancel }) {
 // Result summary after confirm
 // ---------------------------------------------------------------------------
 
-function ResultSummary({ result, onReset }) {
+function ResultSummary({ result, onReset, onViewPlan }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div style={{ textAlign: 'center', padding: '24px 0' }}>
@@ -411,7 +412,7 @@ function ResultSummary({ result, onReset }) {
         <h3 style={{ marginTop: 12, fontSize: '1.1rem' }}>
           {result.status === 'SUCCESS' && '✅ Import Complete'}
           {result.status === 'PARTIAL' && '⚠️ Partial Import'}
-          {result.status === 'FAILED'  && '❌ Import Failed'}
+          {result.status === 'FAILED' && '❌ Import Failed'}
         </h3>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: 4 }}>
           {result.saved} saved · {result.failed} failed
@@ -441,9 +442,16 @@ function ResultSummary({ result, onReset }) {
           </div>
         </div>
       ))}
-      <button className="btn-secondary" onClick={onReset} style={{ alignSelf: 'center', marginTop: 8 }}>
-        <RefreshCw size={14} /> Import More
-      </button>
+      <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 12, flexWrap: 'wrap' }}>
+        <button className="btn-secondary" onClick={onReset}>
+          <RefreshCw size={14} /> Import More
+        </button>
+        {onViewPlan && (
+          <button className="btn-primary" onClick={onViewPlan} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Sparkles size={14} /> View Personalized Financial Plan →
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -452,27 +460,27 @@ function ResultSummary({ result, onReset }) {
 // Main ImportManager component
 // ---------------------------------------------------------------------------
 
-export default function ImportManager({ onImportComplete }) {
-  const [mode,      setMode]      = useState('csv'); // 'csv' | 'image'
-  const [step,      setStep]      = useState(0);     // 0=upload, 1=preview, 2=confirm, 3=done
-  const [loading,   setLoading]   = useState(false);
-  const [error,     setError]     = useState(null);
+export default function ImportManager({ onImportComplete, onViewPlan }) {
+  const [mode, setMode] = useState('csv'); // 'csv' | 'image'
+  const [step, setStep] = useState(0);     // 0=upload, 1=preview, 2=confirm, 3=done
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   // CSV state
   const [parseResult, setParseResult] = useState(null);
-  const [rows,        setRows]        = useState([]);
+  const [rows, setRows] = useState([]);
   const [selectedIds, setSelectedIds] = useState(new Set());
-  const [editingId,   setEditingId]   = useState(null);
+  const [editingId, setEditingId] = useState(null);
 
   // Image state
-  const [imageResult,   setImageResult]   = useState(null);
+  const [imageResult, setImageResult] = useState(null);
   const [showImageForm, setShowImageForm] = useState(false);
 
   // Confirm result
   const [confirmResult, setConfirmResult] = useState(null);
 
   // Warnings & errors panels
-  const [showErrors,   setShowErrors]   = useState(false);
+  const [showErrors, setShowErrors] = useState(false);
   const [showWarnings, setShowWarnings] = useState(false);
 
   const reset = () => {
@@ -540,12 +548,12 @@ export default function ImportManager({ onImportComplete }) {
     try {
       const body = {
         rows: toImport.map(r => ({
-          date:        r.date,
+          date: r.date,
           description: r.description,
-          amount:      r.amount,
-          type:        r.type,
-          category:    r.category || 'General',
-          source_ref:  r.source_ref || null,
+          amount: r.amount,
+          type: r.type,
+          category: r.category || 'General',
+          source_ref: r.source_ref || null,
           source_type: r.source_type || 'csv',
         })),
       };
@@ -574,12 +582,12 @@ export default function ImportManager({ onImportComplete }) {
         credentials: 'include',
         body: JSON.stringify({
           rows: [{
-            date:        formData.date,
+            date: formData.date,
             description: formData.description,
-            amount:      parseFloat(formData.amount),
-            type:        formData.type,
-            category:    formData.category || 'General',
-            source_ref:  imageResult?.extraction?.source_ref || null,
+            amount: parseFloat(formData.amount),
+            type: formData.type,
+            category: formData.category || 'General',
+            source_ref: imageResult?.extraction?.source_ref || null,
             source_type: 'image',
           }],
         }),
@@ -604,8 +612,8 @@ export default function ImportManager({ onImportComplete }) {
     setEditingId(null);
   };
 
-  const toggleRow    = (id)    => setSelectedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
-  const toggleAll    = (state) => setSelectedIds(new Set(state ? rows.filter(r => r.duplicate_status !== 'CONFIRMED_DUPLICATE').map(r => r._id) : []));
+  const toggleRow = (id) => setSelectedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const toggleAll = (state) => setSelectedIds(new Set(state ? rows.filter(r => r.duplicate_status !== 'CONFIRMED_DUPLICATE').map(r => r._id) : []));
 
   // -------------------------------------------------------------------------
   // Render
@@ -667,15 +675,31 @@ export default function ImportManager({ onImportComplete }) {
           <div style={{
             display: 'flex', gap: 12, flexWrap: 'wrap',
             background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '10px 14px',
-            border: '1px solid var(--border-subtle)', fontSize: '0.8rem'
+            border: '1px solid var(--border-subtle)', fontSize: '0.8rem', alignItems: 'center'
           }}>
-            <span>📄 <strong>{stats.total_rows}</strong> rows read</span>
-            <span>✅ <strong style={{ color: '#34d399' }}>{stats.valid}</strong> valid</span>
-            {stats.parse_errors > 0  && <span>❌ <strong style={{ color: '#f87171' }}>{stats.parse_errors}</strong> parse errors</span>}
-            {stats.invalid > 0       && <span>⚠️ <strong style={{ color: '#fbbf24' }}>{stats.invalid}</strong> invalid</span>}
-            {stats.possible_duplicates > 0 && <span>🔁 <strong style={{ color: '#fbbf24' }}>{stats.possible_duplicates}</strong> possible duplicates</span>}
-            {stats.confirmed_duplicates > 0 && <span>🚫 <strong style={{ color: '#f87171' }}>{stats.confirmed_duplicates}</strong> already imported</span>}
+            <span>📄 <strong>{stats?.total_rows ?? 0}</strong> Total Rows</span>
+            <span>✅ <strong style={{ color: '#34d399' }}>{stats?.accepted_count ?? stats?.valid ?? 0}</strong> Accepted</span>
+            <span>🔁 <strong style={{ color: '#fbbf24' }}>{stats?.duplicate_count ?? ((stats?.possible_duplicates || 0) + (stats?.confirmed_duplicates || 0))}</strong> Duplicates</span>
+            <span>❌ <strong style={{ color: '#f87171' }}>{stats?.rejected_count ?? ((stats?.parse_errors || 0) + (stats?.invalid || 0))}</strong> Rejected</span>
+            {stats?.skipped_count > 0 && (
+              <span>⚪ <strong style={{ color: 'var(--text-muted)' }}>{stats?.skipped_count}</strong> Skipped</span>
+            )}
           </div>
+
+          {/* Unrecognized columns notice */}
+          {parseResult.unrecognized_columns && parseResult.unrecognized_columns.length > 0 && (
+            <Alert type="info">
+              <strong>ℹ️ Unrecognized Column(s) in CSV:</strong> {parseResult.unrecognized_columns.join(', ')}.
+              These columns do not match standard transaction attributes and were safely ignored.
+            </Alert>
+          )}
+
+          {/* Ambiguous date format notice */}
+          {parseResult.date_ambiguity && (
+            <Alert type="warning">
+              <strong>⚠️ Ambiguous Date Format:</strong> Dates with day and month both ≤ 12 (e.g. 01/02/2025) were parsed assuming DD/MM/YYYY. Please verify detected dates in the table below before confirming.
+            </Alert>
+          )}
 
           {/* Warnings collapsible */}
           {parseResult.warnings && parseResult.warnings.length > 0 && (
@@ -693,18 +717,20 @@ export default function ImportManager({ onImportComplete }) {
             </div>
           )}
 
-          {/* Invalid / parse error rows collapsible */}
-          {(parseResult.parse_errors?.length > 0 || parseResult.invalid_rows?.length > 0) && (
+          {/* Rejected / invalid rows collapsible */}
+          {((parseResult.rejected_rows && parseResult.rejected_rows.length > 0) || (parseResult.parse_errors?.length > 0 || parseResult.invalid_rows?.length > 0)) && (
             <div>
               <button onClick={() => setShowErrors(v => !v)}
                 style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.8rem', fontWeight: 600 }}>
-                <XCircle size={14} /> {(parseResult.parse_errors?.length || 0) + (parseResult.invalid_rows?.length || 0)} skipped rows
+                <XCircle size={14} /> {stats?.rejected_count ?? ((parseResult.parse_errors?.length || 0) + (parseResult.invalid_rows?.length || 0))} rejected rows (skipped from import)
                 {showErrors ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
               </button>
               {showErrors && (
                 <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {[...(parseResult.parse_errors || []), ...(parseResult.invalid_rows || [])].map((e, i) => (
-                    <Alert key={i} type="error">{e.error || JSON.stringify(e)}</Alert>
+                  {(parseResult.rejected_rows || [...(parseResult.parse_errors || []), ...(parseResult.invalid_rows || [])]).map((e, i) => (
+                    <Alert key={i} type="error">
+                      <strong>Row {e.row_index ?? '?'}:</strong> {e.error || e.reason || JSON.stringify(e)}
+                    </Alert>
                   ))}
                 </div>
               )}
@@ -712,10 +738,9 @@ export default function ImportManager({ onImportComplete }) {
           )}
 
           {/* Ambiguous mapping notice */}
-          {parseResult.ambiguous && (
+          {parseResult.ambiguous && !parseResult.date_ambiguity && (
             <Alert type="warning">
               The column mapping is ambiguous. Please review the detected layout above and verify the preview below is correct.
-              If columns are wrong, re-upload with a corrected file.
             </Alert>
           )}
 
@@ -744,14 +769,19 @@ export default function ImportManager({ onImportComplete }) {
           {error && <Alert type="error">{error}</Alert>}
 
           {/* Actions */}
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', paddingTop: 8, borderTop: '1px solid var(--border-subtle)' }}>
-            <button className="btn-secondary" onClick={reset} style={{ fontSize: '0.82rem' }}>← Back</button>
-            <button className="btn-primary"
-              disabled={selectedIds.size === 0 || loading}
-              onClick={handleConfirm}
-              style={{ fontSize: '0.82rem' }}>
-              {loading ? <><Spinner /> Importing…</> : <><Send size={14} /> Import {selectedIds.size} Transaction{selectedIds.size !== 1 ? 's' : ''}</>}
-            </button>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'space-between', alignItems: 'center', paddingTop: 8, borderTop: '1px solid var(--border-subtle)' }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
+              🔒 Confirmation commits to ledger &amp; is safe to repeat
+            </span>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button className="btn-secondary" onClick={reset} style={{ fontSize: '0.82rem' }}>← Back</button>
+              <button className="btn-primary"
+                disabled={selectedIds.size === 0 || loading}
+                onClick={handleConfirm}
+                style={{ fontSize: '0.82rem' }}>
+                {loading ? <><Spinner /> Importing…</> : <><Send size={14} /> Import {selectedIds.size} Transaction{selectedIds.size !== 1 ? 's' : ''}</>}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -776,7 +806,7 @@ export default function ImportManager({ onImportComplete }) {
 
       {/* ── STEP 3: DONE ── */}
       {step === 3 && confirmResult && (
-        <ResultSummary result={confirmResult} onReset={reset} />
+        <ResultSummary result={confirmResult} onReset={reset} onViewPlan={onViewPlan} />
       )}
 
       {/* Inline spin animation */}
