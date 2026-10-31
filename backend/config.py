@@ -19,7 +19,7 @@ NEO4J_DATABASE = os.getenv("NEO4J_DATABASE", "finance-ai-antigravity")
 
 # LLM Configuration
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-LLM_MODEL = os.getenv("LLM_MODEL", "openai/gpt-oss-20b")
+LLM_MODEL = os.getenv("LLM_MODEL", "openai/gpt-oss-120b")
 VISION_MODEL = os.getenv("VISION_MODEL", "qwen/qwen3.8-27b")
 DEFAULT_PROMPT_VERSION = os.getenv("DEFAULT_PROMPT_VERSION", "v1.1")
 
