@@ -33,18 +33,10 @@ def _parse_paise(val: Any, allow_negative: bool = False) -> int:
     if val is None or isinstance(val, bool):
         return 0
     try:
-        if isinstance(val, (int, float, Decimal)):
-            if allow_negative and val < 0:
-                return -to_paise(-val)
-            if val < 0:
-                return 0
-            return to_paise(val)
-        if isinstance(val, str):
-            s = val.strip()
-            if allow_negative and s.startswith("-"):
-                return -to_paise(s[1:])
-            return to_paise(s)
-        return to_paise(val)
+        p = to_paise(val)
+        if not allow_negative and p < 0:
+            return 0
+        return p
     except (ValueError, TypeError):
         return 0
 

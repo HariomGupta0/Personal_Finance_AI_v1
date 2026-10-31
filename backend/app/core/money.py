@@ -56,6 +56,8 @@ def to_paise(value: Any) -> int:
 
         try:
             d = Decimal(cleaned)
+            if d.is_nan() or d.is_infinite():
+                raise ValueError("NaN and Inf cannot be converted to paise")
         except Exception as exc:
             raise ValueError(f"Unparseable currency string: {value}") from exc
 
