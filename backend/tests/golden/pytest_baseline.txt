@@ -1,0 +1,1906 @@
+Failed to find real location of C:\Users\gupta\AppData\Local\Programs\Python\Python313\python.exe
+============================= test session starts =============================
+platform win32 -- Python 3.13.0, pytest-9.1.1, pluggy-1.7.0 -- C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP
+configfile: pytest.ini
+plugins: anyio-4.15.1, cov-7.1.0
+collecting ... collected 328 items / 7 errors
+
+backend/tests/test_api.py::test_all_api_endpoints FAILED                 [  0%]
+backend/tests/test_dynamic_graph.py::test_dynamic_graph FAILED           [  0%]
+backend/tests/test_import.py::TestParseDate::test_iso_format PASSED      [  0%]
+backend/tests/test_import.py::TestParseDate::test_dmy_dash PASSED        [  1%]
+backend/tests/test_import.py::TestParseDate::test_dmy_slash PASSED       [  1%]
+backend/tests/test_import.py::TestParseDate::test_dmy_dot PASSED         [  1%]
+backend/tests/test_import.py::TestParseDate::test_month_name_short PASSED [  2%]
+backend/tests/test_import.py::TestParseDate::test_month_name_with_dash PASSED [  2%]
+backend/tests/test_import.py::TestParseDate::test_blank_returns_none PASSED [  2%]
+backend/tests/test_import.py::TestParseDate::test_gibberish_returns_none PASSED [  3%]
+backend/tests/test_import.py::TestParseDate::test_yyyymmdd_slash PASSED  [  3%]
+backend/tests/test_import.py::TestParseAmount::test_plain_float PASSED   [  3%]
+backend/tests/test_import.py::TestParseAmount::test_with_rupee_symbol PASSED [  3%]
+backend/tests/test_import.py::TestParseAmount::test_with_commas PASSED   [  4%]
+backend/tests/test_import.py::TestParseAmount::test_negative PASSED      [  4%]
+backend/tests/test_import.py::TestParseAmount::test_parenthesised_negative PASSED [  4%]
+backend/tests/test_import.py::TestParseAmount::test_blank_returns_none PASSED [  5%]
+backend/tests/test_import.py::TestParseAmount::test_none_input PASSED    [  5%]
+backend/tests/test_import.py::TestParseAmount::test_dash_returns_none PASSED [  5%]
+backend/tests/test_import.py::TestParseAmount::test_nil_returns_none PASSED [  6%]
+backend/tests/test_import.py::TestParseAmount::test_na_returns_none PASSED [  6%]
+backend/tests/test_import.py::TestDetectColumns::test_debit_credit_mode PASSED [  6%]
+backend/tests/test_import.py::TestDetectColumns::test_signed_amount_mode PASSED [  7%]
+backend/tests/test_import.py::TestDetectColumns::test_balance_col_ignored PASSED [  7%]
+backend/tests/test_import.py::TestDetectColumns::test_missing_amount_raises PASSED [  7%]
+backend/tests/test_import.py::TestDetectColumns::test_withdrawal_deposit_mapped PASSED [  7%]
+backend/tests/test_import.py::TestParseCsv::test_synthetic_bank_parses_correctly PASSED [  8%]
+backend/tests/test_import.py::TestParseCsv::test_synthetic_narration_parses_correctly PASSED [  8%]
+backend/tests/test_import.py::TestParseCsv::test_edge_cases_handles_missing_amount PASSED [  8%]
+backend/tests/test_import.py::TestParseCsv::test_edge_cases_handles_invalid_amount PASSED [  9%]
+backend/tests/test_import.py::TestParseCsv::test_edge_cases_zero_amount_rejected PASSED [  9%]
+backend/tests/test_import.py::TestParseCsv::test_edge_cases_refund_as_income PASSED [  9%]
+backend/tests/test_import.py::TestParseCsv::test_description_with_commas_and_quotes PASSED [ 10%]
+backend/tests/test_import.py::TestParseCsv::test_source_ref_extracted PASSED [ 10%]
+backend/tests/test_import.py::TestParseCsv::test_empty_file_raises PASSED [ 10%]
+backend/tests/test_import.py::TestParseCsv::test_non_csv_raises PASSED   [ 10%]
+backend/tests/test_import.py::TestParseCsv::test_balance_column_not_used_as_amount PASSED [ 11%]
+backend/tests/test_import.py::TestDetectMime::test_jpeg PASSED           [ 11%]
+backend/tests/test_import.py::TestDetectMime::test_png PASSED            [ 11%]
+backend/tests/test_import.py::TestDetectMime::test_unsupported_raises PASSED [ 12%]
+backend/tests/test_import.py::TestSanitiseExtraction::test_valid_extraction PASSED [ 12%]
+backend/tests/test_import.py::TestSanitiseExtraction::test_zero_amount_nulled PASSED [ 12%]
+backend/tests/test_import.py::TestSanitiseExtraction::test_unknown_status_generates_warning PASSED [ 13%]
+backend/tests/test_import.py::TestSanitiseExtraction::test_refund_maps_to_income PASSED [ 13%]
+backend/tests/test_import.py::TestSanitiseExtraction::test_unknown_direction_type_is_none PASSED [ 13%]
+backend/tests/test_import.py::TestSanitiseExtraction::test_low_confidence_generates_warning PASSED [ 14%]
+backend/tests/test_import.py::TestSanitiseExtraction::test_bad_date_nulled PASSED [ 14%]
+backend/tests/test_import.py::TestExtractFromImage::test_success_response_parsed PASSED [ 14%]
+backend/tests/test_import.py::TestExtractFromImage::test_api_failure_returns_fallback PASSED [ 14%]
+backend/tests/test_import.py::TestExtractFromImage::test_malformed_json_returns_fallback PASSED [ 15%]
+backend/tests/test_import.py::TestExtractFromImage::test_unsupported_format_raises PASSED [ 15%]
+backend/tests/test_import.py::TestInferCategory::test_rent_maps_to_housing PASSED [ 15%]
+backend/tests/test_import.py::TestInferCategory::test_grocery_maps_to_food PASSED [ 16%]
+backend/tests/test_import.py::TestInferCategory::test_salary_income_maps_correctly PASSED [ 16%]
+backend/tests/test_import.py::TestInferCategory::test_unknown_maps_to_general PASSED [ 16%]
+backend/tests/test_import.py::TestRunPipeline::test_valid_rows_pass PASSED [ 17%]
+backend/tests/test_import.py::TestRunPipeline::test_missing_amount_rejected PASSED [ 17%]
+backend/tests/test_import.py::TestRunPipeline::test_zero_amount_rejected PASSED [ 17%]
+backend/tests/test_import.py::TestRunPipeline::test_invalid_type_rejected PASSED [ 17%]
+backend/tests/test_import.py::TestRunPipeline::test_refund_type_converted_to_income PASSED [ 18%]
+backend/tests/test_import.py::TestRunPipeline::test_category_inferred_if_missing PASSED [ 18%]
+backend/tests/test_import.py::TestRunPipeline::test_date_defaults_to_today_if_missing PASSED [ 18%]
+backend/tests/test_import.py::TestRunPipeline::test_duplicate_detection_mocked PASSED [ 19%]
+backend/tests/test_import.py::TestImportAPIUnit::test_csv_upload_valid_file PASSED [ 19%]
+backend/tests/test_import.py::TestImportAPIUnit::test_csv_upload_rejects_oversized_content PASSED [ 19%]
+backend/tests/test_import.py::TestImportAPIUnit::test_csv_upload_rejects_non_csv_extension PASSED [ 20%]
+backend/tests/test_import.py::TestImportAPIUnit::test_image_upload_rejects_unsupported_format PASSED [ 20%]
+backend/tests/test_import.py::TestImportAPIUnit::test_confirm_requires_auth PASSED [ 20%]
+backend/tests/test_import.py::TestImportAPIUnit::test_confirm_saves_expense FAILED [ 21%]
+backend/tests/test_import.py::TestImportAPIUnit::test_confirm_rejects_zero_amount PASSED [ 21%]
+backend/tests/test_import.py::TestImportAPIUnit::test_confirm_rejects_invalid_type PASSED [ 21%]
+backend/tests/unit/test_api_dependency_injection.py::test_api_summary_with_mock_db PASSED [ 21%]
+backend/tests/unit/test_api_dependency_injection.py::test_api_expenses_with_mock_db PASSED [ 22%]
+backend/tests/unit/test_api_dependency_injection.py::test_api_transactions_list_with_mock_db PASSED [ 22%]
+backend/tests/unit/test_api_dependency_injection.py::test_api_goals_list_with_mock_db PASSED [ 22%]
+backend/tests/unit/test_api_dependency_injection.py::test_api_goal_create_and_delete PASSED [ 23%]
+backend/tests/unit/test_async_llm.py::test_ask_llm_async_success PASSED  [ 23%]
+backend/tests/unit/test_async_llm.py::test_ask_llm_async_fallback_on_failure PASSED [ 23%]
+backend/tests/unit/test_async_llm.py::test_ask_llm_sync_wrapper PASSED   [ 24%]
+backend/tests/unit/test_async_llm.py::test_graph_rag_process_query_async PASSED [ 24%]
+backend/tests/unit/test_automated_evaluation_suite.py::test_evaluator_all_dimensions_pass PASSED [ 24%]
+backend/tests/unit/test_automated_evaluation_suite.py::test_evaluator_individual_dimension_runners PASSED [ 25%]
+backend/tests/unit/test_category_percentage_fix.py::test_category_percentage_relative_to_period_total PASSED [ 25%]
+backend/tests/unit/test_category_percentage_fix.py::test_category_percentage_with_explicit_total_in_context PASSED [ 25%]
+backend/tests/unit/test_category_percentage_fix.py::test_category_percentage_zero_expenses_edge_case PASSED [ 25%]
+backend/tests/unit/test_category_percentage_fix.py::test_category_percentage_zero_spend_in_category PASSED [ 26%]
+backend/tests/unit/test_conversation_memory.py::test_build_prompt_with_history PASSED [ 26%]
+backend/tests/unit/test_conversation_memory.py::test_build_prompt_without_history PASSED [ 26%]
+backend/tests/unit/test_conversation_memory.py::test_query_request_model_with_history PASSED [ 27%]
+backend/tests/unit/test_conversation_memory.py::test_query_request_model_default_empty_history PASSED [ 27%]
+backend/tests/unit/test_csv_import_audit.py::test_preview_detection_fields_and_categories PASSED [ 27%]
+backend/tests/unit/test_csv_import_audit.py::test_malformed_rows_and_no_guessing_amounts PASSED [ 28%]
+backend/tests/unit/test_csv_import_audit.py::test_ambiguous_date_format_detection PASSED [ 28%]
+backend/tests/unit/test_csv_import_audit.py::test_unrecognized_columns_identification PASSED [ 28%]
+backend/tests/unit/test_csv_import_audit.py::test_row_counts_reporting[asyncio] PASSED [ 28%]
+backend/tests/unit/test_csv_import_audit.py::test_confirm_import_idempotent_safety PASSED [ 29%]
+backend/tests/unit/test_csv_parser.py::TestDateParsing::test_iso_date PASSED [ 29%]
+backend/tests/unit/test_csv_parser.py::TestDateParsing::test_indian_dmy_slashes PASSED [ 29%]
+backend/tests/unit/test_csv_parser.py::TestDateParsing::test_indian_dmy_hyphens PASSED [ 30%]
+backend/tests/unit/test_csv_parser.py::TestDateParsing::test_month_abbreviation PASSED [ 30%]
+backend/tests/unit/test_csv_parser.py::TestDateParsing::test_invalid_date_returns_none PASSED [ 30%]
+backend/tests/unit/test_csv_parser.py::TestAmountParsing::test_clean_number PASSED [ 31%]
+backend/tests/unit/test_csv_parser.py::TestAmountParsing::test_amount_with_rupee_and_commas PASSED [ 31%]
+backend/tests/unit/test_csv_parser.py::TestAmountParsing::test_amount_with_dollar PASSED [ 31%]
+backend/tests/unit/test_csv_parser.py::TestAmountParsing::test_parenthesised_negative PASSED [ 32%]
+backend/tests/unit/test_csv_parser.py::TestAmountParsing::test_blank_and_na_cells_return_none PASSED [ 32%]
+backend/tests/unit/test_csv_parser.py::TestDualColumnDebitCreditCSV::test_debit_credit_format PASSED [ 32%]
+backend/tests/unit/test_csv_parser.py::TestDualColumnDebitCreditCSV::test_both_debit_and_credit_flagged_as_error PASSED [ 32%]
+backend/tests/unit/test_csv_parser.py::TestSingleAmountAndTypeCSV::test_amount_and_type_columns PASSED [ 33%]
+backend/tests/unit/test_csv_parser.py::TestSignedAmountCSV::test_signed_amounts PASSED [ 33%]
+backend/tests/unit/test_csv_parser.py::TestInvalidFilesAndEdgeCases::test_empty_csv_raises_error PASSED [ 33%]
+backend/tests/unit/test_csv_parser.py::TestInvalidFilesAndEdgeCases::test_html_content_rejected PASSED [ 34%]
+backend/tests/unit/test_csv_parser.py::TestInvalidFilesAndEdgeCases::test_json_content_rejected PASSED [ 34%]
+backend/tests/unit/test_csv_parser.py::TestInvalidFilesAndEdgeCases::test_missing_amount_columns_raises_error PASSED [ 34%]
+backend/tests/unit/test_evidence_presentation.py::test_evidence_presentation_purchase_safety PASSED [ 35%]
+backend/tests/unit/test_evidence_presentation.py::test_evidence_presentation_savings_analysis PASSED [ 35%]
+backend/tests/unit/test_evidence_presentation.py::test_evidence_presentation_emergency_fund PASSED [ 35%]
+backend/tests/unit/test_evidence_presentation.py::test_missing_data_caveat_zero_expenses_in_purchase_safety PASSED [ 35%]
+backend/tests/unit/test_evidence_presentation.py::test_missing_data_caveat_zero_income_with_active_debt PASSED [ 36%]
+backend/tests/unit/test_evidence_presentation.py::test_missing_data_caveat_no_accounts_linked PASSED [ 36%]
+backend/tests/unit/test_evidence_presentation.py::test_missing_data_caveat_missing_emergency_goal PASSED [ 36%]
+backend/tests/unit/test_evidence_presentation.py::test_missing_data_caveat_unknown_intent PASSED [ 37%]
+backend/tests/unit/test_expenditure_reproduction.py::test_reproduce_category_percentage_isolation_bug PASSED [ 37%]
+backend/tests/unit/test_expenditure_reproduction.py::test_reproduce_merchant_misclassification_bug PASSED [ 37%]
+backend/tests/unit/test_expenditure_reproduction.py::test_reproduce_top_transactions_aggregation_bug PASSED [ 38%]
+backend/tests/unit/test_expenditure_reproduction.py::test_reproduce_period_comparison_drops_second_month_bug PASSED [ 38%]
+backend/tests/unit/test_financial_engine.py::TestResolveReportingDate::test_explicit_date_is_returned_unchanged PASSED [ 38%]
+backend/tests/unit/test_financial_engine.py::TestResolveReportingDate::test_no_dates_in_context_returns_today PASSED [ 39%]
+backend/tests/unit/test_financial_engine.py::TestResolveReportingDate::test_current_month_data_returns_today PASSED [ 39%]
+backend/tests/unit/test_financial_engine.py::TestResolveReportingDate::test_non_dict_context_returns_today PASSED [ 39%]
+backend/tests/unit/test_financial_engine.py::TestIsInReportingMonth::test_matching_month PASSED [ 39%]
+backend/tests/unit/test_financial_engine.py::TestIsInReportingMonth::test_different_month PASSED [ 40%]
+backend/tests/unit/test_financial_engine.py::TestIsInReportingMonth::test_missing_date_returns_false PASSED [ 40%]
+backend/tests/unit/test_financial_engine.py::TestIsInReportingMonth::test_invalid_date_string_returns_false PASSED [ 40%]
+backend/tests/unit/test_financial_engine.py::TestIsInReportingMonth::test_date_object_works PASSED [ 41%]
+backend/tests/unit/test_financial_engine.py::TestCalculateSavingsRate::test_correct_totals PASSED [ 41%]
+backend/tests/unit/test_financial_engine.py::TestCalculateSavingsRate::test_savings_rate_formula PASSED [ 41%]
+backend/tests/unit/test_financial_engine.py::TestCalculateSavingsRate::test_zero_income_returns_zero_rate PASSED [ 42%]
+backend/tests/unit/test_financial_engine.py::TestCalculateSavingsRate::test_zero_expenses PASSED [ 42%]
+backend/tests/unit/test_financial_engine.py::TestCalculateSavingsRate::test_result_has_required_keys PASSED [ 42%]
+backend/tests/unit/test_financial_engine.py::TestCalculateEmergencyFund::test_recommended_fund_is_3x_monthly_expenses PASSED [ 42%]
+backend/tests/unit/test_financial_engine.py::TestCalculateEmergencyFund::test_shortfall_is_non_negative PASSED [ 43%]
+backend/tests/unit/test_financial_engine.py::TestCalculateEmergencyFund::test_correct_shortfall PASSED [ 43%]
+backend/tests/unit/test_financial_engine.py::TestCalculateEmergencyFund::test_no_goals_gives_zero_current_fund PASSED [ 43%]
+backend/tests/unit/test_financial_engine.py::TestCalculateEmergencyFund::test_zero_expenses_gives_zero_shortfall PASSED [ 44%]
+backend/tests/unit/test_financial_engine.py::TestCalculateEmergencyRunway::test_runway_calculation PASSED [ 44%]
+backend/tests/unit/test_financial_engine.py::TestCalculateEmergencyRunway::test_runway_status_insufficient PASSED [ 44%]
+backend/tests/unit/test_financial_engine.py::TestCalculateEmergencyRunway::test_strong_runway PASSED [ 45%]
+backend/tests/unit/test_financial_engine.py::TestCalculateEmergencyRunway::test_healthy_runway PASSED [ 45%]
+backend/tests/unit/test_financial_engine.py::TestCalculateEmergencyRunway::test_critical_runway PASSED [ 45%]
+backend/tests/unit/test_financial_engine.py::TestCalculateEmergencyRunway::test_zero_expenses_returns_12_months PASSED [ 46%]
+backend/tests/unit/test_financial_engine.py::TestCalculateEmergencyRunway::test_zero_balance_returns_critical PASSED [ 46%]
+backend/tests/unit/test_financial_engine.py::TestCalculateDebtBurden::test_total_outstanding_debt PASSED [ 46%]
+backend/tests/unit/test_financial_engine.py::TestCalculateDebtBurden::test_monthly_emi PASSED [ 46%]
+backend/tests/unit/test_financial_engine.py::TestCalculateDebtBurden::test_dti_ratio PASSED [ 47%]
+backend/tests/unit/test_financial_engine.py::TestCalculateDebtBurden::test_low_risk_classification PASSED [ 47%]
+backend/tests/unit/test_financial_engine.py::TestCalculateDebtBurden::test_high_dti_gives_high_risk PASSED [ 47%]
+backend/tests/unit/test_financial_engine.py::TestCalculateDebtBurden::test_critical_dti PASSED [ 48%]
+backend/tests/unit/test_financial_engine.py::TestCalculateDebtBurden::test_no_loans_gives_zero_dti PASSED [ 48%]
+backend/tests/unit/test_financial_engine.py::TestCalculateDebtBurden::test_zero_income_gives_zero_dti PASSED [ 48%]
+backend/tests/unit/test_financial_engine.py::TestCheckPurchaseSafety::test_large_purchase_is_not_safe PASSED [ 49%]
+backend/tests/unit/test_financial_engine.py::TestCheckPurchaseSafety::test_not_safe_has_very_high_risk PASSED [ 49%]
+backend/tests/unit/test_financial_engine.py::TestCheckPurchaseSafety::test_tiny_purchase_is_safe PASSED [ 49%]
+backend/tests/unit/test_financial_engine.py::TestCheckPurchaseSafety::test_evidence_contains_required_keys PASSED [ 50%]
+backend/tests/unit/test_financial_engine.py::TestCheckPurchaseSafety::test_balance_after_purchase_math PASSED [ 50%]
+backend/tests/unit/test_financial_engine.py::TestCheckPurchaseSafety::test_zero_purchase_amount PASSED [ 50%]
+backend/tests/unit/test_financial_engine.py::TestCheckPurchaseSafety::test_risk_level_is_valid_enum PASSED [ 50%]
+backend/tests/unit/test_financial_engine.py::TestCalculateCategoryExpenses::test_top_category_is_housing PASSED [ 51%]
+backend/tests/unit/test_financial_engine.py::TestCalculateCategoryExpenses::test_total_expenses_sum PASSED [ 51%]
+backend/tests/unit/test_financial_engine.py::TestCalculateCategoryExpenses::test_categories_sorted_descending PASSED [ 51%]
+backend/tests/unit/test_financial_engine.py::TestCalculateCategoryExpenses::test_percentage_sums_to_100 PASSED [ 52%]
+backend/tests/unit/test_financial_engine.py::TestCalculateCategoryExpenses::test_no_transactions_returns_empty PASSED [ 52%]
+backend/tests/unit/test_financial_engine.py::TestCalculateComprehensiveHealth::test_score_is_in_valid_range PASSED [ 52%]
+backend/tests/unit/test_financial_engine.py::TestCalculateComprehensiveHealth::test_grade_is_valid PASSED [ 53%]
+backend/tests/unit/test_financial_engine.py::TestCalculateComprehensiveHealth::test_required_keys_present PASSED [ 53%]
+backend/tests/unit/test_financial_engine.py::TestCalculateComprehensiveHealth::test_excellent_finances_give_high_score PASSED [ 53%]
+backend/tests/unit/test_financial_engine.py::TestCalculateComprehensiveHealth::test_zero_income_zero_balance_gives_low_score PASSED [ 53%]
+backend/tests/unit/test_financial_engine.py::TestFinancialEngineAuditEdgeCases::test_health_score_clamped_on_extreme_negative_savings PASSED [ 54%]
+backend/tests/unit/test_financial_engine.py::TestFinancialEngineAuditEdgeCases::test_health_score_clamped_on_negative_account_balance PASSED [ 54%]
+backend/tests/unit/test_financial_engine.py::TestFinancialEngineAuditEdgeCases::test_health_score_zero_income_with_active_emi_is_penalized PASSED [ 54%]
+backend/tests/unit/test_financial_engine.py::TestFinancialEngineAuditEdgeCases::test_debt_burden_zero_income_with_active_emi_is_critical_risk PASSED [ 55%]
+backend/tests/unit/test_financial_engine.py::TestFinancialEngineAuditEdgeCases::test_debt_burden_zero_income_zero_debt_is_low_risk PASSED [ 55%]
+backend/tests/unit/test_financial_engine.py::TestFinancialEngineAuditEdgeCases::test_emergency_runway_zero_expenses_flags_insufficient_data PASSED [ 55%]
+backend/tests/unit/test_financial_engine.py::TestFinancialEngineAuditEdgeCases::test_pending_emi_deduplication_in_purchase_safety PASSED [ 56%]
+backend/tests/unit/test_financial_engine.py::TestFinancialEngineAuditEdgeCases::test_purchase_safety_negative_purchase_amount_clamped PASSED [ 56%]
+backend/tests/unit/test_financial_engine.py::TestFinancialEngineAuditEdgeCases::test_purchase_safety_zero_expenses_adds_warning_note PASSED [ 56%]
+backend/tests/unit/test_financial_engine.py::TestFinancialEngineAuditEdgeCases::test_all_functions_handle_empty_context_safely PASSED [ 57%]
+backend/tests/unit/test_financial_engine.py::TestFinancialEngineAuditEdgeCases::test_reporting_period_transparency_across_all_metrics PASSED [ 57%]
+backend/tests/unit/test_financial_planner.py::test_is_discretionary_category PASSED [ 57%]
+backend/tests/unit/test_financial_planner.py::test_detect_recurring_commitments PASSED [ 57%]
+backend/tests/unit/test_financial_planner.py::test_calculate_budget_limits PASSED [ 58%]
+backend/tests/unit/test_financial_planner.py::test_calculate_savings_and_emergency_targets PASSED [ 58%]
+backend/tests/unit/test_financial_planner.py::test_generate_financial_plan_deterministic PASSED [ 58%]
+backend/tests/unit/test_financial_planner.py::test_generate_financial_plan_zero_income PASSED [ 59%]
+backend/tests/unit/test_financial_planner.py::test_generate_financial_plan_insufficient_history PASSED [ 59%]
+backend/tests/unit/test_financial_planner.py::test_generate_financial_plan_with_llm_success PASSED [ 59%]
+backend/tests/unit/test_financial_planner.py::test_generate_financial_plan_llm_fallback_on_error PASSED [ 60%]
+backend/tests/unit/test_financial_planner.py::test_api_plan_endpoint PASSED [ 60%]
+backend/tests/unit/test_fingerprint.py::test_fingerprint_deterministic PASSED [ 60%]
+backend/tests/unit/test_fingerprint.py::test_fingerprint_diff_amount PASSED [ 60%]
+backend/tests/unit/test_fingerprint.py::test_fingerprint_diff_date PASSED [ 61%]
+backend/tests/unit/test_fingerprint.py::test_fingerprint_occurrence_collision_protection PASSED [ 61%]
+backend/tests/unit/test_grounded_graph_rag.py::test_grounded_retrieval_multi_entity_purchase_affordability PASSED [ 61%]
+backend/tests/unit/test_grounded_graph_rag.py::test_grounded_retrieval_multi_entity_debt_and_dti PASSED [ 62%]
+backend/tests/unit/test_grounded_graph_rag.py::test_grounded_retrieval_followup_entity_isolation PASSED [ 62%]
+backend/tests/unit/test_grounded_graph_rag.py::test_neo4j_service_retrieve_grounded_subgraph_user_isolation PASSED [ 62%]
+backend/tests/unit/test_llm_reliability.py::test_llm_response_dict_and_string_methods PASSED [ 63%]
+backend/tests/unit/test_llm_reliability.py::test_ask_llm_sync_success_telemetry PASSED [ 63%]
+backend/tests/unit/test_llm_reliability.py::test_transient_error_detection PASSED [ 63%]
+backend/tests/unit/test_llm_reliability.py::test_ask_llm_retry_on_transient_error PASSED [ 64%]
+backend/tests/unit/test_llm_reliability.py::test_ask_llm_fast_fail_on_permanent_error PASSED [ 64%]
+backend/tests/unit/test_llm_reliability.py::test_sanitize_error_strips_api_keys_and_paths PASSED [ 64%]
+backend/tests/unit/test_llm_reliability.py::test_empty_response_falls_back_gracefully PASSED [ 64%]
+backend/tests/unit/test_llm_reliability.py::test_serialize_financial_result PASSED [ 65%]
+backend/tests/unit/test_llm_reliability.py::test_prompt_injection_defense PASSED [ 65%]
+backend/tests/unit/test_llm_reliability.py::test_conversation_history_validation_and_truncation PASSED [ 65%]
+backend/tests/unit/test_llm_reliability.py::test_generate_explanation_backward_compatibility PASSED [ 66%]
+backend/tests/unit/test_llm_reliability.py::test_generate_explanation_with_metadata PASSED [ 66%]
+backend/tests/unit/test_llm_reliability.py::test_generate_explanation_async PASSED [ 66%]
+backend/tests/unit/test_llm_reliability.py::test_contradiction_detection_unsafe_purchase PASSED [ 67%]
+backend/tests/unit/test_llm_reliability.py::test_contradiction_detection_safe_purchase PASSED [ 67%]
+backend/tests/unit/test_llm_reliability.py::test_contradiction_detection_risk_level PASSED [ 67%]
+backend/tests/unit/test_llm_reliability.py::test_build_deterministic_fallback_preserves_four_sections_and_rupees PASSED [ 67%]
+backend/tests/unit/test_merchant_and_top_transactions.py::test_exact_merchant_match_parsing PASSED [ 68%]
+backend/tests/unit/test_merchant_and_top_transactions.py::test_merchant_case_and_whitespace_normalization PASSED [ 68%]
+backend/tests/unit/test_merchant_and_top_transactions.py::test_ambiguous_multiple_merchants_clarification PASSED [ 68%]
+backend/tests/unit/test_merchant_and_top_transactions.py::test_merchant_does_not_hijack_category_query PASSED [ 69%]
+backend/tests/unit/test_merchant_and_top_transactions.py::test_top_n_transaction_parsing PASSED [ 69%]
+backend/tests/unit/test_merchant_and_top_transactions.py::test_amount_threshold_parsing PASSED [ 69%]
+backend/tests/unit/test_merchant_and_top_transactions.py::test_merchant_calculation_and_refund_exclusion PASSED [ 70%]
+backend/tests/unit/test_merchant_and_top_transactions.py::test_no_match_versus_confirmed_zero_spend PASSED [ 70%]
+backend/tests/unit/test_merchant_and_top_transactions.py::test_top_transactions_descending_sorting_and_limits PASSED [ 70%]
+backend/tests/unit/test_merchant_and_top_transactions.py::test_top_transactions_amount_threshold_bounds PASSED [ 71%]
+backend/tests/unit/test_merchant_and_top_transactions.py::test_graph_rag_merchant_expense_pipeline PASSED [ 71%]
+backend/tests/unit/test_merchant_and_top_transactions.py::test_graph_rag_top_transactions_pipeline PASSED [ 71%]
+backend/tests/unit/test_merchant_and_top_transactions.py::test_user_data_isolation PASSED [ 71%]
+backend/tests/unit/test_merchant_normalizer.py::test_normalize_upi_swiggy PASSED [ 72%]
+backend/tests/unit/test_merchant_normalizer.py::test_normalize_upi_uber PASSED [ 72%]
+backend/tests/unit/test_merchant_normalizer.py::test_normalize_pos_retail PASSED [ 72%]
+backend/tests/unit/test_merchant_normalizer.py::test_normalize_atm_withdrawal PASSED [ 73%]
+backend/tests/unit/test_merchant_normalizer.py::test_normalize_income_salary PASSED [ 73%]
+backend/tests/unit/test_merchant_normalizer.py::test_normalize_keyword_fallback PASSED [ 73%]
+backend/tests/unit/test_merchant_normalizer.py::test_normalize_unknown_merchant PASSED [ 74%]
+backend/tests/unit/test_multiturn_conversations.py::TestMultiTurnFollowUps::test_purchase_amount_followup PASSED [ 74%]
+backend/tests/unit/test_multiturn_conversations.py::TestMultiTurnFollowUps::test_purchase_bare_amount_reply_after_missing_amount PASSED [ 74%]
+backend/tests/unit/test_multiturn_conversations.py::TestMultiTurnFollowUps::test_category_expense_followup PASSED [ 75%]
+backend/tests/unit/test_multiturn_conversations.py::TestMultiTurnFollowUps::test_temporal_date_followup PASSED [ 75%]
+backend/tests/unit/test_multiturn_conversations.py::TestMultiTurnFollowUps::test_justification_followup PASSED [ 75%]
+backend/tests/unit/test_multiturn_conversations.py::TestTopicChanges::test_switch_from_purchase_to_savings PASSED [ 75%]
+backend/tests/unit/test_multiturn_conversations.py::TestTopicChanges::test_switch_from_temporal_category_to_runway PASSED [ 76%]
+backend/tests/unit/test_multiturn_conversations.py::TestTopicChanges::test_switch_to_new_purchase_item PASSED [ 76%]
+backend/tests/unit/test_multiturn_conversations.py::TestMissingInformationAndAmbiguity::test_purchase_missing_amount_triggers_clarification PASSED [ 76%]
+backend/tests/unit/test_multiturn_conversations.py::TestMissingInformationAndAmbiguity::test_purchase_ambiguous_multiple_amounts PASSED [ 77%]
+backend/tests/unit/test_multiturn_conversations.py::TestMissingInformationAndAmbiguity::test_ambiguous_date_slash_format PASSED [ 77%]
+backend/tests/unit/test_multiturn_conversations.py::TestMissingInformationAndAmbiguity::test_unambiguous_date_iso_format PASSED [ 77%]
+backend/tests/unit/test_multiturn_conversations.py::TestContradictoryHistoryDefense::test_parser_ignores_unverified_claims_in_user_prompt PASSED [ 78%]
+backend/tests/unit/test_multiturn_conversations.py::TestContradictoryHistoryDefense::test_parser_never_extracts_facts_from_assistant_turns PASSED [ 78%]
+backend/tests/unit/test_multiturn_conversations.py::TestContradictoryHistoryDefense::test_graph_rag_recalculates_on_current_authorized_data[asyncio] PASSED [ 78%]
+backend/tests/unit/test_multiturn_conversations.py::TestContradictoryHistoryDefense::test_graph_rag_intercepts_clarification_before_math[asyncio] PASSED [ 78%]
+backend/tests/unit/test_neo4j_service_ingestion.py::TestSchemaConstraints::test_schema_constraints_created_successfully PASSED [ 79%]
+backend/tests/unit/test_neo4j_service_ingestion.py::TestSchemaConstraints::test_schema_constraints_logs_error_without_silent_swallowing PASSED [ 79%]
+backend/tests/unit/test_neo4j_service_ingestion.py::TestSchemaConstraints::test_schema_constraints_strict_mode_raises PASSED [ 79%]
+backend/tests/unit/test_neo4j_service_ingestion.py::TestRepeatedImportIdempotency::test_repeated_import_does_not_create_duplicates_nor_change_balance PASSED [ 80%]
+backend/tests/unit/test_neo4j_service_ingestion.py::TestInBatchDuplicates::test_in_batch_duplicate_fingerprints_applied_only_once PASSED [ 80%]
+backend/tests/unit/test_neo4j_service_ingestion.py::TestInBatchDuplicates::test_legitimate_repeated_purchases_get_distinct_fingerprints PASSED [ 80%]
+backend/tests/unit/test_neo4j_service_ingestion.py::TestBalanceAccountingIntegrity::test_mixed_batch_updates_balance_only_for_genuinely_new_rows PASSED [ 81%]
+backend/tests/unit/test_neo4j_service_ingestion.py::TestAtomicityAndRollback::test_write_failure_rolls_back_balance_and_transactions PASSED [ 81%]
+backend/tests/unit/test_neo4j_service_ingestion.py::TestAtomicityAndRollback::test_empty_rows_safe_noop PASSED [ 81%]
+backend/tests/unit/test_neo4j_service_ingestion.py::TestNeo4jRealIntegration::test_live_neo4j_idempotent_import SKIPPED [ 82%]
+backend/tests/unit/test_period_analytics.py::test_parse_explicit_month_comparison PASSED [ 82%]
+backend/tests/unit/test_period_analytics.py::test_parse_explicit_year_and_iso_comparison PASSED [ 82%]
+backend/tests/unit/test_period_analytics.py::test_parse_relative_comparison_with_category PASSED [ 82%]
+backend/tests/unit/test_period_analytics.py::test_parse_period_comparison_with_merchant PASSED [ 83%]
+backend/tests/unit/test_period_analytics.py::test_period_comparison_ambiguity_and_clarification PASSED [ 83%]
+backend/tests/unit/test_period_analytics.py::test_period_comparison_positive_and_negative_change PASSED [ 83%]
+backend/tests/unit/test_period_analytics.py::test_period_comparison_zero_baseline_division_safety PASSED [ 84%]
+backend/tests/unit/test_period_analytics.py::test_period_comparison_refund_and_transfer_exclusion PASSED [ 84%]
+backend/tests/unit/test_period_analytics.py::test_period_comparison_date_boundaries PASSED [ 84%]
+backend/tests/unit/test_period_analytics.py::test_category_variance_attribution_ranking PASSED [ 85%]
+backend/tests/unit/test_period_analytics.py::test_variance_attribution_query_parsing PASSED [ 85%]
+backend/tests/unit/test_period_analytics.py::test_multi_month_trends_chronological_ordering PASSED [ 85%]
+backend/tests/unit/test_period_analytics.py::test_missing_months_versus_confirmed_zero_spend PASSED [ 85%]
+backend/tests/unit/test_period_analytics.py::test_user_data_isolation_period_analytics PASSED [ 86%]
+backend/tests/unit/test_period_analytics.py::test_graph_rag_period_comparison_evidence_pipeline PASSED [ 86%]
+backend/tests/unit/test_period_analytics.py::test_graph_rag_spending_trend_pipeline PASSED [ 86%]
+backend/tests/unit/test_period_analytics.py::test_empty_dataset_handling PASSED [ 87%]
+backend/tests/unit/test_prompt_versioning.py::test_list_prompt_versions PASSED [ 87%]
+backend/tests/unit/test_prompt_versioning.py::test_get_prompt_template_valid PASSED [ 87%]
+backend/tests/unit/test_prompt_versioning.py::test_get_prompt_template_invalid PASSED [ 88%]
+backend/tests/unit/test_prompt_versioning.py::test_prompt_v1_0_structure PASSED [ 88%]
+backend/tests/unit/test_prompt_versioning.py::test_prompt_v1_1_executive_structure PASSED [ 88%]
+backend/tests/unit/test_prompt_versioning.py::test_prompt_with_conversation_history PASSED [ 89%]
+backend/tests/unit/test_prompt_versioning.py::test_api_prompt_versions_endpoint PASSED [ 89%]
+backend/tests/unit/test_question_parser.py::TestPurchaseSafetyIntent::test_purchase_with_rupee_symbol PASSED [ 89%]
+backend/tests/unit/test_question_parser.py::TestPurchaseSafetyIntent::test_purchase_with_plain_number PASSED [ 89%]
+backend/tests/unit/test_question_parser.py::TestPurchaseSafetyIntent::test_purchase_afford_keyword PASSED [ 90%]
+backend/tests/unit/test_question_parser.py::TestSavingsAnalysisIntent::test_savings_rate PASSED [ 90%]
+backend/tests/unit/test_question_parser.py::TestSavingsAnalysisIntent::test_how_much_am_i_saving PASSED [ 90%]
+backend/tests/unit/test_question_parser.py::TestEmergencyFundIntent::test_emergency_fund_query PASSED [ 91%]
+backend/tests/unit/test_question_parser.py::TestEmergencyFundIntent::test_emergency_reserve_query PASSED [ 91%]
+backend/tests/unit/test_question_parser.py::TestEmergencyRunwayIntent::test_emergency_runway_query PASSED [ 91%]
+backend/tests/unit/test_question_parser.py::TestEmergencyRunwayIntent::test_survival_query PASSED [ 92%]
+backend/tests/unit/test_question_parser.py::TestDebtAnalysisIntent::test_debt_query PASSED [ 92%]
+backend/tests/unit/test_question_parser.py::TestDebtAnalysisIntent::test_emi_query PASSED [ 92%]
+backend/tests/unit/test_question_parser.py::TestDebtAnalysisIntent::test_dti_ratio_query PASSED [ 92%]
+backend/tests/unit/test_question_parser.py::TestFinancialHealthAndSummary::test_financial_health_query PASSED [ 93%]
+backend/tests/unit/test_question_parser.py::TestFinancialHealthAndSummary::test_health_score_query PASSED [ 93%]
+backend/tests/unit/test_question_parser.py::TestFinancialHealthAndSummary::test_financial_summary_query PASSED [ 93%]
+backend/tests/unit/test_question_parser.py::TestFinancialHealthAndSummary::test_financial_situation_query PASSED [ 94%]
+backend/tests/unit/test_question_parser.py::TestExpenseBreakdownAndCategories::test_expense_breakdown_query PASSED [ 94%]
+backend/tests/unit/test_question_parser.py::TestExpenseBreakdownAndCategories::test_category_expense_query PASSED [ 94%]
+backend/tests/unit/test_question_parser.py::TestTransactionIngestionIntent::test_spent_transaction PASSED [ 95%]
+backend/tests/unit/test_question_parser.py::TestUnknownFallback::test_unmatched_rules_without_llm PASSED [ 95%]
+backend/tests/unit/test_question_parser.py::TestTemporalExtraction::test_explicit_month_year PASSED [ 95%]
+backend/tests/unit/test_question_parser.py::TestTemporalExtraction::test_last_month_reference PASSED [ 96%]
+backend/tests/unit/test_question_parser.py::TestTemporalExtraction::test_iso_month_reference PASSED [ 96%]
+backend/tests/unit/test_security_audit.py::TestAuthenticationSecurity::test_unauthenticated_requests_return_401 PASSED [ 96%]
+backend/tests/unit/test_security_audit.py::TestAuthenticationSecurity::test_tampered_session_cookie_returns_401 PASSED [ 96%]
+backend/tests/unit/test_security_audit.py::TestAuthenticationSecurity::test_forged_signature_returns_401 PASSED [ 97%]
+backend/tests/unit/test_security_audit.py::TestCrossUserDataIsolation::test_bob_cannot_read_alice_transactions PASSED [ 97%]
+backend/tests/unit/test_security_audit.py::TestCrossUserDataIsolation::test_bob_cannot_modify_alice_transaction PASSED [ 97%]
+backend/tests/unit/test_security_audit.py::TestCrossUserDataIsolation::test_bob_cannot_create_transaction_on_alice_account PASSED [ 98%]
+backend/tests/unit/test_security_audit.py::TestCrossUserDataIsolation::test_bob_cannot_import_into_alice_account PASSED [ 98%]
+backend/tests/unit/test_security_audit.py::TestUploadSecurityValidation::test_upload_binary_null_bytes_rejected PASSED [ 98%]
+backend/tests/unit/test_security_audit.py::TestUploadSecurityValidation::test_upload_empty_csv_rejected PASSED [ 99%]
+backend/tests/unit/test_security_audit.py::TestUploadSecurityValidation::test_upload_invalid_extension_rejected PASSED [ 99%]
+backend/tests/unit/test_security_audit.py::TestSensitiveDataRedaction::test_log_filter_redacts_credentials_and_tokens PASSED [ 99%]
+backend/tests/unit/test_security_audit.py::TestNeo4jServiceUserIdRequirements::test_missing_or_empty_user_id_raises_value_error PASSED [100%]
+
+=================================== ERRORS ====================================
+_______________ ERROR collecting backend/tests/test_context.py ________________
+  | ExceptionGroup: All routing table requests failed (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_async_compat\network\_bolt_socket.py", line 552, in _connect_secure
+    |     s.connect(resolved_address)
+    |     ~~~~~~~~~^^^^^^^^^^^^^^^^^^
+    | ConnectionRefusedError: [WinError 10061] No connection could be made because the target machine actively refused it
+    | 
+    | The above exception was the direct cause of the following exception:
+    | 
+    | Traceback (most recent call last):
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_bolt_socket.py", line 329, in connect
+    |     s = cls._connect_secure(
+    |         resolved_address,
+    |     ...<3 lines>...
+    |         ssl_context,
+    |     )
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_async_compat\network\_bolt_socket.py", line 562, in _connect_secure
+    |     raise ServiceUnavailable(
+    |     ...<2 lines>...
+    |     ) from error
+    | neo4j.exceptions.ServiceUnavailable: Failed to establish connection to ResolvedIPv4Address(('127.0.0.1', 7687)) (reason [WinError 10061] No connection could be made because the target machine actively refused it)
+    | 
+    | The above exception was the direct cause of the following exception:
+    | 
+    | Traceback (most recent call last):
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 833, in fetch_routing_table
+    |     new_routing_info = self.fetch_routing_info(
+    |         address,
+    |     ...<4 lines>...
+    |         acquisition_timeout,
+    |     )
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 792, in fetch_routing_info
+    |     cx = self._acquire(address, auth, deadline, None)
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 418, in _acquire
+    |     return connection_creator()
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 231, in connection_creator
+    |     connection = self.opener(
+    |         address, auth or self.pool_config.auth, deadline
+    |     )
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 711, in opener
+    |     return Bolt.open(
+    |            ~~~~~~~~~^
+    |         addr,
+    |         ^^^^^
+    |     ...<3 lines>...
+    |         pool_config=pool_config,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^
+    |     )
+    |     ^
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_bolt.py", line 366, in open
+    |     s, protocol_version = BoltSocket.connect(
+    |                           ~~~~~~~~~~~~~~~~~~^
+    |         address,
+    |         ^^^^^^^^
+    |     ...<4 lines>...
+    |         keep_alive=pool_config.keep_alive,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |     )
+    |     ^
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_bolt_socket.py", line 379, in connect
+    |     raise ServiceUnavailable(
+    |     ...<2 lines>...
+    |     ) from errors[0]
+    | neo4j.exceptions.ServiceUnavailable: Couldn't connect to 127.0.0.1:7687 (resolved to ('127.0.0.1:7687',)):
+    | Failed to establish connection to ResolvedIPv4Address(('127.0.0.1', 7687)) (reason [WinError 10061] No connection could be made because the target machine actively refused it)
+    +------------------------------------
+
+The above exception was the direct cause of the following exception:
+backend\tests\test_context.py:4: in <module>
+    context = db.get_financial_context("U001")
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\app\database\neo4j_service.py:140: in get_financial_context
+    result = session.run(query, user_id=user_id)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\neo4j\_sync\work\session.py:318: in run
+    self._connect(self._config.default_access_mode)
+.venv\Lib\site-packages\neo4j\_sync\work\session.py:128: in _connect
+    super()._connect(
+.venv\Lib\site-packages\neo4j\_sync\work\workspace.py:181: in _connect
+    self._connection = self._pool.acquire(**acquire_kwargs_)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\neo4j\_sync\io\_pool.py:1216: in acquire
+    self.ensure_routing_table_is_fresh(
+.venv\Lib\site-packages\neo4j\_sync\io\_pool.py:1150: in ensure_routing_table_is_fresh
+    self.update_routing_table(
+.venv\Lib\site-packages\neo4j\_sync\io\_pool.py:1076: in update_routing_table
+    raise ServiceUnavailable(
+E   neo4j.exceptions.ServiceUnavailable: Unable to retrieve routing information
+------------------------------- Captured stdout -------------------------------
+2026-10-31 18:25:40 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:25:40 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT txn_fp IF NOT EXISTS FOR (t:Transaction) REQUIRE t.fingerprint IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:25:42 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:25:42 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT txn_id_unique IF NOT EXISTS FOR (t:Transaction) REQUIRE t.id IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:25:44 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:25:44 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT merchant_norm IF NOT EXISTS FOR (m:Merchant) REQUIRE m.normalized IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:25:46 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:25:46 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT user_id_unique IF NOT EXISTS FOR (u:User) REQUIRE u.id IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:25:48 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:25:48 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT user_username_unique IF NOT EXISTS FOR (u:User) REQUIRE u.username IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:25:50 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:25:50 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT account_id_unique IF NOT EXISTS FOR (a:Account) REQUIRE a.id IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:25:52 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:25:52 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE INDEX txn_date_idx IF NOT EXISTS FOR (t:Transaction) ON (t.date)': Unable to retrieve routing information
+2026-10-31 18:25:55 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:25:55 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE INDEX txn_amount_idx IF NOT EXISTS FOR (t:Transaction) ON (t.amount)': Unable to retrieve routing information
+2026-10-31 18:25:57 | ERROR    | neo4j.pool | Unable to retrieve routing information
+__________ ERROR collecting backend/tests/test_emergency_context.py ___________
+  | ExceptionGroup: All routing table requests failed (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_async_compat\network\_bolt_socket.py", line 552, in _connect_secure
+    |     s.connect(resolved_address)
+    |     ~~~~~~~~~^^^^^^^^^^^^^^^^^^
+    | ConnectionRefusedError: [WinError 10061] No connection could be made because the target machine actively refused it
+    | 
+    | The above exception was the direct cause of the following exception:
+    | 
+    | Traceback (most recent call last):
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_bolt_socket.py", line 329, in connect
+    |     s = cls._connect_secure(
+    |         resolved_address,
+    |     ...<3 lines>...
+    |         ssl_context,
+    |     )
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_async_compat\network\_bolt_socket.py", line 562, in _connect_secure
+    |     raise ServiceUnavailable(
+    |     ...<2 lines>...
+    |     ) from error
+    | neo4j.exceptions.ServiceUnavailable: Failed to establish connection to ResolvedIPv4Address(('127.0.0.1', 7687)) (reason [WinError 10061] No connection could be made because the target machine actively refused it)
+    | 
+    | The above exception was the direct cause of the following exception:
+    | 
+    | Traceback (most recent call last):
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 833, in fetch_routing_table
+    |     new_routing_info = self.fetch_routing_info(
+    |         address,
+    |     ...<4 lines>...
+    |         acquisition_timeout,
+    |     )
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 792, in fetch_routing_info
+    |     cx = self._acquire(address, auth, deadline, None)
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 418, in _acquire
+    |     return connection_creator()
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 231, in connection_creator
+    |     connection = self.opener(
+    |         address, auth or self.pool_config.auth, deadline
+    |     )
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 711, in opener
+    |     return Bolt.open(
+    |            ~~~~~~~~~^
+    |         addr,
+    |         ^^^^^
+    |     ...<3 lines>...
+    |         pool_config=pool_config,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^
+    |     )
+    |     ^
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_bolt.py", line 366, in open
+    |     s, protocol_version = BoltSocket.connect(
+    |                           ~~~~~~~~~~~~~~~~~~^
+    |         address,
+    |         ^^^^^^^^
+    |     ...<4 lines>...
+    |         keep_alive=pool_config.keep_alive,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |     )
+    |     ^
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_bolt_socket.py", line 379, in connect
+    |     raise ServiceUnavailable(
+    |     ...<2 lines>...
+    |     ) from errors[0]
+    | neo4j.exceptions.ServiceUnavailable: Couldn't connect to 127.0.0.1:7687 (resolved to ('127.0.0.1:7687',)):
+    | Failed to establish connection to ResolvedIPv4Address(('127.0.0.1', 7687)) (reason [WinError 10061] No connection could be made because the target machine actively refused it)
+    +------------------------------------
+
+The above exception was the direct cause of the following exception:
+backend\tests\test_emergency_context.py:4: in <module>
+    context = db.get_emergency_fund_context("U001")
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\app\database\neo4j_service.py:328: in get_emergency_fund_context
+    result = session.run(query, user_id=user_id)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\neo4j\_sync\work\session.py:318: in run
+    self._connect(self._config.default_access_mode)
+.venv\Lib\site-packages\neo4j\_sync\work\session.py:128: in _connect
+    super()._connect(
+.venv\Lib\site-packages\neo4j\_sync\work\workspace.py:181: in _connect
+    self._connection = self._pool.acquire(**acquire_kwargs_)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\neo4j\_sync\io\_pool.py:1216: in acquire
+    self.ensure_routing_table_is_fresh(
+.venv\Lib\site-packages\neo4j\_sync\io\_pool.py:1150: in ensure_routing_table_is_fresh
+    self.update_routing_table(
+.venv\Lib\site-packages\neo4j\_sync\io\_pool.py:1076: in update_routing_table
+    raise ServiceUnavailable(
+E   neo4j.exceptions.ServiceUnavailable: Unable to retrieve routing information
+------------------------------- Captured stdout -------------------------------
+2026-10-31 18:26:03 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:26:03 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT txn_fp IF NOT EXISTS FOR (t:Transaction) REQUIRE t.fingerprint IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:26:05 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:26:05 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT txn_id_unique IF NOT EXISTS FOR (t:Transaction) REQUIRE t.id IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:26:07 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:26:07 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT merchant_norm IF NOT EXISTS FOR (m:Merchant) REQUIRE m.normalized IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:26:09 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:26:09 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT user_id_unique IF NOT EXISTS FOR (u:User) REQUIRE u.id IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:26:11 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:26:11 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT user_username_unique IF NOT EXISTS FOR (u:User) REQUIRE u.username IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:26:13 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:26:13 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT account_id_unique IF NOT EXISTS FOR (a:Account) REQUIRE a.id IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:26:15 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:26:15 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE INDEX txn_date_idx IF NOT EXISTS FOR (t:Transaction) ON (t.date)': Unable to retrieve routing information
+2026-10-31 18:26:18 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:26:18 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE INDEX txn_amount_idx IF NOT EXISTS FOR (t:Transaction) ON (t.amount)': Unable to retrieve routing information
+2026-10-31 18:26:20 | ERROR    | neo4j.pool | Unable to retrieve routing information
+________________ ERROR collecting backend/tests/test_engine.py ________________
+  | ExceptionGroup: All routing table requests failed (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_async_compat\network\_bolt_socket.py", line 552, in _connect_secure
+    |     s.connect(resolved_address)
+    |     ~~~~~~~~~^^^^^^^^^^^^^^^^^^
+    | ConnectionRefusedError: [WinError 10061] No connection could be made because the target machine actively refused it
+    | 
+    | The above exception was the direct cause of the following exception:
+    | 
+    | Traceback (most recent call last):
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_bolt_socket.py", line 329, in connect
+    |     s = cls._connect_secure(
+    |         resolved_address,
+    |     ...<3 lines>...
+    |         ssl_context,
+    |     )
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_async_compat\network\_bolt_socket.py", line 562, in _connect_secure
+    |     raise ServiceUnavailable(
+    |     ...<2 lines>...
+    |     ) from error
+    | neo4j.exceptions.ServiceUnavailable: Failed to establish connection to ResolvedIPv4Address(('127.0.0.1', 7687)) (reason [WinError 10061] No connection could be made because the target machine actively refused it)
+    | 
+    | The above exception was the direct cause of the following exception:
+    | 
+    | Traceback (most recent call last):
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 833, in fetch_routing_table
+    |     new_routing_info = self.fetch_routing_info(
+    |         address,
+    |     ...<4 lines>...
+    |         acquisition_timeout,
+    |     )
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 792, in fetch_routing_info
+    |     cx = self._acquire(address, auth, deadline, None)
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 418, in _acquire
+    |     return connection_creator()
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 231, in connection_creator
+    |     connection = self.opener(
+    |         address, auth or self.pool_config.auth, deadline
+    |     )
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 711, in opener
+    |     return Bolt.open(
+    |            ~~~~~~~~~^
+    |         addr,
+    |         ^^^^^
+    |     ...<3 lines>...
+    |         pool_config=pool_config,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^
+    |     )
+    |     ^
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_bolt.py", line 366, in open
+    |     s, protocol_version = BoltSocket.connect(
+    |                           ~~~~~~~~~~~~~~~~~~^
+    |         address,
+    |         ^^^^^^^^
+    |     ...<4 lines>...
+    |         keep_alive=pool_config.keep_alive,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |     )
+    |     ^
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_bolt_socket.py", line 379, in connect
+    |     raise ServiceUnavailable(
+    |     ...<2 lines>...
+    |     ) from errors[0]
+    | neo4j.exceptions.ServiceUnavailable: Couldn't connect to 127.0.0.1:7687 (resolved to ('127.0.0.1:7687',)):
+    | Failed to establish connection to ResolvedIPv4Address(('127.0.0.1', 7687)) (reason [WinError 10061] No connection could be made because the target machine actively refused it)
+    +------------------------------------
+
+The above exception was the direct cause of the following exception:
+backend\tests\test_engine.py:10: in <module>
+    context = db.get_financial_context("U001")
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\app\database\neo4j_service.py:140: in get_financial_context
+    result = session.run(query, user_id=user_id)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\neo4j\_sync\work\session.py:318: in run
+    self._connect(self._config.default_access_mode)
+.venv\Lib\site-packages\neo4j\_sync\work\session.py:128: in _connect
+    super()._connect(
+.venv\Lib\site-packages\neo4j\_sync\work\workspace.py:181: in _connect
+    self._connection = self._pool.acquire(**acquire_kwargs_)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\neo4j\_sync\io\_pool.py:1216: in acquire
+    self.ensure_routing_table_is_fresh(
+.venv\Lib\site-packages\neo4j\_sync\io\_pool.py:1150: in ensure_routing_table_is_fresh
+    self.update_routing_table(
+.venv\Lib\site-packages\neo4j\_sync\io\_pool.py:1076: in update_routing_table
+    raise ServiceUnavailable(
+E   neo4j.exceptions.ServiceUnavailable: Unable to retrieve routing information
+------------------------------- Captured stdout -------------------------------
+2026-10-31 18:26:22 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:26:22 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT txn_fp IF NOT EXISTS FOR (t:Transaction) REQUIRE t.fingerprint IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:26:24 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:26:24 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT txn_id_unique IF NOT EXISTS FOR (t:Transaction) REQUIRE t.id IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:26:26 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:26:26 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT merchant_norm IF NOT EXISTS FOR (m:Merchant) REQUIRE m.normalized IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:26:28 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:26:28 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT user_id_unique IF NOT EXISTS FOR (u:User) REQUIRE u.id IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:26:30 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:26:30 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT user_username_unique IF NOT EXISTS FOR (u:User) REQUIRE u.username IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:26:32 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:26:32 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT account_id_unique IF NOT EXISTS FOR (a:Account) REQUIRE a.id IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:26:34 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:26:34 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE INDEX txn_date_idx IF NOT EXISTS FOR (t:Transaction) ON (t.date)': Unable to retrieve routing information
+2026-10-31 18:26:36 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:26:36 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE INDEX txn_amount_idx IF NOT EXISTS FOR (t:Transaction) ON (t.amount)': Unable to retrieve routing information
+2026-10-31 18:26:38 | ERROR    | neo4j.pool | Unable to retrieve routing information
+___________ ERROR collecting backend/tests/test_purchase_context.py ___________
+  | ExceptionGroup: All routing table requests failed (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_async_compat\network\_bolt_socket.py", line 552, in _connect_secure
+    |     s.connect(resolved_address)
+    |     ~~~~~~~~~^^^^^^^^^^^^^^^^^^
+    | ConnectionRefusedError: [WinError 10061] No connection could be made because the target machine actively refused it
+    | 
+    | The above exception was the direct cause of the following exception:
+    | 
+    | Traceback (most recent call last):
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_bolt_socket.py", line 329, in connect
+    |     s = cls._connect_secure(
+    |         resolved_address,
+    |     ...<3 lines>...
+    |         ssl_context,
+    |     )
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_async_compat\network\_bolt_socket.py", line 562, in _connect_secure
+    |     raise ServiceUnavailable(
+    |     ...<2 lines>...
+    |     ) from error
+    | neo4j.exceptions.ServiceUnavailable: Failed to establish connection to ResolvedIPv4Address(('127.0.0.1', 7687)) (reason [WinError 10061] No connection could be made because the target machine actively refused it)
+    | 
+    | The above exception was the direct cause of the following exception:
+    | 
+    | Traceback (most recent call last):
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 833, in fetch_routing_table
+    |     new_routing_info = self.fetch_routing_info(
+    |         address,
+    |     ...<4 lines>...
+    |         acquisition_timeout,
+    |     )
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 792, in fetch_routing_info
+    |     cx = self._acquire(address, auth, deadline, None)
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 418, in _acquire
+    |     return connection_creator()
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 231, in connection_creator
+    |     connection = self.opener(
+    |         address, auth or self.pool_config.auth, deadline
+    |     )
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 711, in opener
+    |     return Bolt.open(
+    |            ~~~~~~~~~^
+    |         addr,
+    |         ^^^^^
+    |     ...<3 lines>...
+    |         pool_config=pool_config,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^
+    |     )
+    |     ^
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_bolt.py", line 366, in open
+    |     s, protocol_version = BoltSocket.connect(
+    |                           ~~~~~~~~~~~~~~~~~~^
+    |         address,
+    |         ^^^^^^^^
+    |     ...<4 lines>...
+    |         keep_alive=pool_config.keep_alive,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |     )
+    |     ^
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_bolt_socket.py", line 379, in connect
+    |     raise ServiceUnavailable(
+    |     ...<2 lines>...
+    |     ) from errors[0]
+    | neo4j.exceptions.ServiceUnavailable: Couldn't connect to 127.0.0.1:7687 (resolved to ('127.0.0.1:7687',)):
+    | Failed to establish connection to ResolvedIPv4Address(('127.0.0.1', 7687)) (reason [WinError 10061] No connection could be made because the target machine actively refused it)
+    +------------------------------------
+
+The above exception was the direct cause of the following exception:
+backend\tests\test_purchase_context.py:4: in <module>
+    context = db.get_purchase_context("U001")
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\app\database\neo4j_service.py:247: in get_purchase_context
+    result = session.run(query, user_id=user_id)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\neo4j\_sync\work\session.py:318: in run
+    self._connect(self._config.default_access_mode)
+.venv\Lib\site-packages\neo4j\_sync\work\session.py:128: in _connect
+    super()._connect(
+.venv\Lib\site-packages\neo4j\_sync\work\workspace.py:181: in _connect
+    self._connection = self._pool.acquire(**acquire_kwargs_)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\neo4j\_sync\io\_pool.py:1216: in acquire
+    self.ensure_routing_table_is_fresh(
+.venv\Lib\site-packages\neo4j\_sync\io\_pool.py:1150: in ensure_routing_table_is_fresh
+    self.update_routing_table(
+.venv\Lib\site-packages\neo4j\_sync\io\_pool.py:1076: in update_routing_table
+    raise ServiceUnavailable(
+E   neo4j.exceptions.ServiceUnavailable: Unable to retrieve routing information
+------------------------------- Captured stdout -------------------------------
+2026-10-31 18:26:49 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:26:49 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT txn_fp IF NOT EXISTS FOR (t:Transaction) REQUIRE t.fingerprint IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:26:51 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:26:51 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT txn_id_unique IF NOT EXISTS FOR (t:Transaction) REQUIRE t.id IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:26:53 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:26:53 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT merchant_norm IF NOT EXISTS FOR (m:Merchant) REQUIRE m.normalized IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:26:55 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:26:55 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT user_id_unique IF NOT EXISTS FOR (u:User) REQUIRE u.id IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:26:57 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:26:57 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT user_username_unique IF NOT EXISTS FOR (u:User) REQUIRE u.username IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:26:59 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:26:59 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT account_id_unique IF NOT EXISTS FOR (a:Account) REQUIRE a.id IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:27:01 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:27:01 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE INDEX txn_date_idx IF NOT EXISTS FOR (t:Transaction) ON (t.date)': Unable to retrieve routing information
+2026-10-31 18:27:03 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:27:03 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE INDEX txn_amount_idx IF NOT EXISTS FOR (t:Transaction) ON (t.amount)': Unable to retrieve routing information
+2026-10-31 18:27:05 | ERROR    | neo4j.pool | Unable to retrieve routing information
+___________ ERROR collecting backend/tests/test_savings_context.py ____________
+  | ExceptionGroup: All routing table requests failed (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_async_compat\network\_bolt_socket.py", line 552, in _connect_secure
+    |     s.connect(resolved_address)
+    |     ~~~~~~~~~^^^^^^^^^^^^^^^^^^
+    | ConnectionRefusedError: [WinError 10061] No connection could be made because the target machine actively refused it
+    | 
+    | The above exception was the direct cause of the following exception:
+    | 
+    | Traceback (most recent call last):
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_bolt_socket.py", line 329, in connect
+    |     s = cls._connect_secure(
+    |         resolved_address,
+    |     ...<3 lines>...
+    |         ssl_context,
+    |     )
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_async_compat\network\_bolt_socket.py", line 562, in _connect_secure
+    |     raise ServiceUnavailable(
+    |     ...<2 lines>...
+    |     ) from error
+    | neo4j.exceptions.ServiceUnavailable: Failed to establish connection to ResolvedIPv4Address(('127.0.0.1', 7687)) (reason [WinError 10061] No connection could be made because the target machine actively refused it)
+    | 
+    | The above exception was the direct cause of the following exception:
+    | 
+    | Traceback (most recent call last):
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 833, in fetch_routing_table
+    |     new_routing_info = self.fetch_routing_info(
+    |         address,
+    |     ...<4 lines>...
+    |         acquisition_timeout,
+    |     )
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 792, in fetch_routing_info
+    |     cx = self._acquire(address, auth, deadline, None)
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 418, in _acquire
+    |     return connection_creator()
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 231, in connection_creator
+    |     connection = self.opener(
+    |         address, auth or self.pool_config.auth, deadline
+    |     )
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 711, in opener
+    |     return Bolt.open(
+    |            ~~~~~~~~~^
+    |         addr,
+    |         ^^^^^
+    |     ...<3 lines>...
+    |         pool_config=pool_config,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^
+    |     )
+    |     ^
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_bolt.py", line 366, in open
+    |     s, protocol_version = BoltSocket.connect(
+    |                           ~~~~~~~~~~~~~~~~~~^
+    |         address,
+    |         ^^^^^^^^
+    |     ...<4 lines>...
+    |         keep_alive=pool_config.keep_alive,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |     )
+    |     ^
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_bolt_socket.py", line 379, in connect
+    |     raise ServiceUnavailable(
+    |     ...<2 lines>...
+    |     ) from errors[0]
+    | neo4j.exceptions.ServiceUnavailable: Couldn't connect to 127.0.0.1:7687 (resolved to ('127.0.0.1:7687',)):
+    | Failed to establish connection to ResolvedIPv4Address(('127.0.0.1', 7687)) (reason [WinError 10061] No connection could be made because the target machine actively refused it)
+    +------------------------------------
+
+The above exception was the direct cause of the following exception:
+backend\tests\test_savings_context.py:4: in <module>
+    context = db.get_savings_context("U001")
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\app\database\neo4j_service.py:288: in get_savings_context
+    result = session.run(query, user_id=user_id)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\neo4j\_sync\work\session.py:318: in run
+    self._connect(self._config.default_access_mode)
+.venv\Lib\site-packages\neo4j\_sync\work\session.py:128: in _connect
+    super()._connect(
+.venv\Lib\site-packages\neo4j\_sync\work\workspace.py:181: in _connect
+    self._connection = self._pool.acquire(**acquire_kwargs_)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\neo4j\_sync\io\_pool.py:1216: in acquire
+    self.ensure_routing_table_is_fresh(
+.venv\Lib\site-packages\neo4j\_sync\io\_pool.py:1150: in ensure_routing_table_is_fresh
+    self.update_routing_table(
+.venv\Lib\site-packages\neo4j\_sync\io\_pool.py:1076: in update_routing_table
+    raise ServiceUnavailable(
+E   neo4j.exceptions.ServiceUnavailable: Unable to retrieve routing information
+------------------------------- Captured stdout -------------------------------
+2026-10-31 18:27:17 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:27:17 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT txn_fp IF NOT EXISTS FOR (t:Transaction) REQUIRE t.fingerprint IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:27:19 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:27:19 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT txn_id_unique IF NOT EXISTS FOR (t:Transaction) REQUIRE t.id IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:27:21 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:27:21 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT merchant_norm IF NOT EXISTS FOR (m:Merchant) REQUIRE m.normalized IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:27:23 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:27:23 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT user_id_unique IF NOT EXISTS FOR (u:User) REQUIRE u.id IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:27:25 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:27:25 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT user_username_unique IF NOT EXISTS FOR (u:User) REQUIRE u.username IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:27:27 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:27:27 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT account_id_unique IF NOT EXISTS FOR (a:Account) REQUIRE a.id IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:27:29 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:27:29 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE INDEX txn_date_idx IF NOT EXISTS FOR (t:Transaction) ON (t.date)': Unable to retrieve routing information
+2026-10-31 18:27:31 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:27:31 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE INDEX txn_amount_idx IF NOT EXISTS FOR (t:Transaction) ON (t.amount)': Unable to retrieve routing information
+2026-10-31 18:27:33 | ERROR    | neo4j.pool | Unable to retrieve routing information
+_______________ ERROR collecting backend/tests/test_summary.py ________________
+  | ExceptionGroup: All routing table requests failed (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_async_compat\network\_bolt_socket.py", line 552, in _connect_secure
+    |     s.connect(resolved_address)
+    |     ~~~~~~~~~^^^^^^^^^^^^^^^^^^
+    | ConnectionRefusedError: [WinError 10061] No connection could be made because the target machine actively refused it
+    | 
+    | The above exception was the direct cause of the following exception:
+    | 
+    | Traceback (most recent call last):
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_bolt_socket.py", line 329, in connect
+    |     s = cls._connect_secure(
+    |         resolved_address,
+    |     ...<3 lines>...
+    |         ssl_context,
+    |     )
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_async_compat\network\_bolt_socket.py", line 562, in _connect_secure
+    |     raise ServiceUnavailable(
+    |     ...<2 lines>...
+    |     ) from error
+    | neo4j.exceptions.ServiceUnavailable: Failed to establish connection to ResolvedIPv4Address(('127.0.0.1', 7687)) (reason [WinError 10061] No connection could be made because the target machine actively refused it)
+    | 
+    | The above exception was the direct cause of the following exception:
+    | 
+    | Traceback (most recent call last):
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 833, in fetch_routing_table
+    |     new_routing_info = self.fetch_routing_info(
+    |         address,
+    |     ...<4 lines>...
+    |         acquisition_timeout,
+    |     )
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 792, in fetch_routing_info
+    |     cx = self._acquire(address, auth, deadline, None)
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 418, in _acquire
+    |     return connection_creator()
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 231, in connection_creator
+    |     connection = self.opener(
+    |         address, auth or self.pool_config.auth, deadline
+    |     )
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 711, in opener
+    |     return Bolt.open(
+    |            ~~~~~~~~~^
+    |         addr,
+    |         ^^^^^
+    |     ...<3 lines>...
+    |         pool_config=pool_config,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^
+    |     )
+    |     ^
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_bolt.py", line 366, in open
+    |     s, protocol_version = BoltSocket.connect(
+    |                           ~~~~~~~~~~~~~~~~~~^
+    |         address,
+    |         ^^^^^^^^
+    |     ...<4 lines>...
+    |         keep_alive=pool_config.keep_alive,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |     )
+    |     ^
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_bolt_socket.py", line 379, in connect
+    |     raise ServiceUnavailable(
+    |     ...<2 lines>...
+    |     ) from errors[0]
+    | neo4j.exceptions.ServiceUnavailable: Couldn't connect to 127.0.0.1:7687 (resolved to ('127.0.0.1:7687',)):
+    | Failed to establish connection to ResolvedIPv4Address(('127.0.0.1', 7687)) (reason [WinError 10061] No connection could be made because the target machine actively refused it)
+    +------------------------------------
+
+The above exception was the direct cause of the following exception:
+backend\tests\test_summary.py:5: in <module>
+    context = db.get_financial_context("U001")
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\app\database\neo4j_service.py:140: in get_financial_context
+    result = session.run(query, user_id=user_id)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\neo4j\_sync\work\session.py:318: in run
+    self._connect(self._config.default_access_mode)
+.venv\Lib\site-packages\neo4j\_sync\work\session.py:128: in _connect
+    super()._connect(
+.venv\Lib\site-packages\neo4j\_sync\work\workspace.py:181: in _connect
+    self._connection = self._pool.acquire(**acquire_kwargs_)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\neo4j\_sync\io\_pool.py:1216: in acquire
+    self.ensure_routing_table_is_fresh(
+.venv\Lib\site-packages\neo4j\_sync\io\_pool.py:1150: in ensure_routing_table_is_fresh
+    self.update_routing_table(
+.venv\Lib\site-packages\neo4j\_sync\io\_pool.py:1076: in update_routing_table
+    raise ServiceUnavailable(
+E   neo4j.exceptions.ServiceUnavailable: Unable to retrieve routing information
+------------------------------- Captured stdout -------------------------------
+2026-10-31 18:27:35 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:27:35 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT txn_fp IF NOT EXISTS FOR (t:Transaction) REQUIRE t.fingerprint IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:27:37 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:27:37 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT txn_id_unique IF NOT EXISTS FOR (t:Transaction) REQUIRE t.id IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:27:39 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:27:39 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT merchant_norm IF NOT EXISTS FOR (m:Merchant) REQUIRE m.normalized IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:27:41 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:27:41 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT user_id_unique IF NOT EXISTS FOR (u:User) REQUIRE u.id IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:27:43 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:27:43 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT user_username_unique IF NOT EXISTS FOR (u:User) REQUIRE u.username IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:27:45 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:27:45 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT account_id_unique IF NOT EXISTS FOR (a:Account) REQUIRE a.id IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:27:47 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:27:47 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE INDEX txn_date_idx IF NOT EXISTS FOR (t:Transaction) ON (t.date)': Unable to retrieve routing information
+2026-10-31 18:27:49 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:27:49 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE INDEX txn_amount_idx IF NOT EXISTS FOR (t:Transaction) ON (t.amount)': Unable to retrieve routing information
+2026-10-31 18:27:51 | ERROR    | neo4j.pool | Unable to retrieve routing information
+___________ ERROR collecting backend/tests/test_summary_context.py ____________
+  | ExceptionGroup: All routing table requests failed (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_async_compat\network\_bolt_socket.py", line 552, in _connect_secure
+    |     s.connect(resolved_address)
+    |     ~~~~~~~~~^^^^^^^^^^^^^^^^^^
+    | ConnectionRefusedError: [WinError 10061] No connection could be made because the target machine actively refused it
+    | 
+    | The above exception was the direct cause of the following exception:
+    | 
+    | Traceback (most recent call last):
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_bolt_socket.py", line 329, in connect
+    |     s = cls._connect_secure(
+    |         resolved_address,
+    |     ...<3 lines>...
+    |         ssl_context,
+    |     )
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_async_compat\network\_bolt_socket.py", line 562, in _connect_secure
+    |     raise ServiceUnavailable(
+    |     ...<2 lines>...
+    |     ) from error
+    | neo4j.exceptions.ServiceUnavailable: Failed to establish connection to ResolvedIPv4Address(('127.0.0.1', 7687)) (reason [WinError 10061] No connection could be made because the target machine actively refused it)
+    | 
+    | The above exception was the direct cause of the following exception:
+    | 
+    | Traceback (most recent call last):
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 833, in fetch_routing_table
+    |     new_routing_info = self.fetch_routing_info(
+    |         address,
+    |     ...<4 lines>...
+    |         acquisition_timeout,
+    |     )
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 792, in fetch_routing_info
+    |     cx = self._acquire(address, auth, deadline, None)
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 418, in _acquire
+    |     return connection_creator()
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 231, in connection_creator
+    |     connection = self.opener(
+    |         address, auth or self.pool_config.auth, deadline
+    |     )
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 711, in opener
+    |     return Bolt.open(
+    |            ~~~~~~~~~^
+    |         addr,
+    |         ^^^^^
+    |     ...<3 lines>...
+    |         pool_config=pool_config,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^
+    |     )
+    |     ^
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_bolt.py", line 366, in open
+    |     s, protocol_version = BoltSocket.connect(
+    |                           ~~~~~~~~~~~~~~~~~~^
+    |         address,
+    |         ^^^^^^^^
+    |     ...<4 lines>...
+    |         keep_alive=pool_config.keep_alive,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |     )
+    |     ^
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_bolt_socket.py", line 379, in connect
+    |     raise ServiceUnavailable(
+    |     ...<2 lines>...
+    |     ) from errors[0]
+    | neo4j.exceptions.ServiceUnavailable: Couldn't connect to 127.0.0.1:7687 (resolved to ('127.0.0.1:7687',)):
+    | Failed to establish connection to ResolvedIPv4Address(('127.0.0.1', 7687)) (reason [WinError 10061] No connection could be made because the target machine actively refused it)
+    +------------------------------------
+
+The above exception was the direct cause of the following exception:
+backend\tests\test_summary_context.py:4: in <module>
+    context = db.get_summary_context("U001")
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\app\database\neo4j_service.py:381: in get_summary_context
+    result = session.run(query, user_id=user_id)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\neo4j\_sync\work\session.py:318: in run
+    self._connect(self._config.default_access_mode)
+.venv\Lib\site-packages\neo4j\_sync\work\session.py:128: in _connect
+    super()._connect(
+.venv\Lib\site-packages\neo4j\_sync\work\workspace.py:181: in _connect
+    self._connection = self._pool.acquire(**acquire_kwargs_)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\neo4j\_sync\io\_pool.py:1216: in acquire
+    self.ensure_routing_table_is_fresh(
+.venv\Lib\site-packages\neo4j\_sync\io\_pool.py:1150: in ensure_routing_table_is_fresh
+    self.update_routing_table(
+.venv\Lib\site-packages\neo4j\_sync\io\_pool.py:1076: in update_routing_table
+    raise ServiceUnavailable(
+E   neo4j.exceptions.ServiceUnavailable: Unable to retrieve routing information
+------------------------------- Captured stdout -------------------------------
+2026-10-31 18:27:53 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:27:53 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT txn_fp IF NOT EXISTS FOR (t:Transaction) REQUIRE t.fingerprint IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:27:55 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:27:55 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT txn_id_unique IF NOT EXISTS FOR (t:Transaction) REQUIRE t.id IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:27:57 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:27:57 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT merchant_norm IF NOT EXISTS FOR (m:Merchant) REQUIRE m.normalized IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:27:59 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:27:59 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT user_id_unique IF NOT EXISTS FOR (u:User) REQUIRE u.id IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:28:01 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:28:01 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT user_username_unique IF NOT EXISTS FOR (u:User) REQUIRE u.username IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:28:04 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:28:04 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE CONSTRAINT account_id_unique IF NOT EXISTS FOR (a:Account) REQUIRE a.id IS UNIQUE': Unable to retrieve routing information
+2026-10-31 18:28:06 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:28:06 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE INDEX txn_date_idx IF NOT EXISTS FOR (t:Transaction) ON (t.date)': Unable to retrieve routing information
+2026-10-31 18:28:08 | ERROR    | neo4j.pool | Unable to retrieve routing information
+2026-10-31 18:28:08 | ERROR    | backend.app.database.neo4j_service | Failed to apply schema constraint/index 'CREATE INDEX txn_amount_idx IF NOT EXISTS FOR (t:Transaction) ON (t.amount)': Unable to retrieve routing information
+2026-10-31 18:28:10 | ERROR    | neo4j.pool | Unable to retrieve routing information
+================================== FAILURES ===================================
+___________________________ test_all_api_endpoints ____________________________
+  | ExceptionGroup: All routing table requests failed (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_async_compat\network\_bolt_socket.py", line 552, in _connect_secure
+    |     s.connect(resolved_address)
+    |     ~~~~~~~~~^^^^^^^^^^^^^^^^^^
+    | ConnectionRefusedError: [WinError 10061] No connection could be made because the target machine actively refused it
+    | 
+    | The above exception was the direct cause of the following exception:
+    | 
+    | Traceback (most recent call last):
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_bolt_socket.py", line 329, in connect
+    |     s = cls._connect_secure(
+    |         resolved_address,
+    |     ...<3 lines>...
+    |         ssl_context,
+    |     )
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_async_compat\network\_bolt_socket.py", line 562, in _connect_secure
+    |     raise ServiceUnavailable(
+    |     ...<2 lines>...
+    |     ) from error
+    | neo4j.exceptions.ServiceUnavailable: Failed to establish connection to ResolvedIPv4Address(('127.0.0.1', 7687)) (reason [WinError 10061] No connection could be made because the target machine actively refused it)
+    | 
+    | The above exception was the direct cause of the following exception:
+    | 
+    | Traceback (most recent call last):
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 833, in fetch_routing_table
+    |     new_routing_info = self.fetch_routing_info(
+    |         address,
+    |     ...<4 lines>...
+    |         acquisition_timeout,
+    |     )
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 792, in fetch_routing_info
+    |     cx = self._acquire(address, auth, deadline, None)
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 418, in _acquire
+    |     return connection_creator()
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 231, in connection_creator
+    |     connection = self.opener(
+    |         address, auth or self.pool_config.auth, deadline
+    |     )
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 711, in opener
+    |     return Bolt.open(
+    |            ~~~~~~~~~^
+    |         addr,
+    |         ^^^^^
+    |     ...<3 lines>...
+    |         pool_config=pool_config,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^
+    |     )
+    |     ^
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_bolt.py", line 366, in open
+    |     s, protocol_version = BoltSocket.connect(
+    |                           ~~~~~~~~~~~~~~~~~~^
+    |         address,
+    |         ^^^^^^^^
+    |     ...<4 lines>...
+    |         keep_alive=pool_config.keep_alive,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |     )
+    |     ^
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_bolt_socket.py", line 379, in connect
+    |     raise ServiceUnavailable(
+    |     ...<2 lines>...
+    |     ) from errors[0]
+    | neo4j.exceptions.ServiceUnavailable: Couldn't connect to 127.0.0.1:7687 (resolved to ('127.0.0.1:7687',)):
+    | Failed to establish connection to ResolvedIPv4Address(('127.0.0.1', 7687)) (reason [WinError 10061] No connection could be made because the target machine actively refused it)
+    +------------------------------------
+
+The above exception was the direct cause of the following exception:
+
+    def test_all_api_endpoints():
+        print("==================================================")
+        print(" RUNNING PHASE 9: FASTAPI REST BACKEND TESTS")
+        print("==================================================")
+    
+>       seed_database()
+
+backend\tests\test_api.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+backend\scripts\seed_db.py:116: in seed_database
+    session.run(seed_cypher)
+.venv\Lib\site-packages\neo4j\_sync\work\session.py:318: in run
+    self._connect(self._config.default_access_mode)
+.venv\Lib\site-packages\neo4j\_sync\work\session.py:128: in _connect
+    super()._connect(
+.venv\Lib\site-packages\neo4j\_sync\work\workspace.py:181: in _connect
+    self._connection = self._pool.acquire(**acquire_kwargs_)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\neo4j\_sync\io\_pool.py:1216: in acquire
+    self.ensure_routing_table_is_fresh(
+.venv\Lib\site-packages\neo4j\_sync\io\_pool.py:1150: in ensure_routing_table_is_fresh
+    self.update_routing_table(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <Neo4jPool address=IPv4Address(('127.0.0.1', 7687))>
+database = 'finance-ai-antigravity', imp_user = None, bookmarks = ()
+auth = AcquisitionAuth(auth=None, force_auth=False)
+acquisition_timeout = <neo4j._deadline.Deadline object at 0x000002B9341C8F50>
+database_callback = <function Neo4jPool.ensure_routing_table_is_fresh.<locals>.wrapped_database_callback at 0x000002B934234B80>
+
+    def update_routing_table(
+        self,
+        *,
+        database,
+        imp_user,
+        bookmarks,
+        auth=None,
+        acquisition_timeout=None,
+        database_callback=None,
+    ):
+        """
+        Update the routing table from the first functioning router.
+    
+        :param database: The database name
+        :param imp_user: the user to impersonate while fetching the routing
+                         table
+        :type imp_user: str or None
+        :param bookmarks: bookmarks used when fetching routing table
+        :param auth: auth
+        :param acquisition_timeout: connection acquisition timeout
+        :param database_callback: A callback function that will be called with
+            the database name as only argument when a new routing table has
+            been acquired. This database name might different from ``database``
+            if that was None and the underlying protocol supports reporting
+            back the actual database.
+    
+        :raise neo4j.exceptions.ServiceUnavailable:
+        """
+        acquisition_timeout = acquisition_timeout_to_deadline(
+            acquisition_timeout
+        )
+        errors = []
+        with self.refresh_lock:
+            routing_table = self.get_routing_table(database)
+            if routing_table is not None:
+                # copied because it can be modified
+                existing_routers = set(routing_table.routers)
+                prefer_initial_routing_address = (
+                    routing_table.initialized_without_writers
+                )
+            else:
+                existing_routers = {self.address}
+                prefer_initial_routing_address = True
+    
+            if (
+                prefer_initial_routing_address
+                and
+                # TODO: Test this state
+                self._update_routing_table_from(
+                    self.address,
+                    database=database,
+                    imp_user=imp_user,
+                    bookmarks=bookmarks,
+                    auth=auth,
+                    acquisition_timeout=acquisition_timeout,
+                    database_callback=database_callback,
+                    ignored_errors=errors,
+                )
+            ):
+                # Why is only the first initial routing address used?
+                return
+            if self._update_routing_table_from(
+                *(existing_routers - {self.address}),
+                database=database,
+                imp_user=imp_user,
+                bookmarks=bookmarks,
+                auth=auth,
+                acquisition_timeout=acquisition_timeout,
+                database_callback=database_callback,
+                ignored_errors=errors,
+            ):
+                return
+    
+            if (
+                not prefer_initial_routing_address
+                and self._update_routing_table_from(
+                    self.address,
+                    database=database,
+                    imp_user=imp_user,
+                    bookmarks=bookmarks,
+                    auth=auth,
+                    acquisition_timeout=acquisition_timeout,
+                    database_callback=database_callback,
+                    ignored_errors=errors,
+                )
+            ):
+                # Why is only the first initial routing address used?
+                return
+    
+            # None of the routers have been successful, so just fail
+            log.error("Unable to retrieve routing information")
+            if sys.version_info >= (3, 11):
+                e = ExceptionGroup(  # noqa: F821 # version guard in place
+                    "All routing table requests failed", errors
+                )
+            else:
+                e = None
+                for error in errors:
+                    if e is None:
+                        e = error
+                        continue
+                    cause = error
+                    seen_causes = {id(cause)}
+                    while True:
+                        next_cause = getattr(cause, "__cause__", None)
+                        if next_cause is None:
+                            break
+                        if id(next_cause) in seen_causes:
+                            # Avoid infinite recursion in case of circular
+                            # references.
+                            break
+                        cause = next_cause
+                        seen_causes.add(id(cause))
+                    cause.__cause__ = e
+                    e = error
+>           raise ServiceUnavailable(
+                "Unable to retrieve routing information"
+            ) from e
+E           neo4j.exceptions.ServiceUnavailable: Unable to retrieve routing information
+
+.venv\Lib\site-packages\neo4j\_sync\io\_pool.py:1076: ServiceUnavailable
+---------------------------- Captured stdout call -----------------------------
+==================================================
+ RUNNING PHASE 9: FASTAPI REST BACKEND TESTS
+==================================================
+Connecting to Neo4j URI: neo4j://127.0.0.1:7687 on database: finance-ai-antigravity
+2026-10-31 18:28:12 | ERROR    | neo4j.pool | Unable to retrieve routing information
+------------------------------ Captured log call ------------------------------
+ERROR    neo4j.pool:_pool.py:1051 Unable to retrieve routing information
+_____________________________ test_dynamic_graph ______________________________
+  | ExceptionGroup: All routing table requests failed (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_async_compat\network\_bolt_socket.py", line 552, in _connect_secure
+    |     s.connect(resolved_address)
+    |     ~~~~~~~~~^^^^^^^^^^^^^^^^^^
+    | ConnectionRefusedError: [WinError 10061] No connection could be made because the target machine actively refused it
+    | 
+    | The above exception was the direct cause of the following exception:
+    | 
+    | Traceback (most recent call last):
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_bolt_socket.py", line 329, in connect
+    |     s = cls._connect_secure(
+    |         resolved_address,
+    |     ...<3 lines>...
+    |         ssl_context,
+    |     )
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_async_compat\network\_bolt_socket.py", line 562, in _connect_secure
+    |     raise ServiceUnavailable(
+    |     ...<2 lines>...
+    |     ) from error
+    | neo4j.exceptions.ServiceUnavailable: Failed to establish connection to ResolvedIPv4Address(('127.0.0.1', 7687)) (reason [WinError 10061] No connection could be made because the target machine actively refused it)
+    | 
+    | The above exception was the direct cause of the following exception:
+    | 
+    | Traceback (most recent call last):
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 833, in fetch_routing_table
+    |     new_routing_info = self.fetch_routing_info(
+    |         address,
+    |     ...<4 lines>...
+    |         acquisition_timeout,
+    |     )
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 792, in fetch_routing_info
+    |     cx = self._acquire(address, auth, deadline, None)
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 418, in _acquire
+    |     return connection_creator()
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 231, in connection_creator
+    |     connection = self.opener(
+    |         address, auth or self.pool_config.auth, deadline
+    |     )
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 711, in opener
+    |     return Bolt.open(
+    |            ~~~~~~~~~^
+    |         addr,
+    |         ^^^^^
+    |     ...<3 lines>...
+    |         pool_config=pool_config,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^
+    |     )
+    |     ^
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_bolt.py", line 366, in open
+    |     s, protocol_version = BoltSocket.connect(
+    |                           ~~~~~~~~~~~~~~~~~~^
+    |         address,
+    |         ^^^^^^^^
+    |     ...<4 lines>...
+    |         keep_alive=pool_config.keep_alive,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |     )
+    |     ^
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_bolt_socket.py", line 379, in connect
+    |     raise ServiceUnavailable(
+    |     ...<2 lines>...
+    |     ) from errors[0]
+    | neo4j.exceptions.ServiceUnavailable: Couldn't connect to 127.0.0.1:7687 (resolved to ('127.0.0.1:7687',)):
+    | Failed to establish connection to ResolvedIPv4Address(('127.0.0.1', 7687)) (reason [WinError 10061] No connection could be made because the target machine actively refused it)
+    +------------------------------------
+
+The above exception was the direct cause of the following exception:
+
+    def test_dynamic_graph():
+        print("==================================================")
+        print(" RUNNING PHASE 1: DYNAMIC KNOWLEDGE GRAPH TESTS")
+        print("==================================================")
+    
+>       seed_database()
+
+backend\tests\test_dynamic_graph.py:20: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+backend\scripts\seed_db.py:116: in seed_database
+    session.run(seed_cypher)
+.venv\Lib\site-packages\neo4j\_sync\work\session.py:318: in run
+    self._connect(self._config.default_access_mode)
+.venv\Lib\site-packages\neo4j\_sync\work\session.py:128: in _connect
+    super()._connect(
+.venv\Lib\site-packages\neo4j\_sync\work\workspace.py:181: in _connect
+    self._connection = self._pool.acquire(**acquire_kwargs_)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\neo4j\_sync\io\_pool.py:1216: in acquire
+    self.ensure_routing_table_is_fresh(
+.venv\Lib\site-packages\neo4j\_sync\io\_pool.py:1150: in ensure_routing_table_is_fresh
+    self.update_routing_table(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <Neo4jPool address=IPv4Address(('127.0.0.1', 7687))>
+database = 'finance-ai-antigravity', imp_user = None, bookmarks = ()
+auth = AcquisitionAuth(auth=None, force_auth=False)
+acquisition_timeout = <neo4j._deadline.Deadline object at 0x000002B9341CAE10>
+database_callback = <function Neo4jPool.ensure_routing_table_is_fresh.<locals>.wrapped_database_callback at 0x000002B93421E160>
+
+    def update_routing_table(
+        self,
+        *,
+        database,
+        imp_user,
+        bookmarks,
+        auth=None,
+        acquisition_timeout=None,
+        database_callback=None,
+    ):
+        """
+        Update the routing table from the first functioning router.
+    
+        :param database: The database name
+        :param imp_user: the user to impersonate while fetching the routing
+                         table
+        :type imp_user: str or None
+        :param bookmarks: bookmarks used when fetching routing table
+        :param auth: auth
+        :param acquisition_timeout: connection acquisition timeout
+        :param database_callback: A callback function that will be called with
+            the database name as only argument when a new routing table has
+            been acquired. This database name might different from ``database``
+            if that was None and the underlying protocol supports reporting
+            back the actual database.
+    
+        :raise neo4j.exceptions.ServiceUnavailable:
+        """
+        acquisition_timeout = acquisition_timeout_to_deadline(
+            acquisition_timeout
+        )
+        errors = []
+        with self.refresh_lock:
+            routing_table = self.get_routing_table(database)
+            if routing_table is not None:
+                # copied because it can be modified
+                existing_routers = set(routing_table.routers)
+                prefer_initial_routing_address = (
+                    routing_table.initialized_without_writers
+                )
+            else:
+                existing_routers = {self.address}
+                prefer_initial_routing_address = True
+    
+            if (
+                prefer_initial_routing_address
+                and
+                # TODO: Test this state
+                self._update_routing_table_from(
+                    self.address,
+                    database=database,
+                    imp_user=imp_user,
+                    bookmarks=bookmarks,
+                    auth=auth,
+                    acquisition_timeout=acquisition_timeout,
+                    database_callback=database_callback,
+                    ignored_errors=errors,
+                )
+            ):
+                # Why is only the first initial routing address used?
+                return
+            if self._update_routing_table_from(
+                *(existing_routers - {self.address}),
+                database=database,
+                imp_user=imp_user,
+                bookmarks=bookmarks,
+                auth=auth,
+                acquisition_timeout=acquisition_timeout,
+                database_callback=database_callback,
+                ignored_errors=errors,
+            ):
+                return
+    
+            if (
+                not prefer_initial_routing_address
+                and self._update_routing_table_from(
+                    self.address,
+                    database=database,
+                    imp_user=imp_user,
+                    bookmarks=bookmarks,
+                    auth=auth,
+                    acquisition_timeout=acquisition_timeout,
+                    database_callback=database_callback,
+                    ignored_errors=errors,
+                )
+            ):
+                # Why is only the first initial routing address used?
+                return
+    
+            # None of the routers have been successful, so just fail
+            log.error("Unable to retrieve routing information")
+            if sys.version_info >= (3, 11):
+                e = ExceptionGroup(  # noqa: F821 # version guard in place
+                    "All routing table requests failed", errors
+                )
+            else:
+                e = None
+                for error in errors:
+                    if e is None:
+                        e = error
+                        continue
+                    cause = error
+                    seen_causes = {id(cause)}
+                    while True:
+                        next_cause = getattr(cause, "__cause__", None)
+                        if next_cause is None:
+                            break
+                        if id(next_cause) in seen_causes:
+                            # Avoid infinite recursion in case of circular
+                            # references.
+                            break
+                        cause = next_cause
+                        seen_causes.add(id(cause))
+                    cause.__cause__ = e
+                    e = error
+>           raise ServiceUnavailable(
+                "Unable to retrieve routing information"
+            ) from e
+E           neo4j.exceptions.ServiceUnavailable: Unable to retrieve routing information
+
+.venv\Lib\site-packages\neo4j\_sync\io\_pool.py:1076: ServiceUnavailable
+---------------------------- Captured stdout call -----------------------------
+==================================================
+ RUNNING PHASE 1: DYNAMIC KNOWLEDGE GRAPH TESTS
+==================================================
+Connecting to Neo4j URI: neo4j://127.0.0.1:7687 on database: finance-ai-antigravity
+2026-10-31 18:28:14 | ERROR    | neo4j.pool | Unable to retrieve routing information
+------------------------------ Captured log call ------------------------------
+ERROR    neo4j.pool:_pool.py:1051 Unable to retrieve routing information
+________________ TestImportAPIUnit.test_confirm_saves_expense _________________
+  | ExceptionGroup: All routing table requests failed (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_async_compat\network\_bolt_socket.py", line 552, in _connect_secure
+    |     s.connect(resolved_address)
+    |     ~~~~~~~~~^^^^^^^^^^^^^^^^^^
+    | ConnectionRefusedError: [WinError 10061] No connection could be made because the target machine actively refused it
+    | 
+    | The above exception was the direct cause of the following exception:
+    | 
+    | Traceback (most recent call last):
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_bolt_socket.py", line 329, in connect
+    |     s = cls._connect_secure(
+    |         resolved_address,
+    |     ...<3 lines>...
+    |         ssl_context,
+    |     )
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_async_compat\network\_bolt_socket.py", line 562, in _connect_secure
+    |     raise ServiceUnavailable(
+    |     ...<2 lines>...
+    |     ) from error
+    | neo4j.exceptions.ServiceUnavailable: Failed to establish connection to ResolvedIPv4Address(('127.0.0.1', 7687)) (reason [WinError 10061] No connection could be made because the target machine actively refused it)
+    | 
+    | The above exception was the direct cause of the following exception:
+    | 
+    | Traceback (most recent call last):
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 833, in fetch_routing_table
+    |     new_routing_info = self.fetch_routing_info(
+    |         address,
+    |     ...<4 lines>...
+    |         acquisition_timeout,
+    |     )
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 792, in fetch_routing_info
+    |     cx = self._acquire(address, auth, deadline, None)
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 418, in _acquire
+    |     return connection_creator()
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 231, in connection_creator
+    |     connection = self.opener(
+    |         address, auth or self.pool_config.auth, deadline
+    |     )
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_pool.py", line 711, in opener
+    |     return Bolt.open(
+    |            ~~~~~~~~~^
+    |         addr,
+    |         ^^^^^
+    |     ...<3 lines>...
+    |         pool_config=pool_config,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^
+    |     )
+    |     ^
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_bolt.py", line 366, in open
+    |     s, protocol_version = BoltSocket.connect(
+    |                           ~~~~~~~~~~~~~~~~~~^
+    |         address,
+    |         ^^^^^^^^
+    |     ...<4 lines>...
+    |         keep_alive=pool_config.keep_alive,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |     )
+    |     ^
+    |   File "C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\neo4j\_sync\io\_bolt_socket.py", line 379, in connect
+    |     raise ServiceUnavailable(
+    |     ...<2 lines>...
+    |     ) from errors[0]
+    | neo4j.exceptions.ServiceUnavailable: Couldn't connect to 127.0.0.1:7687 (resolved to ('127.0.0.1:7687',)):
+    | Failed to establish connection to ResolvedIPv4Address(('127.0.0.1', 7687)) (reason [WinError 10061] No connection could be made because the target machine actively refused it)
+    +------------------------------------
+
+The above exception was the direct cause of the following exception:
+
+self = <backend.tests.test_import.TestImportAPIUnit object at 0x000002B9344A4270>
+
+    def test_confirm_saves_expense(self):
+>       resp = self.client.post("/api/import/confirm", json={
+            "rows": [{"date": "2026-09-01", "description": "Test Expense",
+                      "amount": 1500.0, "type": "EXPENSE"}]
+        })
+
+backend\tests\test_import.py:533: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\starlette\testclient.py:556: in post
+    return super().post(
+.venv\Lib\site-packages\httpx\_client.py:1144: in post
+    return self.request(
+.venv\Lib\site-packages\starlette\testclient.py:455: in request
+    return super().request(
+.venv\Lib\site-packages\httpx\_client.py:825: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:914: in send
+    response = self._send_handling_auth(
+.venv\Lib\site-packages\httpx\_client.py:942: in _send_handling_auth
+    response = self._send_handling_redirects(
+.venv\Lib\site-packages\httpx\_client.py:979: in _send_handling_redirects
+    response = self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:1014: in _send_single_request
+    response = transport.handle_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\starlette\testclient.py:354: in handle_request
+    raise exc
+.venv\Lib\site-packages\starlette\testclient.py:351: in handle_request
+    portal.call(self.app, scope, receive, send)
+.venv\Lib\site-packages\anyio\from_thread.py:340: in call
+    return cast(T_Retval, self.start_task_soon(func, *args).result())
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\concurrent\futures\_base.py:456: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\concurrent\futures\_base.py:401: in __get_result
+    raise self._exception
+.venv\Lib\site-packages\anyio\from_thread.py:265: in _call_func
+    retval = await retval_or_awaitable
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\fastapi\applications.py:1163: in __call__
+    await super().__call__(scope, receive, send)
+.venv\Lib\site-packages\starlette\applications.py:96: in __call__
+    await self.middleware_stack(scope, receive, send)
+.venv\Lib\site-packages\starlette\middleware\errors.py:186: in __call__
+    raise exc
+.venv\Lib\site-packages\starlette\middleware\errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+.venv\Lib\site-packages\starlette\middleware\cors.py:88: in __call__
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\starlette\middleware\exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+.venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+.venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+.venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\starlette\routing.py:670: in __call__
+    await self.middleware_stack(scope, receive, send)
+.venv\Lib\site-packages\fastapi\routing.py:2734: in app
+    await route.handle(scope, receive, send)
+.venv\Lib\site-packages\fastapi\routing.py:1780: in handle
+    await self.original_router.handle(scope, receive, send)
+.venv\Lib\site-packages\fastapi\routing.py:2789: in handle
+    await included_router._handle_selected(scope, receive, send)
+.venv\Lib\site-packages\fastapi\routing.py:1800: in _handle_selected
+    await original_route.handle(scope, receive, send)
+.venv\Lib\site-packages\fastapi\routing.py:1279: in handle
+    await app(scope, receive, send)
+.venv\Lib\site-packages\fastapi\routing.py:158: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+.venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+.venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+.venv\Lib\site-packages\fastapi\routing.py:144: in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\fastapi\routing.py:706: in app
+    raw_response = await run_endpoint_function(
+.venv\Lib\site-packages\fastapi\routing.py:354: in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\starlette\concurrency.py:34: in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\anyio\to_thread.py:65: in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+.venv\Lib\site-packages\anyio\_backends\_asyncio.py:2706: in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+.venv\Lib\site-packages\anyio\_backends\_asyncio.py:1100: in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+backend\app\api\import_api.py:307: in confirm_import
+    user_accounts = db.get_user_accounts(user_id)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\app\database\neo4j_service.py:744: in get_user_accounts
+    result = session.run(query, user_id=user_id)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\neo4j\_sync\work\session.py:318: in run
+    self._connect(self._config.default_access_mode)
+.venv\Lib\site-packages\neo4j\_sync\work\session.py:128: in _connect
+    super()._connect(
+.venv\Lib\site-packages\neo4j\_sync\work\workspace.py:181: in _connect
+    self._connection = self._pool.acquire(**acquire_kwargs_)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\neo4j\_sync\io\_pool.py:1216: in acquire
+    self.ensure_routing_table_is_fresh(
+.venv\Lib\site-packages\neo4j\_sync\io\_pool.py:1150: in ensure_routing_table_is_fresh
+    self.update_routing_table(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <Neo4jPool address=IPv4Address(('127.0.0.1', 7687))>
+database = 'finance-ai-antigravity', imp_user = None, bookmarks = ()
+auth = AcquisitionAuth(auth=None, force_auth=False)
+acquisition_timeout = <neo4j._deadline.Deadline object at 0x000002B9348BD790>
+database_callback = <function Neo4jPool.ensure_routing_table_is_fresh.<locals>.wrapped_database_callback at 0x000002B934634A40>
+
+    def update_routing_table(
+        self,
+        *,
+        database,
+        imp_user,
+        bookmarks,
+        auth=None,
+        acquisition_timeout=None,
+        database_callback=None,
+    ):
+        """
+        Update the routing table from the first functioning router.
+    
+        :param database: The database name
+        :param imp_user: the user to impersonate while fetching the routing
+                         table
+        :type imp_user: str or None
+        :param bookmarks: bookmarks used when fetching routing table
+        :param auth: auth
+        :param acquisition_timeout: connection acquisition timeout
+        :param database_callback: A callback function that will be called with
+            the database name as only argument when a new routing table has
+            been acquired. This database name might different from ``database``
+            if that was None and the underlying protocol supports reporting
+            back the actual database.
+    
+        :raise neo4j.exceptions.ServiceUnavailable:
+        """
+        acquisition_timeout = acquisition_timeout_to_deadline(
+            acquisition_timeout
+        )
+        errors = []
+        with self.refresh_lock:
+            routing_table = self.get_routing_table(database)
+            if routing_table is not None:
+                # copied because it can be modified
+                existing_routers = set(routing_table.routers)
+                prefer_initial_routing_address = (
+                    routing_table.initialized_without_writers
+                )
+            else:
+                existing_routers = {self.address}
+                prefer_initial_routing_address = True
+    
+            if (
+                prefer_initial_routing_address
+                and
+                # TODO: Test this state
+                self._update_routing_table_from(
+                    self.address,
+                    database=database,
+                    imp_user=imp_user,
+                    bookmarks=bookmarks,
+                    auth=auth,
+                    acquisition_timeout=acquisition_timeout,
+                    database_callback=database_callback,
+                    ignored_errors=errors,
+                )
+            ):
+                # Why is only the first initial routing address used?
+                return
+            if self._update_routing_table_from(
+                *(existing_routers - {self.address}),
+                database=database,
+                imp_user=imp_user,
+                bookmarks=bookmarks,
+                auth=auth,
+                acquisition_timeout=acquisition_timeout,
+                database_callback=database_callback,
+                ignored_errors=errors,
+            ):
+                return
+    
+            if (
+                not prefer_initial_routing_address
+                and self._update_routing_table_from(
+                    self.address,
+                    database=database,
+                    imp_user=imp_user,
+                    bookmarks=bookmarks,
+                    auth=auth,
+                    acquisition_timeout=acquisition_timeout,
+                    database_callback=database_callback,
+                    ignored_errors=errors,
+                )
+            ):
+                # Why is only the first initial routing address used?
+                return
+    
+            # None of the routers have been successful, so just fail
+            log.error("Unable to retrieve routing information")
+            if sys.version_info >= (3, 11):
+                e = ExceptionGroup(  # noqa: F821 # version guard in place
+                    "All routing table requests failed", errors
+                )
+            else:
+                e = None
+                for error in errors:
+                    if e is None:
+                        e = error
+                        continue
+                    cause = error
+                    seen_causes = {id(cause)}
+                    while True:
+                        next_cause = getattr(cause, "__cause__", None)
+                        if next_cause is None:
+                            break
+                        if id(next_cause) in seen_causes:
+                            # Avoid infinite recursion in case of circular
+                            # references.
+                            break
+                        cause = next_cause
+                        seen_causes.add(id(cause))
+                    cause.__cause__ = e
+                    e = error
+>           raise ServiceUnavailable(
+                "Unable to retrieve routing information"
+            ) from e
+E           neo4j.exceptions.ServiceUnavailable: Unable to retrieve routing information
+
+.venv\Lib\site-packages\neo4j\_sync\io\_pool.py:1076: ServiceUnavailable
+---------------------------- Captured stdout setup ----------------------------
+2026-10-31 18:29:06 | ERROR    | neo4j.pool | Unable to retrieve routing information
+----------------------------- Captured log setup ------------------------------
+ERROR    neo4j.pool:_pool.py:1051 Unable to retrieve routing information
+---------------------------- Captured stdout call -----------------------------
+2026-10-31 18:29:08 | ERROR    | neo4j.pool | Unable to retrieve routing information
+------------------------------ Captured log call ------------------------------
+ERROR    neo4j.pool:_pool.py:1051 Unable to retrieve routing information
+============================== warnings summary ===============================
+.venv\Lib\site-packages\fastapi\testclient.py:1
+  C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+.venv\Lib\site-packages\starlette\testclient.py:53
+  C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\starlette\testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+
+backend/tests/test_import.py::TestImportAPIUnit::test_csv_upload_rejects_oversized_content
+  C:\Users\gupta\Documents\HARIOM\Personal_Finance_AI_FYP\.venv\Lib\site-packages\fastapi\routing.py:352: StarletteDeprecationWarning: 'HTTP_413_REQUEST_ENTITY_TOO_LARGE' is deprecated. Use 'HTTP_413_CONTENT_TOO_LARGE' instead.
+    return await dependant.call(**values)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED backend/tests/test_api.py::test_all_api_endpoints - neo4j.exceptions.S...
+FAILED backend/tests/test_dynamic_graph.py::test_dynamic_graph - neo4j.except...
+FAILED backend/tests/test_import.py::TestImportAPIUnit::test_confirm_saves_expense
+ERROR backend/tests/test_context.py - neo4j.exceptions.ServiceUnavailable: Un...
+ERROR backend/tests/test_emergency_context.py - neo4j.exceptions.ServiceUnava...
+ERROR backend/tests/test_engine.py - neo4j.exceptions.ServiceUnavailable: Una...
+ERROR backend/tests/test_purchase_context.py - neo4j.exceptions.ServiceUnavai...
+ERROR backend/tests/test_savings_context.py - neo4j.exceptions.ServiceUnavail...
+ERROR backend/tests/test_summary.py - neo4j.exceptions.ServiceUnavailable: Un...
+ERROR backend/tests/test_summary_context.py - neo4j.exceptions.ServiceUnavail...
+= 3 failed, 324 passed, 1 skipped, 3 warnings, 7 errors in 267.05s (0:04:27) ==

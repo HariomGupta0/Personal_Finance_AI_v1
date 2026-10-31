@@ -1,0 +1,1664 @@
+{
+  "fixture_1_demo": {
+    "category_expenses": {
+      "categories": [
+        {
+          "amount": 12000.0,
+          "category": "Housing",
+          "percentage": 57.14
+        },
+        {
+          "amount": 4000.0,
+          "category": "Food",
+          "percentage": 19.05
+        },
+        {
+          "amount": 3000.0,
+          "category": "Utilities",
+          "percentage": 14.29
+        },
+        {
+          "amount": 2000.0,
+          "category": "Transport",
+          "percentage": 9.52
+        }
+      ],
+      "reporting_period": "2026-10",
+      "top_amount": 12000.0,
+      "top_category": "Housing",
+      "total_expenses": 21000.0
+    },
+    "comprehensive_health": {
+      "dti_ratio": 16.67,
+      "emergency_shortfall": 33000.0,
+      "grade": "A",
+      "health_score": 90.0,
+      "is_sufficient_data": true,
+      "reporting_period": "2026-10",
+      "runway_months": 2.14,
+      "savings_rate": 65.0,
+      "summary": "Excellent financial health with strong reserves and manageable debt."
+    },
+    "debt_burden": {
+      "assessment": "Healthy debt level (under 20% of income).",
+      "dti_ratio": 16.67,
+      "has_income": true,
+      "is_sufficient_data": true,
+      "monthly_emi": 10000.0,
+      "reporting_period": "2026-10",
+      "risk_level": "LOW",
+      "total_outstanding_debt": 150000.0
+    },
+    "emergency_fund": {
+      "current_fund": 30000.0,
+      "is_sufficient_data": true,
+      "monthly_expenses": 21000.0,
+      "recommended_fund": 63000.0,
+      "reporting_period": "2026-10",
+      "shortfall": 33000.0
+    },
+    "emergency_runway": {
+      "current_balance": 45000.0,
+      "data_note": null,
+      "is_sufficient_data": true,
+      "monthly_expenses": 21000.0,
+      "reporting_period": "2026-10",
+      "runway_months": 2.14,
+      "status": "INSUFFICIENT",
+      "target_runway_months": 3.0
+    },
+    "financial_plan": {
+      "ai_metadata": {
+        "model": null,
+        "source": "deterministic_rules"
+      },
+      "budget_plan": {
+        "categories": [
+          {
+            "category": "Housing",
+            "current_spending": 12000.0,
+            "is_discretionary": false,
+            "percentage_of_expenses": 57.14,
+            "potential_savings": 0.0,
+            "recommended_limit": 12000.0,
+            "status": "WITHIN_BUDGET"
+          },
+          {
+            "category": "Food",
+            "current_spending": 4000.0,
+            "is_discretionary": true,
+            "percentage_of_expenses": 19.05,
+            "potential_savings": 400.0,
+            "recommended_limit": 3600,
+            "status": "OVER_BUDGET"
+          },
+          {
+            "category": "Utilities",
+            "current_spending": 3000.0,
+            "is_discretionary": false,
+            "percentage_of_expenses": 14.29,
+            "potential_savings": 0.0,
+            "recommended_limit": 3000.0,
+            "status": "WITHIN_BUDGET"
+          },
+          {
+            "category": "Transport",
+            "current_spending": 2000.0,
+            "is_discretionary": false,
+            "percentage_of_expenses": 9.52,
+            "potential_savings": 0.0,
+            "recommended_limit": 2000.0,
+            "status": "WITHIN_BUDGET"
+          }
+        ],
+        "current_total_expenses": 21000.0,
+        "recommended_total_budget": 20600.0,
+        "total_potential_savings": 400.0
+      },
+      "data_limitations": [],
+      "debt_and_commitments": {
+        "dti_ratio": 16.67,
+        "monthly_emi": 10000.0,
+        "recurring_commitments": [
+          {
+            "amount": 10000.0,
+            "due_date": "2026-10-10",
+            "name": "Loan (L001)",
+            "status": "PENDING",
+            "type": "EMI"
+          },
+          {
+            "amount": 12000.0,
+            "frequency": "Monthly",
+            "name": "Monthly Rent",
+            "type": "SUBSCRIPTION/BILL"
+          },
+          {
+            "amount": 3000.0,
+            "frequency": "Monthly",
+            "name": "Electricity Bill",
+            "type": "SUBSCRIPTION/BILL"
+          }
+        ],
+        "risk_level": "LOW",
+        "total_outstanding_debt": 150000.0,
+        "total_recurring_monthly": 25000.0
+      },
+      "executive_summary": "You have a solid financial foundation with a 65.0% savings rate (Grade A, Score 90.0/100). Your monthly surplus is \u20b939,000.00. By trimming discretionary categories like Housing, you can unlock an additional \u20b9400.00 each month to accelerate your emergency cushion.",
+      "financial_summary": {
+        "health_assessment": "Excellent financial health with strong reserves and manageable debt.",
+        "health_grade": "A",
+        "health_score": 90.0,
+        "liquid_balance": 45000.0,
+        "monthly_expenses": 21000.0,
+        "monthly_income": 60000.0,
+        "net_savings": 39000.0,
+        "runway_months": 2.14,
+        "runway_status": "INSUFFICIENT",
+        "savings_rate_pct": 65.0
+      },
+      "generated_at": "2026-10-15T10:00:00.000000",
+      "goals": [
+        {
+          "current": 30000.0,
+          "current_amount": 30000.0,
+          "id": "G001",
+          "name": "Emergency Fund",
+          "target": 100000.0,
+          "target_amount": 100000.0,
+          "target_date": "2027-03-01"
+        }
+      ],
+      "prioritized_actions": [
+        {
+          "action": "Cap monthly Food spending at \u20b93,600.00.",
+          "category": "Food",
+          "expected_impact": "Saves \u20b9400.00/month",
+          "priority": "HIGH",
+          "rationale": "Current spending on Food is \u20b94,000.00 (19.1% of expenses). Reducing this frees up substantial capital.",
+          "title": "Reduce Discretionary Spending on Food"
+        },
+        {
+          "action": "Automate a recurring deposit of \u20b924,000.00 into a dedicated high-yield savings account or liquid fund on salary day.",
+          "category": "Emergency Fund",
+          "expected_impact": "Achieves fully funded status in ~0.8 months at \u20b924,000.00/month",
+          "priority": "HIGH",
+          "rationale": "Your recommended 3-month emergency buffer is \u20b963,000.00. You currently have a gap of \u20b918,000.00.",
+          "title": "Build Your 3-Month Emergency Reserve"
+        },
+        {
+          "action": "Ensure your monthly EMI of \u20b910,000.00 is debited automatically. Direct any windfall bonuses to prepay high-interest principal.",
+          "category": "Debt",
+          "expected_impact": "Reduces total interest paid and lowers DTI ratio",
+          "priority": "MEDIUM",
+          "rationale": "Outstanding debt obligations total \u20b9150,000.00 with a DTI of 16.7%.",
+          "title": "Prioritize High-Interest Debt Repayments"
+        },
+        {
+          "action": "Review weekly transaction summaries on the dashboard to ensure category adherence.",
+          "category": "Habits",
+          "expected_impact": "Maintains financial discipline",
+          "priority": "LOW",
+          "rationale": "Consistent tracking correlates directly with higher savings achievement rates.",
+          "title": "Track Progress Weekly"
+        }
+      ],
+      "reporting_month": "October 2026",
+      "savings_plan": {
+        "current_monthly_savings": 39000.0,
+        "emergency_fund_3mo_target": 63000.0,
+        "emergency_fund_current": 45000.0,
+        "emergency_fund_shortfall": 18000.0,
+        "estimated_months_to_target": 0.8,
+        "goals": [
+          {
+            "current": 30000.0,
+            "current_amount": 30000.0,
+            "id": "G001",
+            "name": "Emergency Fund",
+            "target": 100000.0,
+            "target_amount": 100000.0,
+            "target_date": "2027-03-01"
+          }
+        ],
+        "recommended_monthly_savings": 24000.0,
+        "timeline_text": "~0.8 months at \u20b924,000.00/month"
+      },
+      "spending_insights": [
+        {
+          "category": "Housing",
+          "text": "Housing is your largest expense category at \u20b912,000.00 (57.1% of total outflow).",
+          "topic": "Dominant Expense"
+        },
+        {
+          "category": "Lifestyle",
+          "text": "Discretionary lifestyle spending (Dining, Shopping, Entertainment) constitutes 19.0% (\u20b94,000.00) of your monthly budget.",
+          "topic": "Discretionary Spending"
+        },
+        {
+          "category": "Debt",
+          "text": "Monthly EMI obligations are \u20b910,000.00 (DTI Ratio: 16.7%). Managing these on time is crucial for your credit standing.",
+          "topic": "Fixed Debt Obligations"
+        }
+      ],
+      "status": "SUCCESS",
+      "user_id": "U001"
+    },
+    "financial_summary": {
+      "accounts": [
+        {
+          "account_type": "Savings",
+          "balance": 45000.0,
+          "bank": "Demo Bank",
+          "id": "A001"
+        }
+      ],
+      "current_emergency_fund": 30000.0,
+      "debt_to_income_dti_pct": 16.67,
+      "dti_ratio": 16.67,
+      "emergency_fund_shortfall": 33000.0,
+      "expenses": 21000.0,
+      "financial_health_grade": "A",
+      "financial_health_score": 90.0,
+      "goals": [
+        {
+          "current": 30000.0,
+          "current_amount": 30000.0,
+          "id": "G001",
+          "name": "Emergency Fund",
+          "target": 100000.0,
+          "target_amount": 100000.0,
+          "target_date": "2027-03-01"
+        }
+      ],
+      "health_grade": "A",
+      "health_score": 90.0,
+      "income": 60000.0,
+      "is_sufficient_data": true,
+      "monthly_expenses": 21000.0,
+      "monthly_income": 60000.0,
+      "net_savings": 39000.0,
+      "recommended_3mo_emergency_fund": 63000.0,
+      "recommended_emergency_fund": 63000.0,
+      "reporting_date": "2026-10-15",
+      "reporting_period": "2026-10",
+      "savings": 39000.0,
+      "savings_rate": 65.0,
+      "savings_rate_pct": 65.0,
+      "top_expense_category": "Housing",
+      "total_expenses": 21000.0
+    },
+    "merchant_expenses_swiggy": {
+      "average_spend": 0.0,
+      "historical_count": 0,
+      "is_found": false,
+      "merchant": "Swiggy",
+      "reporting_period": "2026-10",
+      "total_spent": 0.0,
+      "transaction_count": 0,
+      "transactions": []
+    },
+    "period_comparison": {
+      "absolute_change": 21000.0,
+      "category": null,
+      "category_variances": [
+        {
+          "absolute_difference": 12000.0,
+          "category": "Housing",
+          "contribution_weight_pct": 57.14,
+          "mathematical_contribution_note": "Category 'Housing' changed by \u20b912,000.00 (+12,000.00), accounting for 57.1% mathematical contribution to the total change.",
+          "percentage_change": null,
+          "percentage_change_display": "N/A (baseline was \u20b90)",
+          "period_a_spent": 0,
+          "period_b_spent": 12000.0,
+          "supporting_transactions": [
+            {
+              "amount": 12000.0,
+              "date": "2026-10-05",
+              "description": "Monthly Rent",
+              "id": "T001"
+            }
+          ]
+        },
+        {
+          "absolute_difference": 4000.0,
+          "category": "Food",
+          "contribution_weight_pct": 19.05,
+          "mathematical_contribution_note": "Category 'Food' changed by \u20b94,000.00 (+4,000.00), accounting for 19.1% mathematical contribution to the total change.",
+          "percentage_change": null,
+          "percentage_change_display": "N/A (baseline was \u20b90)",
+          "period_a_spent": 0,
+          "period_b_spent": 4000.0,
+          "supporting_transactions": [
+            {
+              "amount": 4000.0,
+              "date": "2026-10-07",
+              "description": "Grocery Shopping",
+              "id": "T002"
+            }
+          ]
+        },
+        {
+          "absolute_difference": 3000.0,
+          "category": "Utilities",
+          "contribution_weight_pct": 14.29,
+          "mathematical_contribution_note": "Category 'Utilities' changed by \u20b93,000.00 (+3,000.00), accounting for 14.3% mathematical contribution to the total change.",
+          "percentage_change": null,
+          "percentage_change_display": "N/A (baseline was \u20b90)",
+          "period_a_spent": 0,
+          "period_b_spent": 3000.0,
+          "supporting_transactions": [
+            {
+              "amount": 3000.0,
+              "date": "2026-10-09",
+              "description": "Electricity Bill",
+              "id": "T004"
+            }
+          ]
+        },
+        {
+          "absolute_difference": 2000.0,
+          "category": "Transport",
+          "contribution_weight_pct": 9.52,
+          "mathematical_contribution_note": "Category 'Transport' changed by \u20b92,000.00 (+2,000.00), accounting for 9.5% mathematical contribution to the total change.",
+          "percentage_change": null,
+          "percentage_change_display": "N/A (baseline was \u20b90)",
+          "period_a_spent": 0,
+          "period_b_spent": 2000.0,
+          "supporting_transactions": [
+            {
+              "amount": 2000.0,
+              "date": "2026-10-08",
+              "description": "Bus/Auto Travel",
+              "id": "T003"
+            }
+          ]
+        }
+      ],
+      "caveats": [
+        "Baseline period September 2026 had \u20b90 spending; percentage change is mathematically unavailable."
+      ],
+      "comparison_outcome": "Higher spending in October 2026",
+      "comparison_verdict": "Your spending overall increased by \u20b921,000.00 (percentage change unavailable because the baseline is zero) from September 2026 (\u20b90.00) to October 2026 (\u20b921,000.00).",
+      "higher_period": "October 2026",
+      "is_sufficient_data": true,
+      "merchant": null,
+      "net_difference": 21000.0,
+      "percentage_change": null,
+      "percentage_change_display": "percentage change unavailable because the baseline is zero",
+      "percentage_change_status": "BASELINE_ZERO",
+      "period_a": {
+        "end_date": "2026-09-30",
+        "name": "September 2026",
+        "start_date": "2026-09-01",
+        "total_spent": 0,
+        "transaction_count": 0
+      },
+      "period_a_tx_ids": [],
+      "period_b": {
+        "end_date": "2026-10-31",
+        "name": "October 2026",
+        "start_date": "2026-10-01",
+        "total_spent": 21000.0,
+        "transaction_count": 4
+      },
+      "period_b_tx_ids": [
+        "T001",
+        "T002",
+        "T003",
+        "T004"
+      ],
+      "reporting_period": "September 2026 vs October 2026",
+      "top_decreases": [],
+      "top_increases": [
+        {
+          "absolute_difference": 12000.0,
+          "category": "Housing",
+          "contribution_weight_pct": 57.14,
+          "mathematical_contribution_note": "Category 'Housing' changed by \u20b912,000.00 (+12,000.00), accounting for 57.1% mathematical contribution to the total change.",
+          "percentage_change": null,
+          "percentage_change_display": "N/A (baseline was \u20b90)",
+          "period_a_spent": 0,
+          "period_b_spent": 12000.0,
+          "supporting_transactions": [
+            {
+              "amount": 12000.0,
+              "date": "2026-10-05",
+              "description": "Monthly Rent",
+              "id": "T001"
+            }
+          ]
+        },
+        {
+          "absolute_difference": 4000.0,
+          "category": "Food",
+          "contribution_weight_pct": 19.05,
+          "mathematical_contribution_note": "Category 'Food' changed by \u20b94,000.00 (+4,000.00), accounting for 19.1% mathematical contribution to the total change.",
+          "percentage_change": null,
+          "percentage_change_display": "N/A (baseline was \u20b90)",
+          "period_a_spent": 0,
+          "period_b_spent": 4000.0,
+          "supporting_transactions": [
+            {
+              "amount": 4000.0,
+              "date": "2026-10-07",
+              "description": "Grocery Shopping",
+              "id": "T002"
+            }
+          ]
+        },
+        {
+          "absolute_difference": 3000.0,
+          "category": "Utilities",
+          "contribution_weight_pct": 14.29,
+          "mathematical_contribution_note": "Category 'Utilities' changed by \u20b93,000.00 (+3,000.00), accounting for 14.3% mathematical contribution to the total change.",
+          "percentage_change": null,
+          "percentage_change_display": "N/A (baseline was \u20b90)",
+          "period_a_spent": 0,
+          "period_b_spent": 3000.0,
+          "supporting_transactions": [
+            {
+              "amount": 3000.0,
+              "date": "2026-10-09",
+              "description": "Electricity Bill",
+              "id": "T004"
+            }
+          ]
+        },
+        {
+          "absolute_difference": 2000.0,
+          "category": "Transport",
+          "contribution_weight_pct": 9.52,
+          "mathematical_contribution_note": "Category 'Transport' changed by \u20b92,000.00 (+2,000.00), accounting for 9.5% mathematical contribution to the total change.",
+          "percentage_change": null,
+          "percentage_change_display": "N/A (baseline was \u20b90)",
+          "period_a_spent": 0,
+          "period_b_spent": 2000.0,
+          "supporting_transactions": [
+            {
+              "amount": 2000.0,
+              "date": "2026-10-08",
+              "description": "Bus/Auto Travel",
+              "id": "T003"
+            }
+          ]
+        }
+      ]
+    },
+    "purchase_safety": {
+      "decision": "NOT_SAFE",
+      "evidence": {
+        "balance_after_purchase": 20000.0,
+        "current_balance": 45000.0,
+        "emergency_requirement": 63000.0,
+        "monthly_expenses": 21000.0,
+        "pending_emi": 10000.0,
+        "purchase_amount": 15000.0
+      },
+      "is_sufficient_data": true,
+      "reason": "The purchase is not financially safe. After the pending EMI and purchase, only \u20b920,000 would remain, which is below the recommended emergency reserve of \u20b963,000.",
+      "reporting_period": "2026-10",
+      "risk_level": "HIGH"
+    },
+    "savings_rate": {
+      "has_income": true,
+      "is_sufficient_data": true,
+      "reporting_period": "2026-10",
+      "savings": 39000.0,
+      "savings_rate": 65.0,
+      "total_expenses": 21000.0,
+      "total_income": 60000.0
+    },
+    "spending_trends": {
+      "available_months_count": 1,
+      "average_monthly_spend": 21000.0,
+      "caveats": [
+        "Data is unavailable for 5 of 6 evaluated months (May 2026, June 2026, July 2026, August 2026, September 2026). These periods are not assumed to have zero spend."
+      ],
+      "coverage_end": "October 2026",
+      "coverage_start": "May 2026",
+      "is_sufficient_data": true,
+      "missing_months_count": 5,
+      "reporting_period": "May 2026 to October 2026",
+      "total_months_evaluated": 6,
+      "trend_direction": "INSUFFICIENT_DATA",
+      "trend_points": [
+        {
+          "coverage_note": "No statement data available for this month",
+          "end_date": "2026-05-31",
+          "is_covered": false,
+          "month": "2026-05",
+          "month_name": "May 2026",
+          "start_date": "2026-05-01",
+          "status": "DATA_UNAVAILABLE",
+          "total_spent": 0.0,
+          "transaction_count": 0,
+          "transaction_ids": []
+        },
+        {
+          "coverage_note": "No statement data available for this month",
+          "end_date": "2026-06-30",
+          "is_covered": false,
+          "month": "2026-06",
+          "month_name": "June 2026",
+          "start_date": "2026-06-01",
+          "status": "DATA_UNAVAILABLE",
+          "total_spent": 0.0,
+          "transaction_count": 0,
+          "transaction_ids": []
+        },
+        {
+          "coverage_note": "No statement data available for this month",
+          "end_date": "2026-07-31",
+          "is_covered": false,
+          "month": "2026-07",
+          "month_name": "July 2026",
+          "start_date": "2026-07-01",
+          "status": "DATA_UNAVAILABLE",
+          "total_spent": 0.0,
+          "transaction_count": 0,
+          "transaction_ids": []
+        },
+        {
+          "coverage_note": "No statement data available for this month",
+          "end_date": "2026-08-31",
+          "is_covered": false,
+          "month": "2026-08",
+          "month_name": "August 2026",
+          "start_date": "2026-08-01",
+          "status": "DATA_UNAVAILABLE",
+          "total_spent": 0.0,
+          "transaction_count": 0,
+          "transaction_ids": []
+        },
+        {
+          "coverage_note": "No statement data available for this month",
+          "end_date": "2026-09-30",
+          "is_covered": false,
+          "month": "2026-09",
+          "month_name": "September 2026",
+          "start_date": "2026-09-01",
+          "status": "DATA_UNAVAILABLE",
+          "total_spent": 0.0,
+          "transaction_count": 0,
+          "transaction_ids": []
+        },
+        {
+          "coverage_note": "Verified statement records present",
+          "end_date": "2026-10-31",
+          "is_covered": true,
+          "month": "2026-10",
+          "month_name": "October 2026",
+          "start_date": "2026-10-01",
+          "status": "CONFIRMED_SPEND",
+          "total_spent": 21000.0,
+          "transaction_count": 4,
+          "transaction_ids": [
+            "T001",
+            "T002",
+            "T003",
+            "T004"
+          ]
+        }
+      ]
+    },
+    "top_transactions": {
+      "amount_max": null,
+      "amount_min": null,
+      "count": 4,
+      "limit_applied": 5,
+      "reporting_period": "2026-10",
+      "total_matching_count": 4,
+      "total_selected_amount": 21000.0,
+      "transactions": [
+        {
+          "amount": 12000.0,
+          "bank": null,
+          "category": "Housing",
+          "date": "2026-10-05",
+          "description": "Monthly Rent",
+          "id": "T001",
+          "merchant": null
+        },
+        {
+          "amount": 4000.0,
+          "bank": null,
+          "category": "Food",
+          "date": "2026-10-07",
+          "description": "Grocery Shopping",
+          "id": "T002",
+          "merchant": null
+        },
+        {
+          "amount": 3000.0,
+          "bank": null,
+          "category": "Utilities",
+          "date": "2026-10-09",
+          "description": "Electricity Bill",
+          "id": "T004",
+          "merchant": null
+        },
+        {
+          "amount": 2000.0,
+          "bank": null,
+          "category": "Transport",
+          "date": "2026-10-08",
+          "description": "Bus/Auto Travel",
+          "id": "T003",
+          "merchant": null
+        }
+      ]
+    }
+  },
+  "fixture_2_ugly_cents": {
+    "category_expenses": {
+      "categories": [
+        {
+          "amount": 19999.99,
+          "category": "Housing",
+          "percentage": 89.55
+        },
+        {
+          "amount": 1334.55,
+          "category": "Food",
+          "percentage": 5.98
+        },
+        {
+          "amount": 999.99,
+          "category": "Shopping",
+          "percentage": 4.48
+        },
+        {
+          "amount": 0.2,
+          "category": "Utilities",
+          "percentage": 0.0
+        }
+      ],
+      "reporting_period": "2026-10",
+      "top_amount": 19999.99,
+      "top_category": "Housing",
+      "total_expenses": 22334.73
+    },
+    "comprehensive_health": {
+      "dti_ratio": 7.95,
+      "emergency_shortfall": 65769.63,
+      "grade": "B",
+      "health_score": 71.4,
+      "is_sufficient_data": true,
+      "reporting_period": "2026-10",
+      "runway_months": 0.55,
+      "savings_rate": 58.88,
+      "summary": "Good financial standing with minor areas for savings or emergency reserve optimization."
+    },
+    "debt_burden": {
+      "assessment": "Healthy debt level (under 20% of income).",
+      "dti_ratio": 7.95,
+      "has_income": true,
+      "is_sufficient_data": true,
+      "monthly_emi": 4321.09,
+      "reporting_period": "2026-10",
+      "risk_level": "LOW",
+      "total_outstanding_debt": 87654.32
+    },
+    "emergency_fund": {
+      "current_fund": 1234.56,
+      "is_sufficient_data": true,
+      "monthly_expenses": 22334.73,
+      "recommended_fund": 67004.19,
+      "reporting_period": "2026-10",
+      "shortfall": 65769.63
+    },
+    "emergency_runway": {
+      "current_balance": 12345.67,
+      "data_note": null,
+      "is_sufficient_data": true,
+      "monthly_expenses": 22334.73,
+      "reporting_period": "2026-10",
+      "runway_months": 0.55,
+      "status": "CRITICAL",
+      "target_runway_months": 3.0
+    },
+    "financial_plan": {
+      "ai_metadata": {
+        "model": null,
+        "source": "deterministic_rules"
+      },
+      "budget_plan": {
+        "categories": [
+          {
+            "category": "Housing",
+            "current_spending": 19999.99,
+            "is_discretionary": false,
+            "percentage_of_expenses": 89.55,
+            "potential_savings": 0.0,
+            "recommended_limit": 19999.99,
+            "status": "WITHIN_BUDGET"
+          },
+          {
+            "category": "Food",
+            "current_spending": 1334.55,
+            "is_discretionary": true,
+            "percentage_of_expenses": 5.98,
+            "potential_savings": 134.55,
+            "recommended_limit": 1200,
+            "status": "OVER_BUDGET"
+          },
+          {
+            "category": "Shopping",
+            "current_spending": 999.99,
+            "is_discretionary": true,
+            "percentage_of_expenses": 4.48,
+            "potential_savings": 99.99,
+            "recommended_limit": 900,
+            "status": "OVER_BUDGET"
+          },
+          {
+            "category": "Utilities",
+            "current_spending": 0.2,
+            "is_discretionary": false,
+            "percentage_of_expenses": 0.0,
+            "potential_savings": 0.0,
+            "recommended_limit": 0.2,
+            "status": "WITHIN_BUDGET"
+          }
+        ],
+        "current_total_expenses": 22334.73,
+        "recommended_total_budget": 22100.19,
+        "total_potential_savings": 234.54
+      },
+      "data_limitations": [],
+      "debt_and_commitments": {
+        "dti_ratio": 7.95,
+        "monthly_emi": 4321.09,
+        "recurring_commitments": [
+          {
+            "amount": 4321.09,
+            "due_date": "2026-10-12",
+            "name": "Loan (L201)",
+            "status": "PENDING",
+            "type": "EMI"
+          },
+          {
+            "amount": 19999.99,
+            "frequency": "Monthly",
+            "name": "Rent Oct",
+            "type": "SUBSCRIPTION/BILL"
+          }
+        ],
+        "risk_level": "LOW",
+        "total_outstanding_debt": 87654.32,
+        "total_recurring_monthly": 24321.08
+      },
+      "executive_summary": "You have a solid financial foundation with a 58.9% savings rate (Grade B, Score 71.4/100). Your monthly surplus is \u20b931,986.36. By trimming discretionary categories like Housing, you can unlock an additional \u20b9234.54 each month to accelerate your emergency cushion.",
+      "financial_summary": {
+        "health_assessment": "Good financial standing with minor areas for savings or emergency reserve optimization.",
+        "health_grade": "B",
+        "health_score": 71.4,
+        "liquid_balance": 12345.67,
+        "monthly_expenses": 22334.73,
+        "monthly_income": 54321.09,
+        "net_savings": 31986.36,
+        "runway_months": 0.55,
+        "runway_status": "CRITICAL",
+        "savings_rate_pct": 58.88
+      },
+      "generated_at": "2026-10-15T10:00:00.000000",
+      "goals": [
+        {
+          "current": 1234.56,
+          "current_amount": 1234.56,
+          "id": "G201",
+          "name": "Emergency Fund",
+          "target": 50000.0,
+          "target_amount": 50000.0,
+          "target_date": "2027-01-01"
+        }
+      ],
+      "prioritized_actions": [
+        {
+          "action": "Cap monthly Food spending at \u20b91,200.00.",
+          "category": "Food",
+          "expected_impact": "Saves \u20b9134.55/month",
+          "priority": "HIGH",
+          "rationale": "Current spending on Food is \u20b91,334.55 (6.0% of expenses). Reducing this frees up substantial capital.",
+          "title": "Reduce Discretionary Spending on Food"
+        },
+        {
+          "action": "Automate a recurring deposit of \u20b921,728.44 into a dedicated high-yield savings account or liquid fund on salary day.",
+          "category": "Emergency Fund",
+          "expected_impact": "Achieves fully funded status in ~2.5 months at \u20b921,728.44/month",
+          "priority": "HIGH",
+          "rationale": "Your recommended 3-month emergency buffer is \u20b967,004.19. You currently have a gap of \u20b954,658.52.",
+          "title": "Build Your 3-Month Emergency Reserve"
+        },
+        {
+          "action": "Ensure your monthly EMI of \u20b94,321.09 is debited automatically. Direct any windfall bonuses to prepay high-interest principal.",
+          "category": "Debt",
+          "expected_impact": "Reduces total interest paid and lowers DTI ratio",
+          "priority": "MEDIUM",
+          "rationale": "Outstanding debt obligations total \u20b987,654.32 with a DTI of 8.0%.",
+          "title": "Prioritize High-Interest Debt Repayments"
+        },
+        {
+          "action": "Review weekly transaction summaries on the dashboard to ensure category adherence.",
+          "category": "Habits",
+          "expected_impact": "Maintains financial discipline",
+          "priority": "LOW",
+          "rationale": "Consistent tracking correlates directly with higher savings achievement rates.",
+          "title": "Track Progress Weekly"
+        }
+      ],
+      "reporting_month": "October 2026",
+      "savings_plan": {
+        "current_monthly_savings": 31986.36,
+        "emergency_fund_3mo_target": 67004.19,
+        "emergency_fund_current": 12345.67,
+        "emergency_fund_shortfall": 54658.52,
+        "estimated_months_to_target": 2.5,
+        "goals": [
+          {
+            "current": 1234.56,
+            "current_amount": 1234.56,
+            "id": "G201",
+            "name": "Emergency Fund",
+            "target": 50000.0,
+            "target_amount": 50000.0,
+            "target_date": "2027-01-01"
+          }
+        ],
+        "recommended_monthly_savings": 21728.44,
+        "timeline_text": "~2.5 months at \u20b921,728.44/month"
+      },
+      "spending_insights": [
+        {
+          "category": "Housing",
+          "text": "Housing is your largest expense category at \u20b919,999.99 (89.5% of total outflow).",
+          "topic": "Dominant Expense"
+        },
+        {
+          "category": "Lifestyle",
+          "text": "Discretionary lifestyle spending (Dining, Shopping, Entertainment) constitutes 10.5% (\u20b92,334.54) of your monthly budget.",
+          "topic": "Discretionary Spending"
+        },
+        {
+          "category": "Debt",
+          "text": "Monthly EMI obligations are \u20b94,321.09 (DTI Ratio: 8.0%). Managing these on time is crucial for your credit standing.",
+          "topic": "Fixed Debt Obligations"
+        }
+      ],
+      "status": "SUCCESS",
+      "user_id": "U001"
+    },
+    "financial_summary": {
+      "accounts": [
+        {
+          "account_type": "Savings",
+          "balance": 12345.67,
+          "bank": "Test Bank",
+          "id": "A002"
+        }
+      ],
+      "current_emergency_fund": 1234.56,
+      "debt_to_income_dti_pct": 7.95,
+      "dti_ratio": 7.95,
+      "emergency_fund_shortfall": 65769.63,
+      "expenses": 22334.73,
+      "financial_health_grade": "B",
+      "financial_health_score": 71.4,
+      "goals": [
+        {
+          "current": 1234.56,
+          "current_amount": 1234.56,
+          "id": "G201",
+          "name": "Emergency Fund",
+          "target": 50000.0,
+          "target_amount": 50000.0,
+          "target_date": "2027-01-01"
+        }
+      ],
+      "health_grade": "B",
+      "health_score": 71.4,
+      "income": 54321.09,
+      "is_sufficient_data": true,
+      "monthly_expenses": 22334.73,
+      "monthly_income": 54321.09,
+      "net_savings": 31986.36,
+      "recommended_3mo_emergency_fund": 67004.19,
+      "recommended_emergency_fund": 67004.19,
+      "reporting_date": "2026-10-15",
+      "reporting_period": "2026-10",
+      "savings": 31986.36,
+      "savings_rate": 58.88,
+      "savings_rate_pct": 58.88,
+      "top_expense_category": "Housing",
+      "total_expenses": 22334.73
+    },
+    "merchant_expenses_swiggy": {
+      "average_spend": 33.33,
+      "historical_count": 4,
+      "is_found": true,
+      "merchant": "Swiggy",
+      "reporting_period": "2026-10",
+      "total_spent": 99.99,
+      "transaction_count": 3,
+      "transactions": [
+        {
+          "amount": 33.33,
+          "bank": null,
+          "category": "Food",
+          "date": "2026-10-04",
+          "description": "Swiggy Order 3",
+          "id": "T207",
+          "merchant": "Swiggy"
+        },
+        {
+          "amount": 33.33,
+          "bank": null,
+          "category": "Food",
+          "date": "2026-10-03",
+          "description": "Swiggy Order 2",
+          "id": "T206",
+          "merchant": "Swiggy"
+        },
+        {
+          "amount": 33.33,
+          "bank": null,
+          "category": "Food",
+          "date": "2026-10-02",
+          "description": "Swiggy Order 1",
+          "id": "T205",
+          "merchant": "Swiggy"
+        }
+      ]
+    },
+    "period_comparison": {
+      "absolute_change": 1301.32,
+      "category": null,
+      "category_variances": [
+        {
+          "absolute_difference": 1301.22,
+          "category": "Food",
+          "contribution_weight_pct": 99.99,
+          "mathematical_contribution_note": "Category 'Food' changed by \u20b91,301.22 (+1,301.22), accounting for 100.0% mathematical contribution to the total change.",
+          "percentage_change": 3904.05,
+          "percentage_change_display": "+3904.05%",
+          "period_a_spent": 33.33,
+          "period_b_spent": 1334.55,
+          "supporting_transactions": [
+            {
+              "amount": 1234.56,
+              "date": "2026-10-06",
+              "description": "Grocery Mart",
+              "id": "T209"
+            },
+            {
+              "amount": 33.33,
+              "date": "2026-10-02",
+              "description": "Swiggy Order 1",
+              "id": "T205"
+            },
+            {
+              "amount": 33.33,
+              "date": "2026-10-03",
+              "description": "Swiggy Order 2",
+              "id": "T206"
+            }
+          ]
+        },
+        {
+          "absolute_difference": 0.1,
+          "category": "Utilities",
+          "contribution_weight_pct": 0.01,
+          "mathematical_contribution_note": "Category 'Utilities' changed by \u20b90.10 (+0.10), accounting for 0.0% mathematical contribution to the total change.",
+          "percentage_change": 100.0,
+          "percentage_change_display": "+100.00%",
+          "period_a_spent": 0.1,
+          "period_b_spent": 0.2,
+          "supporting_transactions": [
+            {
+              "amount": 0.2,
+              "date": "2026-10-05",
+              "description": "Micro debit 2",
+              "id": "T208"
+            }
+          ]
+        },
+        {
+          "absolute_difference": 0.0,
+          "category": "Housing",
+          "contribution_weight_pct": 0.0,
+          "mathematical_contribution_note": "Category 'Housing' changed by \u20b90.00 (0.00), accounting for 0.0% mathematical contribution to the total change.",
+          "percentage_change": 0.0,
+          "percentage_change_display": "0.00%",
+          "period_a_spent": 19999.99,
+          "period_b_spent": 19999.99,
+          "supporting_transactions": []
+        },
+        {
+          "absolute_difference": 0.0,
+          "category": "Shopping",
+          "contribution_weight_pct": 0.0,
+          "mathematical_contribution_note": "Category 'Shopping' changed by \u20b90.00 (0.00), accounting for 0.0% mathematical contribution to the total change.",
+          "percentage_change": 0.0,
+          "percentage_change_display": "0.00%",
+          "period_a_spent": 999.99,
+          "period_b_spent": 999.99,
+          "supporting_transactions": []
+        }
+      ],
+      "caveats": [],
+      "comparison_outcome": "Higher spending in October 2026",
+      "comparison_verdict": "Your spending overall increased by \u20b91,301.32 (+6.19%) from September 2026 (\u20b921,033.41) to October 2026 (\u20b922,334.73).",
+      "higher_period": "October 2026",
+      "is_sufficient_data": true,
+      "merchant": null,
+      "net_difference": 1301.32,
+      "percentage_change": 6.19,
+      "percentage_change_display": "+6.19%",
+      "percentage_change_status": "VALID",
+      "period_a": {
+        "end_date": "2026-09-30",
+        "name": "September 2026",
+        "start_date": "2026-09-01",
+        "total_spent": 21033.41,
+        "transaction_count": 4
+      },
+      "period_a_tx_ids": [
+        "T201",
+        "T202",
+        "T203",
+        "T204"
+      ],
+      "period_b": {
+        "end_date": "2026-10-31",
+        "name": "October 2026",
+        "start_date": "2026-10-01",
+        "total_spent": 22334.73,
+        "transaction_count": 7
+      },
+      "period_b_tx_ids": [
+        "T205",
+        "T206",
+        "T207",
+        "T208",
+        "T209",
+        "T210",
+        "T211"
+      ],
+      "reporting_period": "September 2026 vs October 2026",
+      "top_decreases": [],
+      "top_increases": [
+        {
+          "absolute_difference": 1301.22,
+          "category": "Food",
+          "contribution_weight_pct": 99.99,
+          "mathematical_contribution_note": "Category 'Food' changed by \u20b91,301.22 (+1,301.22), accounting for 100.0% mathematical contribution to the total change.",
+          "percentage_change": 3904.05,
+          "percentage_change_display": "+3904.05%",
+          "period_a_spent": 33.33,
+          "period_b_spent": 1334.55,
+          "supporting_transactions": [
+            {
+              "amount": 1234.56,
+              "date": "2026-10-06",
+              "description": "Grocery Mart",
+              "id": "T209"
+            },
+            {
+              "amount": 33.33,
+              "date": "2026-10-02",
+              "description": "Swiggy Order 1",
+              "id": "T205"
+            },
+            {
+              "amount": 33.33,
+              "date": "2026-10-03",
+              "description": "Swiggy Order 2",
+              "id": "T206"
+            }
+          ]
+        },
+        {
+          "absolute_difference": 0.1,
+          "category": "Utilities",
+          "contribution_weight_pct": 0.01,
+          "mathematical_contribution_note": "Category 'Utilities' changed by \u20b90.10 (+0.10), accounting for 0.0% mathematical contribution to the total change.",
+          "percentage_change": 100.0,
+          "percentage_change_display": "+100.00%",
+          "period_a_spent": 0.1,
+          "period_b_spent": 0.2,
+          "supporting_transactions": [
+            {
+              "amount": 0.2,
+              "date": "2026-10-05",
+              "description": "Micro debit 2",
+              "id": "T208"
+            }
+          ]
+        }
+      ]
+    },
+    "purchase_safety": {
+      "decision": "NOT_SAFE",
+      "evidence": {
+        "balance_after_purchase": 6790.02,
+        "current_balance": 12345.67,
+        "emergency_requirement": 67004.19,
+        "monthly_expenses": 22334.73,
+        "pending_emi": 4321.09,
+        "purchase_amount": 1234.56
+      },
+      "is_sufficient_data": true,
+      "reason": "The purchase is not financially safe. After the pending EMI and purchase, only \u20b96,790 would remain, which is below the recommended emergency reserve of \u20b967,004.",
+      "reporting_period": "2026-10",
+      "risk_level": "HIGH"
+    },
+    "savings_rate": {
+      "has_income": true,
+      "is_sufficient_data": true,
+      "reporting_period": "2026-10",
+      "savings": 31986.36,
+      "savings_rate": 58.88,
+      "total_expenses": 22334.73,
+      "total_income": 54321.09
+    },
+    "spending_trends": {
+      "available_months_count": 2,
+      "average_monthly_spend": 21684.07,
+      "caveats": [
+        "Data is unavailable for 4 of 6 evaluated months (May 2026, June 2026, July 2026, August 2026). These periods are not assumed to have zero spend."
+      ],
+      "coverage_end": "October 2026",
+      "coverage_start": "May 2026",
+      "is_sufficient_data": true,
+      "missing_months_count": 4,
+      "reporting_period": "May 2026 to October 2026",
+      "total_months_evaluated": 6,
+      "trend_direction": "UPWARD",
+      "trend_points": [
+        {
+          "coverage_note": "No statement data available for this month",
+          "end_date": "2026-05-31",
+          "is_covered": false,
+          "month": "2026-05",
+          "month_name": "May 2026",
+          "start_date": "2026-05-01",
+          "status": "DATA_UNAVAILABLE",
+          "total_spent": 0.0,
+          "transaction_count": 0,
+          "transaction_ids": []
+        },
+        {
+          "coverage_note": "No statement data available for this month",
+          "end_date": "2026-06-30",
+          "is_covered": false,
+          "month": "2026-06",
+          "month_name": "June 2026",
+          "start_date": "2026-06-01",
+          "status": "DATA_UNAVAILABLE",
+          "total_spent": 0.0,
+          "transaction_count": 0,
+          "transaction_ids": []
+        },
+        {
+          "coverage_note": "No statement data available for this month",
+          "end_date": "2026-07-31",
+          "is_covered": false,
+          "month": "2026-07",
+          "month_name": "July 2026",
+          "start_date": "2026-07-01",
+          "status": "DATA_UNAVAILABLE",
+          "total_spent": 0.0,
+          "transaction_count": 0,
+          "transaction_ids": []
+        },
+        {
+          "coverage_note": "No statement data available for this month",
+          "end_date": "2026-08-31",
+          "is_covered": false,
+          "month": "2026-08",
+          "month_name": "August 2026",
+          "start_date": "2026-08-01",
+          "status": "DATA_UNAVAILABLE",
+          "total_spent": 0.0,
+          "transaction_count": 0,
+          "transaction_ids": []
+        },
+        {
+          "coverage_note": "Verified statement records present",
+          "end_date": "2026-09-30",
+          "is_covered": true,
+          "month": "2026-09",
+          "month_name": "September 2026",
+          "start_date": "2026-09-01",
+          "status": "CONFIRMED_SPEND",
+          "total_spent": 21033.41,
+          "transaction_count": 4,
+          "transaction_ids": [
+            "T201",
+            "T202",
+            "T203",
+            "T204"
+          ]
+        },
+        {
+          "coverage_note": "Verified statement records present",
+          "end_date": "2026-10-31",
+          "is_covered": true,
+          "month": "2026-10",
+          "month_name": "October 2026",
+          "start_date": "2026-10-01",
+          "status": "CONFIRMED_SPEND",
+          "total_spent": 22334.73,
+          "transaction_count": 7,
+          "transaction_ids": [
+            "T205",
+            "T206",
+            "T207",
+            "T208",
+            "T209",
+            "T210",
+            "T211"
+          ]
+        }
+      ]
+    },
+    "top_transactions": {
+      "amount_max": null,
+      "amount_min": null,
+      "count": 5,
+      "limit_applied": 5,
+      "reporting_period": "2026-10",
+      "total_matching_count": 7,
+      "total_selected_amount": 22301.2,
+      "transactions": [
+        {
+          "amount": 19999.99,
+          "bank": null,
+          "category": "Housing",
+          "date": "2026-10-10",
+          "description": "Rent Oct",
+          "id": "T211",
+          "merchant": null
+        },
+        {
+          "amount": 1234.56,
+          "bank": null,
+          "category": "Food",
+          "date": "2026-10-06",
+          "description": "Grocery Mart",
+          "id": "T209",
+          "merchant": null
+        },
+        {
+          "amount": 999.99,
+          "bank": null,
+          "category": "Shopping",
+          "date": "2026-10-08",
+          "description": "Electronics Buy",
+          "id": "T210",
+          "merchant": null
+        },
+        {
+          "amount": 33.33,
+          "bank": null,
+          "category": "Food",
+          "date": "2026-10-02",
+          "description": "Swiggy Order 1",
+          "id": "T205",
+          "merchant": "Swiggy"
+        },
+        {
+          "amount": 33.33,
+          "bank": null,
+          "category": "Food",
+          "date": "2026-10-03",
+          "description": "Swiggy Order 2",
+          "id": "T206",
+          "merchant": "Swiggy"
+        }
+      ]
+    }
+  },
+  "fixture_3_edge_cases": {
+    "category_expenses": {
+      "categories": [],
+      "reporting_period": "2026-10",
+      "top_amount": 0.0,
+      "top_category": "None",
+      "total_expenses": 0.0
+    },
+    "comprehensive_health": {
+      "dti_ratio": 0.0,
+      "emergency_shortfall": 0.0,
+      "grade": "D",
+      "health_score": 30.0,
+      "is_sufficient_data": false,
+      "reporting_period": "2026-10",
+      "runway_months": 0.0,
+      "savings_rate": 0.0,
+      "summary": "Vulnerable financial health; urgent focus required on debt reduction and emergency savings."
+    },
+    "debt_burden": {
+      "assessment": "No recorded debt obligations or income.",
+      "dti_ratio": 0.0,
+      "has_income": false,
+      "is_sufficient_data": false,
+      "monthly_emi": 0,
+      "reporting_period": "2026-10",
+      "risk_level": "LOW",
+      "total_outstanding_debt": 0
+    },
+    "emergency_fund": {
+      "current_fund": 0.0,
+      "is_sufficient_data": false,
+      "monthly_expenses": 0,
+      "recommended_fund": 0,
+      "reporting_period": "2026-10",
+      "shortfall": 0.0
+    },
+    "emergency_runway": {
+      "current_balance": -5000.0,
+      "data_note": "Zero recorded expenses in period; runway is capped nominally but actual expenses are unrecorded.",
+      "is_sufficient_data": false,
+      "monthly_expenses": 0,
+      "reporting_period": "2026-10",
+      "runway_months": 0.0,
+      "status": "CRITICAL",
+      "target_runway_months": 3.0
+    },
+    "financial_plan": {
+      "ai_metadata": {
+        "model": null,
+        "source": "deterministic_rules"
+      },
+      "budget_plan": {
+        "categories": [],
+        "current_total_expenses": 0.0,
+        "recommended_total_budget": 0.0,
+        "total_potential_savings": 0.0
+      },
+      "data_limitations": [
+        "No monthly income was detected in your statement. Budget limits and savings goals are computed against your observed expense outflow of \u20b90.00. Please record your monthly salary or income to enable full 50/30/20 allocation planning.",
+        "Limited statement history detected (0 transactions). Upload a full 1 to 3 month statement for higher category accuracy."
+      ],
+      "debt_and_commitments": {
+        "dti_ratio": 0.0,
+        "monthly_emi": 0,
+        "recurring_commitments": [],
+        "risk_level": "LOW",
+        "total_outstanding_debt": 0,
+        "total_recurring_monthly": 0
+      },
+      "executive_summary": "Based on your statement, total recorded expenses stand at \u20b90.00 with None as the primary spending driver. Optimizing discretionary spending according to the proposed budget can yield \u20b90.00 in monthly savings.",
+      "financial_summary": {
+        "health_assessment": "Vulnerable financial health; urgent focus required on debt reduction and emergency savings.",
+        "health_grade": "D",
+        "health_score": 30.0,
+        "liquid_balance": -5000.0,
+        "monthly_expenses": 0.0,
+        "monthly_income": 0.0,
+        "net_savings": 0.0,
+        "runway_months": 0.0,
+        "runway_status": "CRITICAL",
+        "savings_rate_pct": 0.0
+      },
+      "generated_at": "2026-10-15T10:00:00.000000",
+      "goals": [],
+      "prioritized_actions": [
+        {
+          "action": "Maintain your 3-month liquid buffer and channel additional monthly savings into diversified index funds or fixed deposits.",
+          "category": "Investment",
+          "expected_impact": "Wealth creation and inflation protection",
+          "priority": "MEDIUM",
+          "rationale": "Your emergency reserve is already funded. Surplus funds should be deployed to avoid cash drag.",
+          "title": "Maintain Emergency Reserve & Invest Surplus"
+        },
+        {
+          "action": "Configure notifications when spending reaches 80% of category limits.",
+          "category": "Budgeting",
+          "expected_impact": "Prevents month-end budget overruns",
+          "priority": "MEDIUM",
+          "rationale": "Staying within the recommended \u20b90.00 monthly budget protects your savings goals.",
+          "title": "Set Category-Specific Alerts"
+        },
+        {
+          "action": "Record your verified monthly salary/income to enable comprehensive 50/30/20 budget tracking.",
+          "category": "Profile",
+          "expected_impact": "Unlocks precision cash flow forecasts and personalized tax planning",
+          "priority": "LOW",
+          "rationale": "Your uploaded statement contained only debits or incomplete income credits.",
+          "title": "Provide Complete Financial Profile"
+        }
+      ],
+      "reporting_month": "October 2026",
+      "savings_plan": {
+        "current_monthly_savings": 0.0,
+        "emergency_fund_3mo_target": 0.0,
+        "emergency_fund_current": 0.0,
+        "emergency_fund_shortfall": 0.0,
+        "estimated_months_to_target": 0.0,
+        "goals": [],
+        "recommended_monthly_savings": 0.0,
+        "timeline_text": "Target Achieved (You have 3+ months of essential reserves)"
+      },
+      "spending_insights": [
+        {
+          "category": "Lifestyle",
+          "text": "Discretionary lifestyle spending (Dining, Shopping, Entertainment) constitutes 0.0% (\u20b90.00) of your monthly budget.",
+          "topic": "Discretionary Spending"
+        },
+        {
+          "category": "Savings",
+          "text": "Your target 3-month emergency fund is \u20b90.00 with a shortfall of \u20b90.00.",
+          "topic": "Emergency Buffer"
+        }
+      ],
+      "status": "SUCCESS",
+      "user_id": "U001"
+    },
+    "financial_summary": {
+      "accounts": [
+        {
+          "account_type": "Current",
+          "balance": -5000.0,
+          "bank": "Overdraft Bank",
+          "id": "A003"
+        }
+      ],
+      "current_emergency_fund": 0.0,
+      "debt_to_income_dti_pct": 0.0,
+      "dti_ratio": 0.0,
+      "emergency_fund_shortfall": 0.0,
+      "expenses": 0,
+      "financial_health_grade": "D",
+      "financial_health_score": 30.0,
+      "goals": [],
+      "health_grade": "D",
+      "health_score": 30.0,
+      "income": 0,
+      "is_sufficient_data": false,
+      "monthly_expenses": 0,
+      "monthly_income": 0,
+      "net_savings": 0,
+      "recommended_3mo_emergency_fund": 0,
+      "recommended_emergency_fund": 0,
+      "reporting_date": "2026-10-15",
+      "reporting_period": "2026-10",
+      "savings": 0,
+      "savings_rate": 0.0,
+      "savings_rate_pct": 0.0,
+      "top_expense_category": "None",
+      "total_expenses": 0
+    },
+    "merchant_expenses_swiggy": {
+      "average_spend": 0.0,
+      "historical_count": 0,
+      "is_found": false,
+      "merchant": "Swiggy",
+      "reporting_period": "2026-10",
+      "total_spent": 0.0,
+      "transaction_count": 0,
+      "transactions": []
+    },
+    "period_comparison": {
+      "absolute_change": 0,
+      "category": null,
+      "category_variances": [],
+      "caveats": [
+        "No eligible expense transactions were found for either period."
+      ],
+      "comparison_outcome": "Equal spending in both periods",
+      "comparison_verdict": "Your spending overall was equal across September 2026 and October 2026 at \u20b90.00.",
+      "higher_period": "EQUAL",
+      "is_sufficient_data": false,
+      "merchant": null,
+      "net_difference": 0,
+      "percentage_change": null,
+      "percentage_change_display": "percentage change unavailable because the baseline is zero",
+      "percentage_change_status": "BASELINE_ZERO",
+      "period_a": {
+        "end_date": "2026-09-30",
+        "name": "September 2026",
+        "start_date": "2026-09-01",
+        "total_spent": 0,
+        "transaction_count": 0
+      },
+      "period_a_tx_ids": [],
+      "period_b": {
+        "end_date": "2026-10-31",
+        "name": "October 2026",
+        "start_date": "2026-10-01",
+        "total_spent": 0,
+        "transaction_count": 0
+      },
+      "period_b_tx_ids": [],
+      "reporting_period": "September 2026 vs October 2026",
+      "top_decreases": [],
+      "top_increases": []
+    },
+    "purchase_safety": {
+      "decision": "NOT_SAFE",
+      "evidence": {
+        "balance_after_purchase": -6000.0,
+        "current_balance": -5000.0,
+        "emergency_requirement": 0,
+        "monthly_expenses": 0,
+        "pending_emi": 0,
+        "purchase_amount": 1000.0
+      },
+      "is_sufficient_data": false,
+      "reason": "The purchase is not financially safe. After the pending EMI and purchase, only \u20b9-6,000 would remain, which is below the recommended emergency reserve of \u20b90. (Note: Zero monthly expenses recorded; baseline living reserve could not be verified.)",
+      "reporting_period": "2026-10",
+      "risk_level": "VERY_HIGH"
+    },
+    "savings_rate": {
+      "has_income": false,
+      "is_sufficient_data": false,
+      "reporting_period": "2026-10",
+      "savings": 0,
+      "savings_rate": 0.0,
+      "total_expenses": 0,
+      "total_income": 0
+    },
+    "spending_trends": {
+      "available_months_count": 0,
+      "average_monthly_spend": 0.0,
+      "caveats": [
+        "Data is unavailable for 6 of 6 evaluated months (May 2026, June 2026, July 2026, August 2026, September 2026, October 2026). These periods are not assumed to have zero spend.",
+        "No statement or transaction records were found for the requested period."
+      ],
+      "coverage_end": "October 2026",
+      "coverage_start": "May 2026",
+      "is_sufficient_data": false,
+      "missing_months_count": 6,
+      "reporting_period": "May 2026 to October 2026",
+      "total_months_evaluated": 6,
+      "trend_direction": "INSUFFICIENT_DATA",
+      "trend_points": [
+        {
+          "coverage_note": "No statement data available for this month",
+          "end_date": "2026-05-31",
+          "is_covered": false,
+          "month": "2026-05",
+          "month_name": "May 2026",
+          "start_date": "2026-05-01",
+          "status": "DATA_UNAVAILABLE",
+          "total_spent": 0.0,
+          "transaction_count": 0,
+          "transaction_ids": []
+        },
+        {
+          "coverage_note": "No statement data available for this month",
+          "end_date": "2026-06-30",
+          "is_covered": false,
+          "month": "2026-06",
+          "month_name": "June 2026",
+          "start_date": "2026-06-01",
+          "status": "DATA_UNAVAILABLE",
+          "total_spent": 0.0,
+          "transaction_count": 0,
+          "transaction_ids": []
+        },
+        {
+          "coverage_note": "No statement data available for this month",
+          "end_date": "2026-07-31",
+          "is_covered": false,
+          "month": "2026-07",
+          "month_name": "July 2026",
+          "start_date": "2026-07-01",
+          "status": "DATA_UNAVAILABLE",
+          "total_spent": 0.0,
+          "transaction_count": 0,
+          "transaction_ids": []
+        },
+        {
+          "coverage_note": "No statement data available for this month",
+          "end_date": "2026-08-31",
+          "is_covered": false,
+          "month": "2026-08",
+          "month_name": "August 2026",
+          "start_date": "2026-08-01",
+          "status": "DATA_UNAVAILABLE",
+          "total_spent": 0.0,
+          "transaction_count": 0,
+          "transaction_ids": []
+        },
+        {
+          "coverage_note": "No statement data available for this month",
+          "end_date": "2026-09-30",
+          "is_covered": false,
+          "month": "2026-09",
+          "month_name": "September 2026",
+          "start_date": "2026-09-01",
+          "status": "DATA_UNAVAILABLE",
+          "total_spent": 0.0,
+          "transaction_count": 0,
+          "transaction_ids": []
+        },
+        {
+          "coverage_note": "No statement data available for this month",
+          "end_date": "2026-10-31",
+          "is_covered": false,
+          "month": "2026-10",
+          "month_name": "October 2026",
+          "start_date": "2026-10-01",
+          "status": "DATA_UNAVAILABLE",
+          "total_spent": 0.0,
+          "transaction_count": 0,
+          "transaction_ids": []
+        }
+      ]
+    },
+    "top_transactions": {
+      "amount_max": null,
+      "amount_min": null,
+      "count": 0,
+      "limit_applied": 5,
+      "reporting_period": "2026-10",
+      "total_matching_count": 0,
+      "total_selected_amount": 0,
+      "transactions": []
+    }
+  }
+}
