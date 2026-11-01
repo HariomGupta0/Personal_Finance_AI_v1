@@ -22,7 +22,7 @@ from backend.app.engine.financial_engine import (
 from backend.config import DEFAULT_PROMPT_VERSION
 from backend.app.services.prompt_builder import build_financial_explanation_prompt
 from backend.app.services.llm_service import ask_llm, ask_llm_async
-from backend.app.services.verifier import verify_explanation, build_retry_feedback
+from backend.app.services.verifier import verify_explanation, build_retry_feedback, VerificationResult
 from backend.app.services.response_generator import build_deterministic_fallback
 
 logger = logging.getLogger(__name__)
@@ -754,47 +754,111 @@ class GraphRAG:
             version=used_version,
         )
         llm_result = ask_llm(prompt)
+        is_llm_error = bool(
+            llm_result.get("is_fallback")
+            or (isinstance(llm_result.get("content"), str) and "AI explanation temporarily unavailable" in llm_result["content"])
+        )
 
-        # Numeric & Factual Verifier Check
-        verification = verify_explanation(llm_result["content"], evidence_for_prompt, intent=intent)
-        first_attempt_blocking = len(verification["violations"])
-        first_attempt_advisory = len(verification["advisory"])
-        attempts = 1
-        fallback_used = False
-
-        if not verification.verified:
+        if is_llm_error:
             logger.warning(
-                "Verifier detected %d blocking violations on attempt 1 for intent %s: %s",
-                first_attempt_blocking,
+                "LLM service returned fallback text after exhausted retries for intent %s",
                 intent,
-                verification["violations"],
             )
-            retry_feedback = build_retry_feedback(verification["violations"])
-            retry_prompt = prompt + "\n\n" + retry_feedback
-            llm_result_retry = ask_llm(retry_prompt)
-            verification_retry = verify_explanation(
-                llm_result_retry["content"], evidence_for_prompt, intent=intent
-            )
-            attempts = 2
+            verification = VerificationResult({
+                "verified": False,
+                "violations": [{
+                    "type": "LLM_ERROR",
+                    "found": "_DEFAULT_FALLBACK_TEXT",
+                    "section": "ALL",
+                    "reason": "LLM service failed after exhausted retries; fallback text returned",
+                }],
+                "advisory": [],
+                "advisory_count": 0,
+                "scope": "claims in Quick Take/Numbers/Insights and all status labels; numbers in next-steps advice are listed as advisory, not blocked",
+                "llm_error": True,
+            })
+            first_attempt_blocking = 1
+            first_attempt_advisory = 0
+            attempts = 1
+            fallback_used = True
+        else:
+            # Numeric & Factual Verifier Check
+            verification = verify_explanation(llm_result["content"], evidence_for_prompt, intent=intent)
+            first_attempt_blocking = len(verification["violations"])
+            first_attempt_advisory = len(verification["advisory"])
+            attempts = 1
+            fallback_used = False
 
-            if verification_retry.verified:
-                logger.info("Verifier retry succeeded on attempt 2 for intent %s", intent)
-                llm_result = llm_result_retry
-                verification = verification_retry
-            else:
+            if not verification.verified:
                 logger.warning(
-                    "Verifier retry failed on attempt 2 for intent %s; triggering safe fallback",
+                    "Verifier detected %d blocking violations on attempt 1 for intent %s: %s",
+                    first_attempt_blocking,
                     intent,
+                    verification["violations"],
                 )
-                fallback_text = build_deterministic_fallback(math_result)
-                fallback_used = True
-                llm_result = {
-                    "content": fallback_text,
-                    "prompt_tokens": llm_result.get("prompt_tokens", 0) + llm_result_retry.get("prompt_tokens", 0),
-                    "completion_tokens": llm_result.get("completion_tokens", 0) + llm_result_retry.get("completion_tokens", 0),
-                    "tokens_used": llm_result.get("tokens_used", 0) + llm_result_retry.get("tokens_used", 0),
-                }
-                verification = verify_explanation(fallback_text, evidence_for_prompt, intent=intent)
+                retry_feedback = build_retry_feedback(verification["violations"])
+                retry_prompt = prompt + "\n\n" + retry_feedback
+                llm_result_retry = ask_llm(retry_prompt)
+                retry_is_llm_error = bool(
+                    llm_result_retry.get("is_fallback")
+                    or (isinstance(llm_result_retry.get("content"), str) and "AI explanation temporarily unavailable" in llm_result_retry["content"])
+                )
+
+                if retry_is_llm_error:
+                    logger.warning("LLM service returned fallback text on retry for intent %s", intent)
+                    verification = VerificationResult({
+                        "verified": False,
+                        "violations": [{
+                            "type": "LLM_ERROR",
+                            "found": "_DEFAULT_FALLBACK_TEXT",
+                            "section": "ALL",
+                            "reason": "LLM service failed on retry after exhausted retries",
+                        }],
+                        "advisory": [],
+                        "advisory_count": 0,
+                        "scope": "claims in Quick Take/Numbers/Insights and all status labels; numbers in next-steps advice are listed as advisory, not blocked",
+                        "llm_error": True,
+                    })
+                    attempts = 2
+                    fallback_used = True
+                    llm_result = {
+                        "content": llm_result_retry["content"],
+                        "prompt_tokens": llm_result.get("prompt_tokens", 0) + llm_result_retry.get("prompt_tokens", 0),
+                        "completion_tokens": llm_result.get("completion_tokens", 0) + llm_result_retry.get("completion_tokens", 0),
+                        "tokens_used": llm_result.get("tokens_used", 0) + llm_result_retry.get("tokens_used", 0),
+                        "model": llm_result_retry.get("model") or llm_result.get("model", ""),
+                    }
+                else:
+                    verification_retry = verify_explanation(
+                        llm_result_retry["content"], evidence_for_prompt, intent=intent
+                    )
+                    attempts = 2
+
+                    if verification_retry.verified:
+                        logger.info("Verifier retry succeeded on attempt 2 for intent %s", intent)
+                        llm_result = {
+                            "content": llm_result_retry["content"],
+                            "prompt_tokens": llm_result.get("prompt_tokens", 0) + llm_result_retry.get("prompt_tokens", 0),
+                            "completion_tokens": llm_result.get("completion_tokens", 0) + llm_result_retry.get("completion_tokens", 0),
+                            "tokens_used": llm_result.get("tokens_used", 0) + llm_result_retry.get("tokens_used", 0),
+                            "model": llm_result_retry.get("model") or llm_result.get("model", ""),
+                        }
+                        verification = verification_retry
+                    else:
+                        logger.warning(
+                            "Verifier retry failed on attempt 2 for intent %s; triggering safe fallback",
+                            intent,
+                        )
+                        fallback_text = build_deterministic_fallback(math_result)
+                        fallback_used = True
+                        llm_result = {
+                            "content": fallback_text,
+                            "prompt_tokens": llm_result.get("prompt_tokens", 0) + llm_result_retry.get("prompt_tokens", 0),
+                            "completion_tokens": llm_result.get("completion_tokens", 0) + llm_result_retry.get("completion_tokens", 0),
+                            "tokens_used": llm_result.get("tokens_used", 0) + llm_result_retry.get("tokens_used", 0),
+                            "model": llm_result_retry.get("model") or llm_result.get("model", ""),
+                        }
+                        verification = verify_explanation(fallback_text, evidence_for_prompt, intent=intent)
 
         llm_ms = (time.perf_counter() - llm_t0) * 1000
 
@@ -823,6 +887,7 @@ class GraphRAG:
             "explanation": llm_result["content"],
             "verified": bool(verification.verified),
             "verification": dict(verification),
+            "llm_error": bool(verification.get("llm_error", False)),
             "first_attempt_blocking": first_attempt_blocking,
             "first_attempt_advisory": first_attempt_advisory,
             "attempts": attempts,
@@ -845,6 +910,7 @@ class GraphRAG:
                 "completion": llm_result["completion_tokens"],
                 "total": llm_result["tokens_used"],
             },
+            "model": llm_result.get("model", ""),
         }
 
     async def process_query_async(
@@ -969,48 +1035,112 @@ class GraphRAG:
             version=used_version,
         )
         llm_result = await ask_llm_async(prompt)
+        is_llm_error = bool(
+            llm_result.get("is_fallback")
+            or (isinstance(llm_result.get("content"), str) and "AI explanation temporarily unavailable" in llm_result["content"])
+        )
 
-        # Numeric & Factual Verifier Check
-        verification = verify_explanation(llm_result["content"], evidence_for_prompt, intent=intent)
-        first_attempt_blocking = len(verification["violations"])
-        first_attempt_advisory = len(verification["advisory"])
-        attempts = 1
-        fallback_used = False
-
-        if not verification.verified:
+        if is_llm_error:
             logger.warning(
-                "Verifier detected %d blocking violations on attempt 1 for intent %s: %s",
-                first_attempt_blocking,
+                "LLM service returned fallback text after exhausted retries for intent %s",
                 intent,
-                verification["violations"],
             )
-            # Retry with feedback listing blocking items only
-            retry_feedback = build_retry_feedback(verification["violations"])
-            retry_prompt = prompt + "\n\n" + retry_feedback
-            llm_result_retry = await ask_llm_async(retry_prompt)
-            verification_retry = verify_explanation(
-                llm_result_retry["content"], evidence_for_prompt, intent=intent
-            )
-            attempts = 2
+            verification = VerificationResult({
+                "verified": False,
+                "violations": [{
+                    "type": "LLM_ERROR",
+                    "found": "_DEFAULT_FALLBACK_TEXT",
+                    "section": "ALL",
+                    "reason": "LLM service failed after exhausted retries; fallback text returned",
+                }],
+                "advisory": [],
+                "advisory_count": 0,
+                "scope": "claims in Quick Take/Numbers/Insights and all status labels; numbers in next-steps advice are listed as advisory, not blocked",
+                "llm_error": True,
+            })
+            first_attempt_blocking = 1
+            first_attempt_advisory = 0
+            attempts = 1
+            fallback_used = True
+        else:
+            # Numeric & Factual Verifier Check
+            verification = verify_explanation(llm_result["content"], evidence_for_prompt, intent=intent)
+            first_attempt_blocking = len(verification["violations"])
+            first_attempt_advisory = len(verification["advisory"])
+            attempts = 1
+            fallback_used = False
 
-            if verification_retry.verified:
-                logger.info("Verifier retry succeeded on attempt 2 for intent %s", intent)
-                llm_result = llm_result_retry
-                verification = verification_retry
-            else:
+            if not verification.verified:
                 logger.warning(
-                    "Verifier retry failed on attempt 2 for intent %s; triggering safe fallback",
+                    "Verifier detected %d blocking violations on attempt 1 for intent %s: %s",
+                    first_attempt_blocking,
                     intent,
+                    verification["violations"],
                 )
-                fallback_text = build_deterministic_fallback(math_result)
-                fallback_used = True
-                llm_result = {
-                    "content": fallback_text,
-                    "prompt_tokens": llm_result.get("prompt_tokens", 0) + llm_result_retry.get("prompt_tokens", 0),
-                    "completion_tokens": llm_result.get("completion_tokens", 0) + llm_result_retry.get("completion_tokens", 0),
-                    "tokens_used": llm_result.get("tokens_used", 0) + llm_result_retry.get("tokens_used", 0),
-                }
-                verification = verify_explanation(fallback_text, evidence_for_prompt, intent=intent)
+                # Retry with feedback listing blocking items only
+                retry_feedback = build_retry_feedback(verification["violations"])
+                retry_prompt = prompt + "\n\n" + retry_feedback
+                llm_result_retry = await ask_llm_async(retry_prompt)
+                retry_is_llm_error = bool(
+                    llm_result_retry.get("is_fallback")
+                    or (isinstance(llm_result_retry.get("content"), str) and "AI explanation temporarily unavailable" in llm_result_retry["content"])
+                )
+
+                if retry_is_llm_error:
+                    logger.warning("LLM service retry failed with fallback text for intent %s", intent)
+                    verification = VerificationResult({
+                        "verified": False,
+                        "violations": [{
+                            "type": "LLM_ERROR",
+                            "found": "_DEFAULT_FALLBACK_TEXT",
+                            "section": "ALL",
+                            "reason": "LLM service failed on retry after exhausted retries",
+                        }],
+                        "advisory": [],
+                        "advisory_count": 0,
+                        "scope": "claims in Quick Take/Numbers/Insights and all status labels; numbers in next-steps advice are listed as advisory, not blocked",
+                        "llm_error": True,
+                    })
+                    attempts = 2
+                    fallback_used = True
+                    llm_result = {
+                        "content": llm_result_retry["content"],
+                        "prompt_tokens": llm_result.get("prompt_tokens", 0) + llm_result_retry.get("prompt_tokens", 0),
+                        "completion_tokens": llm_result.get("completion_tokens", 0) + llm_result_retry.get("completion_tokens", 0),
+                        "tokens_used": llm_result.get("tokens_used", 0) + llm_result_retry.get("tokens_used", 0),
+                        "model": llm_result_retry.get("model") or llm_result.get("model", ""),
+                    }
+                else:
+                    verification_retry = verify_explanation(
+                        llm_result_retry["content"], evidence_for_prompt, intent=intent
+                    )
+                    attempts = 2
+
+                    if verification_retry.verified:
+                        logger.info("Verifier retry succeeded on attempt 2 for intent %s", intent)
+                        llm_result = {
+                            "content": llm_result_retry["content"],
+                            "prompt_tokens": llm_result.get("prompt_tokens", 0) + llm_result_retry.get("prompt_tokens", 0),
+                            "completion_tokens": llm_result.get("completion_tokens", 0) + llm_result_retry.get("completion_tokens", 0),
+                            "tokens_used": llm_result.get("tokens_used", 0) + llm_result_retry.get("tokens_used", 0),
+                            "model": llm_result_retry.get("model") or llm_result.get("model", ""),
+                        }
+                        verification = verification_retry
+                    else:
+                        logger.warning(
+                            "Verifier retry failed on attempt 2 for intent %s; triggering safe fallback",
+                            intent,
+                        )
+                        fallback_text = build_deterministic_fallback(math_result)
+                        fallback_used = True
+                        llm_result = {
+                            "content": fallback_text,
+                            "prompt_tokens": llm_result.get("prompt_tokens", 0) + llm_result_retry.get("prompt_tokens", 0),
+                            "completion_tokens": llm_result.get("completion_tokens", 0) + llm_result_retry.get("completion_tokens", 0),
+                            "tokens_used": llm_result.get("tokens_used", 0) + llm_result_retry.get("tokens_used", 0),
+                            "model": llm_result_retry.get("model") or llm_result.get("model", ""),
+                        }
+                        verification = verify_explanation(fallback_text, evidence_for_prompt, intent=intent)
 
         llm_ms = (time.perf_counter() - llm_t0) * 1000
 
@@ -1039,6 +1169,7 @@ class GraphRAG:
             "explanation": llm_result["content"],
             "verified": bool(verification.verified),
             "verification": dict(verification),
+            "llm_error": bool(verification.get("llm_error", False)),
             "first_attempt_blocking": first_attempt_blocking,
             "first_attempt_advisory": first_attempt_advisory,
             "attempts": attempts,
@@ -1061,5 +1192,6 @@ class GraphRAG:
                 "completion": llm_result["completion_tokens"],
                 "total": llm_result["tokens_used"],
             },
+            "model": llm_result.get("model", ""),
         }
 
