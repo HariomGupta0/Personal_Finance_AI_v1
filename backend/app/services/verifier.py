@@ -224,11 +224,11 @@ def extract_money_tokens(text: str) -> list[tuple[str, Decimal]]:
     """
     results = []
     p1 = re.compile(
-        r"(?P<prefix_sign>-)?(?:\bINR\b|₹|Rs\.?)\s*(?P<inner_sign>-)?\s*(?P<num>[0-9,]+(?:\.[0-9]+)?)\s*(?P<unit>thousand|thousands|k|lakhs?|lacs?|crores?|cr)?(?:\s*(?:rupees?|rs\.?))?",
+        r"(?P<prefix_sign>-)?(?:\bINR\b|₹|\bRs\.?)\s*(?P<inner_sign>-)?\s*(?P<num>[0-9,]+(?:\.[0-9]+)?)\s*(?P<unit>(?:thousand|thousands|k|lakhs?|lacs?|crores?|cr)\b)?(?:\s*(?:rupees?|\brs\.?)\b)?",
         re.IGNORECASE,
     )
     p2 = re.compile(
-        r"(?P<prefix_sign>-)?\b(?P<num>[0-9,]+(?:\.[0-9]+)?)\s*(?P<unit>thousand|thousands|k|lakhs?|lacs?|crores?|cr)?\s*(?:rupees?|rs\.?)\b",
+        r"(?P<prefix_sign>-)?\b(?P<num>[0-9,]+(?:\.[0-9]+)?)\s*(?P<unit>(?:thousand|thousands|k|lakhs?|lacs?|crores?|cr)\b)?\s*(?:rupees?|\brs\.?)\b",
         re.IGNORECASE,
     )
     spans = []
@@ -319,6 +319,19 @@ def verify_explanation(
     decision = financial_result.get("decision") if isinstance(financial_result, dict) else None
     risk_level = financial_result.get("risk_level") if isinstance(financial_result, dict) else None
 
+    # Helper to check if match is negated within the same sentence
+    def _is_negated_in_sentence(text_full: str, match_start: int, match_end: int) -> bool:
+        pre = text_full[:match_start]
+        delims = [pre.rfind(d) for d in (".", "!", "?", ";", "\n")]
+        sent_start = max(delims) + 1 if any(d != -1 for d in delims) else 0
+
+        post = text_full[match_end:]
+        delims_post = [post.find(d) for d in (".", "!", "?", ";", "\n") if post.find(d) != -1]
+        sent_end = match_end + min(delims_post) if delims_post else len(text_full)
+
+        sentence = text_full[sent_start:sent_end]
+        return bool(re.search(r"\b(not|n't|never|unsafe|isn't)\b", sentence, re.IGNORECASE))
+
     # Decision contradiction checks (PURCHASE_SAFETY and general)
     if decision == "NOT_SAFE":
         contra_patterns = [
@@ -331,9 +344,7 @@ def verify_explanation(
         for pat in contra_patterns:
             m = re.search(pat, text_lower)
             if m:
-                start = max(0, m.start() - 25)
-                prefix = text_lower[start:m.start()]
-                if not any(neg in prefix for neg in ("not", "n't", "never", "un")):
+                if not _is_negated_in_sentence(text_lower, m.start(), m.end()):
                     violations.append({
                         "type": "CONTRADICTION",
                         "found": m.group(0),
