@@ -24,6 +24,7 @@ import re
 from typing import Any
 
 from backend.app.core.money import div_paise, mul_paise, paise_to_float, ratio, to_paise
+from backend.app.engine.engine_config import DEFAULT_ENGINE_CONFIG, EngineConfig
 
 logger = logging.getLogger(__name__)
 
@@ -132,6 +133,49 @@ def _monthly_incomes(context, reporting_date=None):
     ]
 
 
+def _get_trailing_monthly_expenses_paise(context: dict, target_date: date, n_months: int) -> int:
+    """
+    Computes average monthly expenses (paise) across a trailing window of n_months ending on target_date.
+    If n_months <= 1 or invalid, computes expenses for the single target_date month.
+    """
+    if n_months <= 1 or not isinstance(context, dict):
+        txs = _monthly_transactions(context, target_date)
+        return sum(_get_amount_paise(tx) for tx in txs if tx.get("type") == "EXPENSE")
+
+    cur_year = target_date.year
+    cur_month = target_date.month
+    months = set()
+    for i in range(n_months):
+        m = cur_month - i
+        y = cur_year
+        while m <= 0:
+            m += 12
+            y -= 1
+        months.add((y, m))
+
+    all_txs = context.get("transactions", [])
+    total_trailing_paise = 0
+    for tx in all_txs:
+        if not isinstance(tx, dict) or tx.get("type") != "EXPENSE":
+            continue
+        val = tx.get("date")
+        if not val:
+            continue
+        if isinstance(val, datetime):
+            d = val.date()
+        elif isinstance(val, date):
+            d = val
+        else:
+            try:
+                d = date.fromisoformat(str(val))
+            except ValueError:
+                continue
+        if (d.year, d.month) in months:
+            total_trailing_paise += _get_amount_paise(tx)
+
+    return total_trailing_paise // n_months
+
+
 def _get_deduplicated_pending_emis(context, target_date):
     """
     Extract and deduplicate pending EMIs for the target reporting month.
@@ -212,10 +256,11 @@ def calculate_category_expenses(context, reporting_date=None):
     }
 
 
-def calculate_emergency_fund(context, reporting_date=None):
+def calculate_emergency_fund(context, reporting_date=None, config: EngineConfig | None = None):
     """
-    Calculates 3-month recommended emergency fund and current shortfall.
+    Calculates recommended emergency fund and current shortfall based on configured reserve multiplier.
     """
+    cfg = config or DEFAULT_ENGINE_CONFIG
     target = _resolve_reporting_date(context, reporting_date)
     reporting_period = f"{target.year}-{target.month:02d}"
 
@@ -226,7 +271,7 @@ def calculate_emergency_fund(context, reporting_date=None):
         if transaction.get("type") == "EXPENSE"
     )
 
-    recommended_fund_paise = mul_paise(monthly_expenses_paise, 3)
+    recommended_fund_paise = mul_paise(monthly_expenses_paise, cfg.emergency_reserve_multiplier)
 
     goals = context.get("goals", []) if isinstance(context, dict) else []
     emergency_goal = next(
@@ -257,11 +302,12 @@ def calculate_emergency_fund(context, reporting_date=None):
     }
 
 
-def calculate_emergency_runway(context, reporting_date=None):
+def calculate_emergency_runway(context, reporting_date=None, config: EngineConfig | None = None):
     """
     Calculates available emergency runway in months based on liquid balance and monthly expenses.
     Explicitly flags zero-expense periods where actual expenses are unrecorded.
     """
+    cfg = config or DEFAULT_ENGINE_CONFIG
     target = _resolve_reporting_date(context, reporting_date)
     reporting_period = f"{target.year}-{target.month:02d}"
 
@@ -301,11 +347,11 @@ def calculate_emergency_runway(context, reporting_date=None):
 
     if balance_paise < 0:
         status = "CRITICAL"
-    elif runway_months >= 6.0:
+    elif runway_months >= cfg.runway_bands.healthy_max:
         status = "STRONG"
-    elif runway_months >= 3.0:
+    elif runway_months >= cfg.runway_bands.insufficient_max:
         status = "HEALTHY"
-    elif runway_months >= 1.0:
+    elif runway_months >= cfg.runway_bands.critical_max:
         status = "INSUFFICIENT"
     else:
         status = "CRITICAL"
@@ -315,7 +361,7 @@ def calculate_emergency_runway(context, reporting_date=None):
         "monthly_expenses": paise_to_float(monthly_expenses_paise),
         "runway_months": runway_months,
         "status": status,
-        "target_runway_months": 3.0,
+        "target_runway_months": cfg.runway_bands.target_months,
         "is_sufficient_data": is_sufficient_data,
         "data_note": data_note,
         "reporting_period": reporting_period,
@@ -366,11 +412,12 @@ def calculate_savings_rate(context, reporting_date=None):
     }
 
 
-def calculate_debt_burden(context, reporting_date=None):
+def calculate_debt_burden(context, reporting_date=None, config: EngineConfig | None = None):
     """
     Calculates total outstanding debt, monthly EMI obligations, and Debt-to-Income (DTI) ratio.
     Deduplicates pending EMIs and explicitly handles zero-income edge cases.
     """
+    cfg = config or DEFAULT_ENGINE_CONFIG
     target = _resolve_reporting_date(context, reporting_date)
     reporting_period = f"{target.year}-{target.month:02d}"
 
@@ -395,18 +442,20 @@ def calculate_debt_burden(context, reporting_date=None):
         dti_ratio = round(r * 100.0, 2) if r is not None else 0.0
         has_income = True
         is_sufficient_data = True
-        if dti_ratio <= 20.0:
+        if dti_ratio <= cfg.dti_bands.healthy_max:
             risk = "LOW"
-            assessment = "Healthy debt level (under 20% of income)."
-        elif dti_ratio <= 35.0:
+            h_max = int(cfg.dti_bands.healthy_max) if cfg.dti_bands.healthy_max.is_integer() else cfg.dti_bands.healthy_max
+            assessment = f"Healthy debt level (under {h_max}% of income)."
+        elif dti_ratio <= cfg.dti_bands.moderate_max:
             risk = "MODERATE"
             assessment = "Manageable debt obligations."
-        elif dti_ratio <= 50.0:
+        elif dti_ratio <= cfg.dti_bands.high_max:
             risk = "HIGH"
             assessment = "Elevated debt burden requiring caution."
         else:
             risk = "CRITICAL"
-            assessment = "Critical debt burden exceeding 50% of monthly income."
+            crit_max = int(cfg.dti_bands.high_max) if cfg.dti_bands.high_max.is_integer() else cfg.dti_bands.high_max
+            assessment = f"Critical debt burden exceeding {crit_max}% of monthly income."
     else:
         dti_ratio = 0.0
         has_income = False
@@ -431,48 +480,58 @@ def calculate_debt_burden(context, reporting_date=None):
     }
 
 
-def calculate_comprehensive_health(context, reporting_date=None):
+def calculate_comprehensive_health(context, reporting_date=None, config: EngineConfig | None = None):
     """
     Evaluates complete financial health score strictly bounded in [0.0, 100.0].
     Safeguards against negative savings rate degradation and zero-income artifacts.
     """
+    cfg = config or DEFAULT_ENGINE_CONFIG
     target = _resolve_reporting_date(context, reporting_date)
     reporting_period = f"{target.year}-{target.month:02d}"
 
     savings = calculate_savings_rate(context, target)
-    runway = calculate_emergency_runway(context, target)
-    debt = calculate_debt_burden(context, target)
-    emergency = calculate_emergency_fund(context, target)
+    runway = calculate_emergency_runway(context, target, config=cfg)
+    debt = calculate_debt_burden(context, target, config=cfg)
+    emergency = calculate_emergency_fund(context, target, config=cfg)
 
-    # 1. Savings score (max 35 pts) - 20% savings gives full score.
-    # Non-negative clamping: negative savings rate yields 0.0 pts.
-    savings_score = max(0.0, min(35.0, (savings["savings_rate"] / 20.0) * 35.0))
+    hw = cfg.health_weights
+    # 1. Savings score
+    if hw.savings_target_rate > 0:
+        savings_score = max(0.0, min(hw.savings_max_score, (savings["savings_rate"] / hw.savings_target_rate) * hw.savings_max_score))
+    else:
+        savings_score = 0.0
 
-    # 2. Emergency Runway score (max 35 pts) - 3 months gives full score.
-    # Non-negative clamping: overdraft / zero runway yields 0.0 pts.
-    runway_score = max(0.0, min(35.0, (runway["runway_months"] / 3.0) * 35.0))
+    # 2. Emergency Runway score
+    if hw.runway_target_months > 0:
+        runway_score = max(0.0, min(hw.runway_max_score, (runway["runway_months"] / hw.runway_target_months) * hw.runway_max_score))
+    else:
+        runway_score = 0.0
 
-    # 3. Debt score (max 30 pts) - DTI < 20% gives 30 pts, > 50% gives 0 pts.
-    # Active EMIs with zero income represents critical debt risk (0.0 pts).
+    # 3. Debt score
     if debt.get("monthly_emi", 0) > 0 and savings.get("total_income", 0) <= 0:
         debt_score = 0.0
-    elif debt["dti_ratio"] <= 20.0:
-        debt_score = 30.0
-    elif debt["dti_ratio"] >= 50.0:
+    elif debt["dti_ratio"] <= hw.debt_min_dti:
+        debt_score = hw.debt_max_score
+    elif debt["dti_ratio"] >= hw.debt_max_dti:
         debt_score = 0.0
     else:
-        debt_score = max(0.0, min(30.0, 30.0 - ((debt["dti_ratio"] - 20.0) / 30.0 * 30.0)))
+        dti_span = hw.debt_max_dti - hw.debt_min_dti
+        if dti_span > 0:
+            debt_score = max(0.0, min(hw.debt_max_score, hw.debt_max_score - ((debt["dti_ratio"] - hw.debt_min_dti) / dti_span * hw.debt_max_score)))
+        else:
+            debt_score = 0.0
 
     # Strictly clamp final score to documented [0.0, 100.0] range
     total_score = max(0.0, min(100.0, round(savings_score + runway_score + debt_score, 1)))
 
-    if total_score >= 85.0:
+    gc = cfg.grade_cutoffs
+    if total_score >= gc.grade_a_min:
         grade = "A"
         summary = "Excellent financial health with strong reserves and manageable debt."
-    elif total_score >= 70.0:
+    elif total_score >= gc.grade_b_min:
         grade = "B"
         summary = "Good financial standing with minor areas for savings or emergency reserve optimization."
-    elif total_score >= 50.0:
+    elif total_score >= gc.grade_c_min:
         grade = "C"
         summary = "Fair financial position; recommended to increase emergency reserves."
     else:
@@ -492,12 +551,21 @@ def calculate_comprehensive_health(context, reporting_date=None):
     }
 
 
-def check_purchase_safety(context, purchase_amount, reporting_date=None):
+def check_purchase_safety(
+    context,
+    purchase_amount,
+    reporting_date=None,
+    config: EngineConfig | None = None,
+    trailing_n_months: int | None = None,
+    fixed_obligations: float | None = None,
+):
     """
     Evaluates whether a purchase is financially safe.
     Safely deduplicates pending EMIs, clamps negative purchase amounts,
     and flags cases where monthly expense data is unverified.
+    Supports optional trailing-N-month average expense basis and fixed-obligations input (off by default).
     """
+    cfg = config or DEFAULT_ENGINE_CONFIG
     target = _resolve_reporting_date(context, reporting_date)
     reporting_period = f"{target.year}-{target.month:02d}"
 
@@ -512,20 +580,29 @@ def check_purchase_safety(context, purchase_amount, reporting_date=None):
     deduped_emis = _get_deduplicated_pending_emis(context, target)
     pending_emi_paise = sum(item["amount_paise"] for item in deduped_emis)
 
-    monthly_txs = _monthly_transactions(context, target)
-    monthly_expenses_paise = sum(
-        _get_amount_paise(transaction)
-        for transaction in monthly_txs
-        if transaction.get("type") == "EXPENSE"
-    )
+    # Fixed obligations (optional, defaults to config default which is 0.0)
+    fixed_obs_val = fixed_obligations if fixed_obligations is not None else cfg.fixed_obligations_default
+    fixed_obligations_paise = _parse_paise(fixed_obs_val)
 
-    emergency_requirement_paise = mul_paise(monthly_expenses_paise, 3)
+    # Expense basis: trailing N months if requested (> 1), else single reporting month
+    effective_trailing_n = trailing_n_months if trailing_n_months is not None else cfg.trailing_n_months
+    if effective_trailing_n is not None and effective_trailing_n > 1:
+        monthly_expenses_paise = _get_trailing_monthly_expenses_paise(context, target, effective_trailing_n)
+    else:
+        monthly_txs = _monthly_transactions(context, target)
+        monthly_expenses_paise = sum(
+            _get_amount_paise(transaction)
+            for transaction in monthly_txs
+            if transaction.get("type") == "EXPENSE"
+        )
+
+    emergency_requirement_paise = mul_paise(monthly_expenses_paise, cfg.emergency_reserve_multiplier)
 
     # Sanitize purchase amount: prevent negative values from artificially inflating balance
     sanitized_purchase_paise = max(0, _parse_paise(purchase_amount))
 
     balance_after_purchase_paise = (
-        balance_paise - pending_emi_paise - sanitized_purchase_paise
+        balance_paise - pending_emi_paise - fixed_obligations_paise - sanitized_purchase_paise
     )
 
     is_safe = balance_after_purchase_paise >= emergency_requirement_paise
@@ -542,10 +619,15 @@ def check_purchase_safety(context, purchase_amount, reporting_date=None):
     balance_after_purchase = paise_to_float(balance_after_purchase_paise)
     emergency_requirement = paise_to_float(emergency_requirement_paise)
 
+    if fixed_obligations_paise > 0:
+        obligations_clause = "pending EMI, fixed obligations, and purchase"
+    else:
+        obligations_clause = "pending EMI and purchase"
+
     if is_safe:
         reason = (
             f"The purchase is financially safe. "
-            f"After the pending EMI and purchase, "
+            f"After the {obligations_clause}, "
             f"₹{balance_after_purchase:,.0f} would remain, "
             f"which is above the recommended emergency "
             f"reserve of ₹{emergency_requirement:,.0f}."
@@ -553,7 +635,7 @@ def check_purchase_safety(context, purchase_amount, reporting_date=None):
     else:
         reason = (
             f"The purchase is not financially safe. "
-            f"After the pending EMI and purchase, "
+            f"After the {obligations_clause}, "
             f"only ₹{balance_after_purchase:,.0f} would remain, "
             f"which is below the recommended emergency "
             f"reserve of ₹{emergency_requirement:,.0f}."
@@ -562,33 +644,40 @@ def check_purchase_safety(context, purchase_amount, reporting_date=None):
     if monthly_expenses_paise == 0:
         reason += " (Note: Zero monthly expenses recorded; baseline living reserve could not be verified.)"
 
+    evidence = {
+        "current_balance": paise_to_float(balance_paise),
+        "pending_emi": paise_to_float(pending_emi_paise),
+        "monthly_expenses": paise_to_float(monthly_expenses_paise),
+        "purchase_amount": paise_to_float(sanitized_purchase_paise),
+        "emergency_requirement": emergency_requirement,
+        "balance_after_purchase": balance_after_purchase,
+    }
+    if fixed_obligations_paise > 0:
+        evidence["fixed_obligations"] = paise_to_float(fixed_obligations_paise)
+    if effective_trailing_n is not None and effective_trailing_n > 1:
+        evidence["trailing_n_months"] = effective_trailing_n
+
     return {
         "decision": "SAFE" if is_safe else "NOT_SAFE",
         "risk_level": risk_level,
-        "evidence": {
-            "current_balance": paise_to_float(balance_paise),
-            "pending_emi": paise_to_float(pending_emi_paise),
-            "monthly_expenses": paise_to_float(monthly_expenses_paise),
-            "purchase_amount": paise_to_float(sanitized_purchase_paise),
-            "emergency_requirement": emergency_requirement,
-            "balance_after_purchase": balance_after_purchase,
-        },
+        "evidence": evidence,
         "reason": reason,
         "reporting_period": reporting_period,
         "is_sufficient_data": monthly_expenses_paise > 0,
     }
 
 
-def generate_financial_summary(context, reporting_date=None):
+def generate_financial_summary(context, reporting_date=None, config: EngineConfig | None = None):
     """
     Assembles comprehensive financial snapshot combining all reasoning components.
     """
+    cfg = config or DEFAULT_ENGINE_CONFIG
     target = _resolve_reporting_date(context, reporting_date)
     savings = calculate_savings_rate(context, target)
-    emergency = calculate_emergency_fund(context, target)
-    health = calculate_comprehensive_health(context, target)
+    emergency = calculate_emergency_fund(context, target, config=cfg)
+    health = calculate_comprehensive_health(context, target, config=cfg)
     categories = calculate_category_expenses(context, target)
-    debt = calculate_debt_burden(context, target)
+    debt = calculate_debt_burden(context, target, config=cfg)
 
     reporting_period = f"{target.year}-{target.month:02d}"
 
