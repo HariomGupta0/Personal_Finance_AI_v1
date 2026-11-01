@@ -287,14 +287,20 @@ async def upload_image(
         pipeline_rows = pipeline_result["valid_rows"]
         pipeline_warnings = pipeline_result["warnings"]
 
+    sanity_flag = extraction.get("sanity_flag", False)
+    sanity_issues = extraction.get("sanity_issues", [])
+
     return {
         "status": "EXTRACTED",
         "filename": filename,
         "extraction": extraction,
         "preview_rows": pipeline_rows,
         "warnings": extraction.get("warnings", []) + pipeline_warnings,
+        "sanity_flag": sanity_flag,
+        "sanity_issues": sanity_issues,
         "requires_review": (
-            not extraction.get("extraction_success")
+            not sanity_flag
+            or not extraction.get("extraction_success")
             or extraction.get("confidence") in ("low", "medium")
             or extraction.get("transaction_status") != "SUCCESS"
         ),

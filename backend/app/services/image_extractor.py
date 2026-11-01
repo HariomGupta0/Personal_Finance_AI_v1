@@ -222,12 +222,16 @@ def _sanitise_extraction(data: dict) -> dict:
 
     # Amount must be positive or null
     amount = data.get("amount")
+    implausible_amount = False
     if amount is not None:
         try:
             amount = float(amount)
             if amount <= 0:
                 amount = None
                 warnings.append("Extracted amount was zero or negative — set to null for manual review.")
+            elif amount > 10_000_000:
+                implausible_amount = True
+                warnings.append(f"Extracted amount ₹{amount:,.2f} is implausibly large — manual verification required.")
         except (TypeError, ValueError):
             amount = None
             warnings.append("Amount could not be parsed — set to null for manual review.")
@@ -264,6 +268,30 @@ def _sanitise_extraction(data: dict) -> dict:
         else:
             warnings.append(f"Date '{raw_date}' is in an unrecognised format — please enter manually.")
 
+    # Merchant
+    merchant = data.get("merchant_or_recipient")
+    if merchant and isinstance(merchant, str):
+        merchant = merchant.strip() or None
+    else:
+        merchant = None
+
+    # Sanity checks: missing amount, date, or merchant; or implausible amount
+    sanity_issues = []
+    if amount is None:
+        sanity_issues.append("missing_amount")
+    elif implausible_amount:
+        sanity_issues.append("implausible_amount")
+
+    if date_iso is None:
+        sanity_issues.append("missing_date")
+
+    if merchant is None:
+        sanity_issues.append("missing_merchant")
+
+    sanity_flag = len(sanity_issues) == 0
+    if not sanity_flag:
+        warnings.append(f"Sanity check warning: Extraction incomplete or implausible ({', '.join(sanity_issues)}).")
+
     # Map direction to tx_type for the pipeline
     direction_to_type = {
         "expense": "EXPENSE",
@@ -276,13 +304,16 @@ def _sanitise_extraction(data: dict) -> dict:
         "date": date_iso,
         "amount": amount,
         "currency": data.get("currency"),
-        "description": data.get("merchant_or_recipient"),
+        "description": merchant,
         "direction": direction,
         "type": direction_to_type.get(direction),
         "transaction_status": status,
         "source_ref": data.get("reference_id"),
         "confidence": confidence,
         "warnings": warnings,
+        "sanity_flag": sanity_flag,
+        "sanity_issues": sanity_issues,
+        "implausible_amount": implausible_amount,
         "extraction_success": False,  # overwritten by caller on success
     }
 
@@ -299,6 +330,9 @@ def _fallback_result(warnings: list[str], raw_response: str) -> dict:
         "source_ref": None,
         "confidence": "low",
         "warnings": warnings,
+        "sanity_flag": False,
+        "sanity_issues": ["missing_amount", "missing_date", "missing_merchant"],
+        "implausible_amount": False,
         "extraction_success": False,
         "source_type": "image",
         "raw_response": raw_response,
