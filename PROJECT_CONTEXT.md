@@ -116,9 +116,12 @@ $$\text{Balance After Purchase} = \text{Liquid Balance} - \text{Pending EMIs} - 
   - `VERY_HIGH`: $\text{Balance After Purchase} \le 0$
 
 ### 6. Comprehensive Financial Health Score (0–100) & Grade
-$$\text{Health Score} = (\text{Savings Component} \times 0.35) + (\text{Runway Component} \times 0.35) + (\text{Debt Component} \times 0.20) + (\text{Goal Component} \times 0.10)$$
+$$\text{Health Score} = \text{Savings Component} (35\text{ pts max}) + \text{Runway Component} (35\text{ pts max}) + \text{Debt Component} (30\text{ pts max})$$
+- **Savings Component (0–35 pts)**: $\min\left(35, \frac{\text{Savings Rate}}{20.0\%} \times 35\right)$, non-negative.
+- **Runway Component (0–35 pts)**: $\min\left(35, \frac{\text{Runway Months}}{3.0} \times 35\right)$, non-negative.
+- **Debt Component (0–30 pts)**: $30\text{ pts}$ if $\text{DTI} \le 20\%$; $0\text{ pts}$ if $\text{DTI} \ge 50\%$; linear interpolation in between; $0\text{ pts}$ if active EMIs with zero income.
 - Clamped strictly between `0.0` and `100.0`.
-- Letter grades: `A+` ($\ge 85$), `A` ($\ge 70$), `B` ($\ge 55$), `C` ($\ge 40$), `D` ($< 40$).
+- Letter grades: `A` ($\ge 85$), `B` ($\ge 70$), `C` ($\ge 50$), `D` ($< 50$). Note: No goal component exists in the deterministic engine.
 
 ---
 
