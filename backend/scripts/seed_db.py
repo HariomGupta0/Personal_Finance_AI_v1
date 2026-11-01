@@ -1,6 +1,7 @@
 from datetime import datetime
 from neo4j import GraphDatabase
-from backend.config import NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD, NEO4J_DATABASE
+from backend.config import NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD, NEO4J_DATABASE, APP_PASSWORD
+from backend.app.database.neo4j_service import hash_password
 
 def seed_database():
     print(f"Connecting to Neo4j URI: {NEO4J_URI} on database: {NEO4J_DATABASE}")
@@ -8,6 +9,7 @@ def seed_database():
     
     current_ym = datetime.now().strftime('%Y-%m')
     next_year = datetime.now().year + 1
+    pwd_hash, salt = hash_password(APP_PASSWORD or "demo1234")
 
     seed_cypher = """
     // Clean up existing data in this isolated database
@@ -16,7 +18,13 @@ def seed_database():
 
     create_graph_cypher = f"""
     // Create User
-    CREATE (u:User {{id: 'U001', name: 'Rahul'}})
+    CREATE (u:User {{
+        id: 'U001',
+        name: 'Rahul',
+        username: 'rahul',
+        password_hash: '{pwd_hash}',
+        salt: '{salt}'
+    }})
 
     // Create Account
     CREATE (a:Account {{

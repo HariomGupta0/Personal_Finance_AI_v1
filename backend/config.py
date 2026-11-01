@@ -32,3 +32,4 @@ APP_PASSWORD = os.getenv("APP_PASSWORD")
 SESSION_SECRET = os.getenv("SESSION_SECRET")
 SESSION_TTL_SECONDS = int(os.getenv("SESSION_TTL_SECONDS", "28800"))
 SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "false").lower() == "true"
+DEV_MODE = os.getenv("DEV_MODE", "false").lower() in ("true", "1", "yes", "dev")

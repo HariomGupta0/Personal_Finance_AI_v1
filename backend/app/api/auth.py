@@ -13,10 +13,12 @@ from backend.config import (
     APP_PASSWORD,
     APP_USER_ID,
     APP_USERNAME,
+    DEV_MODE,
     SESSION_COOKIE_SECURE,
     SESSION_SECRET,
     SESSION_TTL_SECONDS,
 )
+from backend.app.core.limiter import limiter
 from backend.app.database.neo4j_service import Neo4jService, get_neo4j_service
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
@@ -124,12 +126,14 @@ def signup(
 
 
 @router.post("/login")
+@limiter.limit("5/minute")
 def login(
+    request: Request,
     payload: LoginRequest,
     response: Response,
     neo: Neo4jService = Depends(get_neo4j_service),
 ):
-    # 1. First attempt authentication against Neo4j User nodes
+    # 1. First attempt authentication against Neo4j User nodes with hashed credentials
     try:
         user = neo.authenticate_user(payload.username, payload.password)
         if user:
@@ -142,8 +146,8 @@ def login(
     except Exception:
         pass
 
-    # 2. Fallback to demo environment credentials if configured
-    if APP_PASSWORD and SESSION_SECRET:
+    # 2. Fallback to demo environment credentials only when DEV_MODE is enabled
+    if DEV_MODE and APP_PASSWORD and SESSION_SECRET:
         valid_username = hmac.compare_digest(payload.username.lower(), APP_USERNAME.lower())
         valid_password = hmac.compare_digest(payload.password, APP_PASSWORD)
         if valid_username and valid_password:
