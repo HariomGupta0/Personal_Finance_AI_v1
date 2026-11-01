@@ -16,7 +16,7 @@ This project is an explainable, research-grade, full-stack personal finance advi
 ## 2. Core Architectural Philosophy & Data Flow
 
 ```text
-User Interaction (Text / Voice / CSV / Receipt Image)
+User Interaction (Text / CSV / Receipt Image)
                          ↓
   [Ingestion / NLU Layer]
   • Multimodal Groq Vision (qwen/qwen3.8-27b) for Receipts & Screenshots
@@ -118,7 +118,7 @@ $$\text{Balance After Purchase} = \text{Liquid Balance} - \text{Pending EMIs} - 
 ### 6. Comprehensive Financial Health Score (0–100) & Grade
 $$\text{Health Score} = (\text{Savings Component} \times 0.35) + (\text{Runway Component} \times 0.35) + (\text{Debt Component} \times 0.20) + (\text{Goal Component} \times 0.10)$$
 - Clamped strictly between `0.0` and `100.0`.
-- Letter grades: `A+` ($\ge 85$), `A` ($\ge 70$), `B` ($\ge 55$), `C` ($\ge 40$), `D` ($< 40$).
+- Letter grades: `A` ($\ge 85$), `B` ($\ge 70$), `C` ($\ge 50$), `D` ($< 50$).
 
 ---
 

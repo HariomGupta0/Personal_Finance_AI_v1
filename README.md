@@ -41,6 +41,10 @@ User Question / Natural Language Ingestion
 - Neo4j Desktop or Server (running locally on `neo4j://127.0.0.1:7687`)
 
 ### 2. Environment Configuration
+Copy `.env.example` to `.env` and set your credentials:
+```powershell
+Copy-Item .env.example .env
+```
 The `.env` file at the root contains:
 ```env
 NEO4J_URI=neo4j://127.0.0.1:7687
