@@ -903,7 +903,7 @@ def parse_question_rules(question: str, conversation_history: list[dict] | None 
     # ─────────────────────────────────────────────────────────────────────────
     category_matches = ["housing", "rent", "food", "grocery", "groceries", "transport", "travel", "utilities", "electricity", "shopping", "entertainment", "healthcare", "medicine"]
     has_cat = any(c in q_lower for c in category_matches)
-    is_cat_spend = ("spend on" in q_lower or "spent on" in q_lower or "expense on" in q_lower or "expenses on" in q_lower or "cost of" in q_lower)
+    is_cat_spend = ("spend on" in q_lower or "spent on" in q_lower or "spending on" in q_lower or "expense on" in q_lower or "expenses on" in q_lower or "cost of" in q_lower)
     is_cat_followup = any(q_lower.startswith(p) for p in ["what about", "how about", "and for", "and what about", "tell me about"])
 
 
@@ -927,7 +927,7 @@ def parse_question_rules(question: str, conversation_history: list[dict] | None 
     # ─────────────────────────────────────────────────────────────────────────
     # H. Overall Expense Breakdown & Top Category (New Topic)
     # ─────────────────────────────────────────────────────────────────────────
-    if any(kw in q_lower for kw in ["spend the most", "where did i spend", "top expense", "largest expense", "highest expense", "expense breakdown", "where is my money going"]):
+    if any(kw in q_lower for kw in ["spend the most", "where did i spend", "top expense", "largest expense", "highest expense", "expense breakdown", "where is my money going", "spending breakdown", "break down", "breakdown"]):
         return {
             "intent": "EXPENSE_BREAKDOWN",
             "amount": None,
@@ -943,11 +943,30 @@ def parse_question_rules(question: str, conversation_history: list[dict] | None 
         }
 
     # ─────────────────────────────────────────────────────────────────────────
-    # I. Savings Analysis (New Topic)
+    # I. Emergency Runway Detection (New Topic)
     # ─────────────────────────────────────────────────────────────────────────
-    if any(kw in q_lower for kw in ["savings rate", "saving rate", "how much am i saving", "how much do i save", "total savings", "my savings"]):
+    runway_keywords = [
+        "runway",
+        "survive",
+        "how long will my money last",
+        "how long can i survive",
+        "how long will my savings last",
+        "how long can i last",
+        "how many months can i survive",
+        "how many months can i last",
+        "months of coverage",
+        "survival buffer",
+        "survival time",
+        "money last",
+        "savings last",
+        "live on my savings",
+        "survive on my savings",
+        "how long would my savings last",
+        "how long could i survive",
+    ]
+    if any(kw in q_lower for kw in runway_keywords):
         return {
-            "intent": "SAVINGS_ANALYSIS",
+            "intent": "EMERGENCY_RUNWAY_ANALYSIS",
             "amount": None,
             "category": None,
             "reporting_date": reporting_date,
@@ -961,11 +980,11 @@ def parse_question_rules(question: str, conversation_history: list[dict] | None 
         }
 
     # ─────────────────────────────────────────────────────────────────────────
-    # J. Emergency Runway Detection (New Topic)
+    # J. Savings Analysis (New Topic)
     # ─────────────────────────────────────────────────────────────────────────
-    if any(kw in q_lower for kw in ["runway", "how long will my money last", "how many months can i survive", "months of coverage", "survival buffer"]):
+    if any(kw in q_lower for kw in ["savings rate", "saving rate", "how much am i saving", "how much do i save", "total savings", "my savings"]):
         return {
-            "intent": "EMERGENCY_RUNWAY_ANALYSIS",
+            "intent": "SAVINGS_ANALYSIS",
             "amount": None,
             "category": None,
             "reporting_date": reporting_date,
@@ -1017,7 +1036,7 @@ def parse_question_rules(question: str, conversation_history: list[dict] | None 
     # ─────────────────────────────────────────────────────────────────────────
     # M. Comprehensive Financial Health Check (New Topic)
     # ─────────────────────────────────────────────────────────────────────────
-    if any(kw in q_lower for kw in ["health score", "financial health", "health check", "financial grade"]):
+    if any(kw in q_lower for kw in ["health score", "financial health", "health check", "financial grade", "financial score"]):
         return {
             "intent": "FINANCIAL_HEALTH",
             "amount": None,
