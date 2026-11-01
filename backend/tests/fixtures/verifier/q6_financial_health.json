@@ -1,0 +1,165 @@
+{
+  "question": "How is my financial health?",
+  "intent": "FINANCIAL_HEALTH",
+  "model": "openai/gpt-oss-120b",
+  "timestamp": "2026-11-01T04:08:32.845557+00:00",
+  "math_result": {
+    "health_score": 90.0,
+    "grade": "A",
+    "summary": "Excellent financial health with strong reserves and manageable debt.",
+    "savings_rate": 65.0,
+    "runway_months": 2.14,
+    "dti_ratio": 16.67,
+    "emergency_shortfall": 33000.0,
+    "reporting_period": "2026-11",
+    "is_sufficient_data": true
+  },
+  "evidence_string": "{\n  \"_graph_paths\": [],\n  \"_grounded_facts\": [\n    {\n      \"label\": \"Overall Financial Health Score\",\n      \"node_ids\": [\n        \"Account:A001\",\n        \"Account:Demo Bank\",\n        \"Loan:L001\",\n        \"Loan:Personal Loan\",\n        \"Income:I001\",\n        \"Income:Salary\"\n      ],\n      \"source\": \"Composite Scoring Model\",\n      \"value\": \"90.0 / 100\"\n    },\n    {\n      \"label\": \"Financial Grade\",\n      \"node_ids\": [\n        \"Account:A001\",\n        \"Account:Demo Bank\",\n        \"Loan:L001\",\n        \"Loan:Personal Loan\",\n        \"Income:I001\",\n        \"Income:Salary\"\n      ],\n      \"source\": \"Grading Engine\",\n      \"value\": \"Grade A\"\n    },\n    {\n      \"label\": \"Savings Rate Pillar\",\n      \"node_ids\": [\n        \"Income:I001\",\n        \"Income:Salary\",\n        \"Transaction:T001\",\n        \"Transaction:T002\",\n        \"Transaction:T003\",\n        \"Transaction:T004\"\n      ],\n      \"source\": \"Savings Model\",\n      \"value\": \"65.0%\"\n    },\n    {\n      \"label\": \"Emergency Runway Pillar\",\n      \"node_ids\": [\n        \"Account:A001\",\n        \"Account:Demo Bank\",\n        \"Transaction:T001\",\n        \"Transaction:T002\",\n        \"Transaction:T003\",\n        \"Transaction:T004\"\n      ],\n      \"source\": \"Runway Model\",\n      \"value\": \"2.14 months\"\n    },\n    {\n      \"label\": \"DTI Ratio Pillar\",\n      \"node_ids\": [\n        \"EMI:E001\",\n        \"Income:I001\",\n        \"Income:Salary\"\n      ],\n      \"source\": \"Debt Model\",\n      \"value\": \"16.67%\"\n    }\n  ],\n  \"_source_identifiers\": [\n    \"Account:A001\",\n    \"Goal:Emergency Fund\",\n    \"Goal:G001\",\n    \"Income:I001\",\n    \"Loan:L001\"\n  ],\n  \"dti_ratio\": 16.67,\n  \"emergency_shortfall\": 33000.0,\n  \"grade\": \"A\",\n  \"health_score\": 90.0,\n  \"is_sufficient_data\": true,\n  \"reporting_period\": \"2026-11\",\n  \"runway_months\": 2.14,\n  \"savings_rate\": 65.0,\n  \"summary\": \"Excellent financial health with strong reserves and manageable debt.\"\n}",
+  "llm_raw_text": "**🎯 The Quick Take**  \nYou’re in great shape—your overall health score is 90 / 100, earning you a solid **Grade A**. Debt is low, you’re saving a healthy slice of your income, and your emergency cushion is already in place.\n\n---\n\n**📊 The Numbers**  \n• **Overall Financial Health Score:** 90 / 100  \n• **Financial Grade:** A  \n• **Savings Rate:** 65 % of your income  \n• **Emergency Runway:** 2.14 months of living expenses  \n• **Debt‑to‑Income (DTI) Ratio:** 16.67 %  \n• **Emergency Shortfall:** ₹33,000  \n\n---\n\n**💡 Smart Insights**  \n- **Savings power:** Saving 65 % means you’re building wealth faster than most households; keep that habit.  \n- **Debt comfort:** A DTI of 16.67 % shows your loan payments are comfortably covered by your salary.  \n- **Emergency buffer:** Two months of runway is a solid start, but extending it to three‑plus months would give you extra peace of mind against unexpected costs.\n\n---\n\n**🚀 What You Should Do Next**  \n1. **Boost your emergency fund** to at least three months of expenses (aim for an additional ₹33,000 – ₹50,000).  \n2. **Maintain or slightly increase** your savings rate; even a 5 % bump can accelerate long‑term goals.  \n3. **Review loan terms** annually to ensure you’re still getting the best rate, and consider extra payments if you have surplus cash.  \n\nYou’re on a strong trajectory—keep the momentum, and your financial future will stay bright!",
+  "api_response": {
+    "query": "How is my financial health?",
+    "intent": "FINANCIAL_HEALTH",
+    "entities": {
+      "intent": "FINANCIAL_HEALTH",
+      "operation": "FINANCIAL_HEALTH",
+      "category": null,
+      "merchant": null,
+      "amount": null,
+      "amount_min": null,
+      "amount_max": null,
+      "limit": null,
+      "sort_by": "date",
+      "sort_direction": "DESC",
+      "reporting_date": null,
+      "comparison_reporting_date": null,
+      "date_range": "start_date=None end_date=None reporting_period=None",
+      "comparison_date_range": null,
+      "trend_months": null,
+      "raw_query": "How is my financial health?",
+      "is_followup": false,
+      "needs_clarification": false,
+      "clarification_type": null,
+      "clarification_message": null,
+      "exclude_transfers": true,
+      "query_plan": "operation=<OperationType.FINANCIAL_HEALTH: 'FINANCIAL_HEALTH'> raw_query='How is my financial health?' date_range=DateRange(start_date=None, end_date=None, reporting_period=None) comparison_date_range=None trend_months=None category=None merchant=None amount=None amount_min=None amount_max=None sort_by='date' sort_direction='DESC' limit=None exclude_transfers=True is_followup=False needs_clarification=False clarification_type=None clarification_message=None",
+      "turn_type": "NEW_TOPIC",
+      "is_date_ambiguous": false
+    },
+    "math_result": {
+      "health_score": 90.0,
+      "grade": "A",
+      "summary": "Excellent financial health with strong reserves and manageable debt.",
+      "savings_rate": 65.0,
+      "runway_months": 2.14,
+      "dti_ratio": 16.67,
+      "emergency_shortfall": 33000.0,
+      "reporting_period": "2026-11",
+      "is_sufficient_data": true
+    },
+    "evidence": [
+      {
+        "label": "Overall Financial Health Score",
+        "value": "90.0 / 100",
+        "source": "Composite Scoring Model",
+        "formula": "Savings (35) + Runway (35) + Debt (30)",
+        "source_node_ids": [
+          "Account:A001",
+          "Account:Demo Bank",
+          "Loan:L001",
+          "Loan:Personal Loan",
+          "Income:I001",
+          "Income:Salary"
+        ]
+      },
+      {
+        "label": "Financial Grade",
+        "value": "Grade A",
+        "source": "Grading Engine",
+        "formula": ">=85 (A), >=70 (B), >=50 (C), <50 (D)",
+        "source_node_ids": [
+          "Account:A001",
+          "Account:Demo Bank",
+          "Loan:L001",
+          "Loan:Personal Loan",
+          "Income:I001",
+          "Income:Salary"
+        ]
+      },
+      {
+        "label": "Savings Rate Pillar",
+        "value": "65.0%",
+        "source": "Savings Model",
+        "formula": "(Savings / Income) × 100",
+        "source_node_ids": [
+          "Income:I001",
+          "Income:Salary",
+          "Transaction:T001",
+          "Transaction:T002",
+          "Transaction:T003",
+          "Transaction:T004"
+        ]
+      },
+      {
+        "label": "Emergency Runway Pillar",
+        "value": "2.14 months",
+        "source": "Runway Model",
+        "formula": "Balance / Monthly Expenses",
+        "source_node_ids": [
+          "Account:A001",
+          "Account:Demo Bank",
+          "Transaction:T001",
+          "Transaction:T002",
+          "Transaction:T003",
+          "Transaction:T004"
+        ]
+      },
+      {
+        "label": "DTI Ratio Pillar",
+        "value": "16.67%",
+        "source": "Debt Model",
+        "formula": "EMIs / Income × 100",
+        "source_node_ids": [
+          "EMI:E001",
+          "Income:I001",
+          "Income:Salary"
+        ]
+      }
+    ],
+    "evidence_metadata": {
+      "reporting_period": "2026-11",
+      "data_freshness": "Verified through latest transaction (2026-11-10)",
+      "methodology_formula": "Health Score = Savings Score (max 35) + Runway Score (max 35) + Debt Score (max 30)",
+      "calculation_method": "Multi-pillar weighted scoring model bounded strictly in [0.0, 100.0].",
+      "caveats": [],
+      "is_sufficient_data": true
+    },
+    "source_identifiers": [
+      "Account:A001",
+      "Goal:Emergency Fund",
+      "Goal:G001",
+      "Income:I001",
+      "Loan:L001"
+    ],
+    "graph_paths": [],
+    "explanation": "**🎯 The Quick Take**  \nYou’re in great shape—your overall health score is 90 / 100, earning you a solid **Grade A**. Debt is low, you’re saving a healthy slice of your income, and your emergency cushion is already in place.\n\n---\n\n**📊 The Numbers**  \n• **Overall Financial Health Score:** 90 / 100  \n• **Financial Grade:** A  \n• **Savings Rate:** 65 % of your income  \n• **Emergency Runway:** 2.14 months of living expenses  \n• **Debt‑to‑Income (DTI) Ratio:** 16.67 %  \n• **Emergency Shortfall:** ₹33,000  \n\n---\n\n**💡 Smart Insights**  \n- **Savings power:** Saving 65 % means you’re building wealth faster than most households; keep that habit.  \n- **Debt comfort:** A DTI of 16.67 % shows your loan payments are comfortably covered by your salary.  \n- **Emergency buffer:** Two months of runway is a solid start, but extending it to three‑plus months would give you extra peace of mind against unexpected costs.\n\n---\n\n**🚀 What You Should Do Next**  \n1. **Boost your emergency fund** to at least three months of expenses (aim for an additional ₹33,000 – ₹50,000).  \n2. **Maintain or slightly increase** your savings rate; even a 5 % bump can accelerate long‑term goals.  \n3. **Review loan terms** annually to ensure you’re still getting the best rate, and consider extra payments if you have surplus cash.  \n\nYou’re on a strong trajectory—keep the momentum, and your financial future will stay bright!",
+    "prompt_version": "v1.1",
+    "is_followup": false,
+    "turn_type": "NEW_TOPIC",
+    "needs_clarification": false,
+    "clarification_type": null,
+    "recalculated_fresh": true,
+    "latency_breakdown": {
+      "nlu_ms": 0.6,
+      "graph_ms": 14.9,
+      "engine_ms": 0.3,
+      "llm_ms": 7295.4,
+      "total_ms": 7311.3
+    },
+    "tokens": {
+      "prompt": 1033,
+      "completion": 550,
+      "total": 1583
+    }
+  },
+  "metadata_note": "Comprehensive financial health score"
+}

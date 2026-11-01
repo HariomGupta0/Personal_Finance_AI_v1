@@ -1,0 +1,515 @@
+{
+  "question": "Compare my spending this month and last month",
+  "intent": "PERIOD_COMPARISON",
+  "model": "openai/gpt-oss-120b",
+  "timestamp": "2026-11-01T04:08:57.027335+00:00",
+  "math_result": {
+    "period_a": {
+      "name": "October 2026",
+      "start_date": "2026-10-01",
+      "end_date": "2026-10-31",
+      "total_spent": 0.0,
+      "transaction_count": 0
+    },
+    "period_b": {
+      "name": "November 2026",
+      "start_date": "2026-11-01",
+      "end_date": "2026-11-30",
+      "total_spent": 21000.0,
+      "transaction_count": 4
+    },
+    "category": null,
+    "merchant": null,
+    "absolute_change": 21000.0,
+    "net_difference": 21000.0,
+    "percentage_change": null,
+    "percentage_change_status": "BASELINE_ZERO",
+    "percentage_change_display": "percentage change unavailable because the baseline is zero",
+    "higher_period": "November 2026",
+    "comparison_outcome": "Higher spending in November 2026",
+    "comparison_verdict": "Your spending overall increased by ₹21,000.00 (percentage change unavailable because the baseline is zero) from October 2026 (₹0.00) to November 2026 (₹21,000.00).",
+    "category_variances": [
+      {
+        "category": "Housing",
+        "period_a_spent": 0.0,
+        "period_b_spent": 12000.0,
+        "absolute_difference": 12000.0,
+        "percentage_change": null,
+        "percentage_change_display": "N/A (baseline was ₹0)",
+        "contribution_weight_pct": 57.14,
+        "supporting_transactions": [
+          {
+            "id": "T001",
+            "description": "Monthly Rent",
+            "amount": 12000.0,
+            "date": "2026-11-05"
+          }
+        ],
+        "mathematical_contribution_note": "Category 'Housing' changed by ₹12,000.00 (+12,000.00), accounting for 57.1% mathematical contribution to the total change."
+      },
+      {
+        "category": "Food",
+        "period_a_spent": 0.0,
+        "period_b_spent": 4000.0,
+        "absolute_difference": 4000.0,
+        "percentage_change": null,
+        "percentage_change_display": "N/A (baseline was ₹0)",
+        "contribution_weight_pct": 19.05,
+        "supporting_transactions": [
+          {
+            "id": "T002",
+            "description": "Grocery Shopping",
+            "amount": 4000.0,
+            "date": "2026-11-07"
+          }
+        ],
+        "mathematical_contribution_note": "Category 'Food' changed by ₹4,000.00 (+4,000.00), accounting for 19.1% mathematical contribution to the total change."
+      },
+      {
+        "category": "Utilities",
+        "period_a_spent": 0.0,
+        "period_b_spent": 3000.0,
+        "absolute_difference": 3000.0,
+        "percentage_change": null,
+        "percentage_change_display": "N/A (baseline was ₹0)",
+        "contribution_weight_pct": 14.29,
+        "supporting_transactions": [
+          {
+            "id": "T004",
+            "description": "Electricity Bill",
+            "amount": 3000.0,
+            "date": "2026-11-09"
+          }
+        ],
+        "mathematical_contribution_note": "Category 'Utilities' changed by ₹3,000.00 (+3,000.00), accounting for 14.3% mathematical contribution to the total change."
+      },
+      {
+        "category": "Transport",
+        "period_a_spent": 0.0,
+        "period_b_spent": 2000.0,
+        "absolute_difference": 2000.0,
+        "percentage_change": null,
+        "percentage_change_display": "N/A (baseline was ₹0)",
+        "contribution_weight_pct": 9.52,
+        "supporting_transactions": [
+          {
+            "id": "T003",
+            "description": "Bus/Auto Travel",
+            "amount": 2000.0,
+            "date": "2026-11-08"
+          }
+        ],
+        "mathematical_contribution_note": "Category 'Transport' changed by ₹2,000.00 (+2,000.00), accounting for 9.5% mathematical contribution to the total change."
+      }
+    ],
+    "top_increases": [
+      {
+        "category": "Housing",
+        "period_a_spent": 0.0,
+        "period_b_spent": 12000.0,
+        "absolute_difference": 12000.0,
+        "percentage_change": null,
+        "percentage_change_display": "N/A (baseline was ₹0)",
+        "contribution_weight_pct": 57.14,
+        "supporting_transactions": [
+          {
+            "id": "T001",
+            "description": "Monthly Rent",
+            "amount": 12000.0,
+            "date": "2026-11-05"
+          }
+        ],
+        "mathematical_contribution_note": "Category 'Housing' changed by ₹12,000.00 (+12,000.00), accounting for 57.1% mathematical contribution to the total change."
+      },
+      {
+        "category": "Food",
+        "period_a_spent": 0.0,
+        "period_b_spent": 4000.0,
+        "absolute_difference": 4000.0,
+        "percentage_change": null,
+        "percentage_change_display": "N/A (baseline was ₹0)",
+        "contribution_weight_pct": 19.05,
+        "supporting_transactions": [
+          {
+            "id": "T002",
+            "description": "Grocery Shopping",
+            "amount": 4000.0,
+            "date": "2026-11-07"
+          }
+        ],
+        "mathematical_contribution_note": "Category 'Food' changed by ₹4,000.00 (+4,000.00), accounting for 19.1% mathematical contribution to the total change."
+      },
+      {
+        "category": "Utilities",
+        "period_a_spent": 0.0,
+        "period_b_spent": 3000.0,
+        "absolute_difference": 3000.0,
+        "percentage_change": null,
+        "percentage_change_display": "N/A (baseline was ₹0)",
+        "contribution_weight_pct": 14.29,
+        "supporting_transactions": [
+          {
+            "id": "T004",
+            "description": "Electricity Bill",
+            "amount": 3000.0,
+            "date": "2026-11-09"
+          }
+        ],
+        "mathematical_contribution_note": "Category 'Utilities' changed by ₹3,000.00 (+3,000.00), accounting for 14.3% mathematical contribution to the total change."
+      },
+      {
+        "category": "Transport",
+        "period_a_spent": 0.0,
+        "period_b_spent": 2000.0,
+        "absolute_difference": 2000.0,
+        "percentage_change": null,
+        "percentage_change_display": "N/A (baseline was ₹0)",
+        "contribution_weight_pct": 9.52,
+        "supporting_transactions": [
+          {
+            "id": "T003",
+            "description": "Bus/Auto Travel",
+            "amount": 2000.0,
+            "date": "2026-11-08"
+          }
+        ],
+        "mathematical_contribution_note": "Category 'Transport' changed by ₹2,000.00 (+2,000.00), accounting for 9.5% mathematical contribution to the total change."
+      }
+    ],
+    "top_decreases": [],
+    "period_a_tx_ids": [],
+    "period_b_tx_ids": [
+      "T001",
+      "T002",
+      "T003",
+      "T004"
+    ],
+    "caveats": [
+      "Baseline period October 2026 had ₹0 spending; percentage change is mathematically unavailable."
+    ],
+    "is_sufficient_data": true,
+    "reporting_period": "October 2026 vs November 2026"
+  },
+  "evidence_string": "{\n  \"_graph_paths\": [],\n  \"_grounded_facts\": [\n    {\n      \"label\": \"Baseline Total (October 2026)\",\n      \"node_ids\": [],\n      \"source\": \"Period A Transactions\",\n      \"value\": \"₹0\"\n    },\n    {\n      \"label\": \"Comparison Total (November 2026)\",\n      \"node_ids\": [\n        \"Transaction:T001\",\n        \"Transaction:T002\",\n        \"Transaction:T003\",\n        \"Transaction:T004\"\n      ],\n      \"source\": \"Period B Transactions\",\n      \"value\": \"₹21,000\"\n    },\n    {\n      \"label\": \"Absolute Change\",\n      \"node_ids\": [],\n      \"source\": \"Deterministic Math\",\n      \"value\": \"+₹21,000\"\n    },\n    {\n      \"label\": \"Percentage Change\",\n      \"node_ids\": [],\n      \"source\": \"Deterministic Math\",\n      \"value\": \"percentage change unavailable because the baseline is zero\"\n    },\n    {\n      \"label\": \"Category Variance: Housing\",\n      \"node_ids\": [\n        \"Transaction:T001\"\n      ],\n      \"source\": \"Variance Attribution\",\n      \"value\": \"+₹12,000 (N/A (baseline was ₹0))\"\n    },\n    {\n      \"label\": \"Category Variance: Food\",\n      \"node_ids\": [\n        \"Transaction:T002\"\n      ],\n      \"source\": \"Variance Attribution\",\n      \"value\": \"+₹4,000 (N/A (baseline was ₹0))\"\n    },\n    {\n      \"label\": \"Category Variance: Utilities\",\n      \"node_ids\": [\n        \"Transaction:T004\"\n      ],\n      \"source\": \"Variance Attribution\",\n      \"value\": \"+₹3,000 (N/A (baseline was ₹0))\"\n    }\n  ],\n  \"_source_identifiers\": [\n    \"Account:A001\",\n    \"Goal:Emergency Fund\",\n    \"Goal:G001\",\n    \"Income:I001\",\n    \"Loan:L001\"\n  ],\n  \"absolute_change\": 21000.0,\n  \"category\": null,\n  \"category_variances\": [\n    {\n      \"absolute_difference\": 12000.0,\n      \"category\": \"Housing\",\n      \"contribution_weight_pct\": 57.14,\n      \"mathematical_contribution_note\": \"Category 'Housing' changed by ₹12,000.00 (+12,000.00), accounting for 57.1% mathematical contribution to the total change.\",\n      \"percentage_change\": null,\n      \"percentage_change_display\": \"N/A (baseline was ₹0)\",\n      \"period_a_spent\": 0.0,\n      \"period_b_spent\": 12000.0,\n      \"supporting_transactions\": [\n        {\n          \"amount\": 12000.0,\n          \"date\": \"2026-11-05\",\n          \"description\": \"Monthly Rent\",\n          \"id\": \"T001\"\n        }\n      ]\n    },\n    {\n      \"absolute_difference\": 4000.0,\n      \"category\": \"Food\",\n      \"contribution_weight_pct\": 19.05,\n      \"mathematical_contribution_note\": \"Category 'Food' changed by ₹4,000.00 (+4,000.00), accounting for 19.1% mathematical contribution to the total change.\",\n      \"percentage_change\": null,\n      \"percentage_change_display\": \"N/A (baseline was ₹0)\",\n      \"period_a_spent\": 0.0,\n      \"period_b_spent\": 4000.0,\n      \"supporting_transactions\": [\n        {\n          \"amount\": 4000.0,\n          \"date\": \"2026-11-07\",\n          \"description\": \"Grocery Shopping\",\n          \"id\": \"T002\"\n        }\n      ]\n    },\n    {\n      \"absolute_difference\": 3000.0,\n      \"category\": \"Utilities\",\n      \"contribution_weight_pct\": 14.29,\n      \"mathematical_contribution_note\": \"Category 'Utilities' changed by ₹3,000.00 (+3,000.00), accounting for 14.3% mathematical contribution to the total change.\",\n      \"percentage_change\": null,\n      \"percentage_change_display\": \"N/A (baseline was ₹0)\",\n      \"period_a_spent\": 0.0,\n      \"period_b_spent\": 3000.0,\n      \"supporting_transactions\": [\n        {\n          \"amount\": 3000.0,\n          \"date\": \"2026-11-09\",\n          \"description\": \"Electricity Bill\",\n          \"id\": \"T004\"\n        }\n      ]\n    },\n    {\n      \"absolute_difference\": 2000.0,\n      \"category\": \"Transport\",\n      \"contribution_weight_pct\": 9.52,\n      \"mathematical_contribution_note\": \"Category 'Transport' changed by ₹2,000.00 (+2,000.00), accounting for 9.5% mathematical contribution to the total change.\",\n      \"percentage_change\": null,\n      \"percentage_change_display\": \"N/A (baseline was ₹0)\",\n      \"period_a_spent\": 0.0,\n      \"period_b_spent\": 2000.0,\n      \"supporting_transactions\": [\n        {\n          \"amount\": 2000.0,\n          \"date\": \"2026-11-08\",\n          \"description\": \"Bus/Auto Travel\",\n          \"id\": \"T003\"\n        }\n      ]\n    }\n  ],\n  \"caveats\": [\n    \"Baseline period October 2026 had ₹0 spending; percentage change is mathematically unavailable.\"\n  ],\n  \"comparison_outcome\": \"Higher spending in November 2026\",\n  \"comparison_verdict\": \"Your spending overall increased by ₹21,000.00 (percentage change unavailable because the baseline is zero) from October 2026 (₹0.00) to November 2026 (₹21,000.00).\",\n  \"higher_period\": \"November 2026\",\n  \"is_sufficient_data\": true,\n  \"merchant\": null,\n  \"net_difference\": 21000.0,\n  \"percentage_change\": null,\n  \"percentage_change_display\": \"percentage change unavailable because the baseline is zero\",\n  \"percentage_change_status\": \"BASELINE_ZERO\",\n  \"period_a\": {\n    \"end_date\": \"2026-10-31\",\n    \"name\": \"October 2026\",\n    \"start_date\": \"2026-10-01\",\n    \"total_spent\": 0.0,\n    \"transaction_count\": 0\n  },\n  \"period_a_tx_ids\": [],\n  \"period_b\": {\n    \"end_date\": \"2026-11-30\",\n    \"name\": \"November 2026\",\n    \"start_date\": \"2026-11-01\",\n    \"total_spent\": 21000.0,\n    \"transaction_count\": 4\n  },\n  \"period_b_tx_ids\": [\n    \"T001\",\n    \"T002\",\n    \"T003\",\n    \"T004\"\n  ],\n  \"reporting_period\": \"October 2026 vs November 2026\",\n  \"top_decreases\": [],\n  \"top_increases\": [\n    {\n      \"absolute_difference\": 12000.0,\n      \"category\": \"Housing\",\n      \"contribution_weight_pct\": 57.14,\n      \"mathematical_contribution_note\": \"Category 'Housing' changed by ₹12,000.00 (+12,000.00), accounting for 57.1% mathematical contribution to the total change.\",\n      \"percentage_change\": null,\n      \"percentage_change_display\": \"N/A (baseline was ₹0)\",\n      \"period_a_spent\": 0.0,\n      \"period_b_spent\": 12000.0,\n      \"supporting_transactions\": [\n        {\n          \"amount\": 12000.0,\n          \"date\": \"2026-11-05\",\n          \"description\": \"Monthly Rent\",\n          \"id\": \"T001\"\n        }\n      ]\n    },\n    {\n      \"absolute_difference\": 4000.0,\n      \"category\": \"Food\",\n      \"contribution_weight_pct\": 19.05,\n      \"mathematical_contribution_note\": \"Category 'Food' changed by ₹4,000.00 (+4,000.00), accounting for 19.1% mathematical contribution to the total change.\",\n      \"percentage_change\": null,\n      \"percentage_change_display\": \"N/A (baseline was ₹0)\",\n      \"period_a_spent\": 0.0,\n      \"period_b_spent\": 4000.0,\n      \"supporting_transactions\": [\n        {\n          \"amount\": 4000.0,\n          \"date\": \"2026-11-07\",\n          \"description\": \"Grocery Shopping\",\n          \"id\": \"T002\"\n        }\n      ]\n    },\n    {\n      \"absolute_difference\": 3000.0,\n      \"category\": \"Utilities\",\n      \"contribution_weight_pct\": 14.29,\n      \"mathematical_contribution_note\": \"Category 'Utilities' changed by ₹3,000.00 (+3,000.00), accounting for 14.3% mathematical contribution to the total change.\",\n      \"percentage_change\": null,\n      \"percentage_change_display\": \"N/A (baseline was ₹0)\",\n      \"period_a_spent\": 0.0,\n      \"period_b_spent\": 3000.0,\n      \"supporting_transactions\": [\n        {\n          \"amount\": 3000.0,\n          \"date\": \"2026-11-09\",\n          \"description\": \"Electricity Bill\",\n          \"id\": \"T004\"\n        }\n      ]\n    },\n    {\n      \"absolute_difference\": 2000.0,\n      \"category\": \"Transport\",\n      \"contribution_weight_pct\": 9.52,\n      \"mathematical_contribution_note\": \"Category 'Transport' changed by ₹2,000.00 (+2,000.00), accounting for 9.5% mathematical contribution to the total change.\",\n      \"percentage_change\": null,\n      \"percentage_change_display\": \"N/A (baseline was ₹0)\",\n      \"period_a_spent\": 0.0,\n      \"period_b_spent\": 2000.0,\n      \"supporting_transactions\": [\n        {\n          \"amount\": 2000.0,\n          \"date\": \"2026-11-08\",\n          \"description\": \"Bus/Auto Travel\",\n          \"id\": \"T003\"\n        }\n      ]\n    }\n  ]\n}",
+  "llm_raw_text": "**🎯 The Quick Take**  \nYour November spending jumped to **₹21,000** from a zero baseline in October, so overall outflow is higher this month.\n\n**📊 The Numbers**  \n• Total spent in October 2026: **₹0**  \n• Total spent in November 2026: **₹21,000**  \n• Absolute change: **+₹21,000** (percentage change unavailable – baseline was zero)  \n\n**Category‑wise contribution**  \n• Housing: **+₹12,000** (≈ 57 % of the rise) – rent paid on 5 Nov  \n• Food: **+₹4,000** (≈ 19 % of the rise) – grocery run on 7 Nov  \n• Utilities: **+₹3,000** (≈ 14 % of the rise) – electricity bill on 9 Nov  \n• Transport: **+₹2,000** (≈ 10 % of the rise) – bus/auto travel on 8 Nov  \n\n**💡 Smart Insights**  \n- This is your first month with recorded expenses, so the “increase” simply reflects the start of tracking, not overspending relative to a prior habit.  \n- Housing dominates your outflow (over half of November’s spend). That’s typical for a new rental cycle, but it also means the other categories have room to be fine‑tuned.  \n- Even modest amounts in Food, Utilities, and Transport add up quickly; together they account for about 33 % of the total. Small tweaks there can free up cash for savings or goals.\n\n**🚀 What You Should Do Next**  \n1. **Set a baseline budget** for each category now that you have real numbers—aim for a target that keeps Housing at ₹12,000 and caps Food, Utilities, and Transport at levels you’re comfortable with.  \n2. **Track weekly** to spot any surprise spikes (e.g., an unexpected utility bill) before the month ends. A quick spreadsheet or budgeting app will do the trick.  \n3. **Allocate a buffer** from the remaining ₹2,000 (or more) toward your emergency fund or a short‑term goal, turning “spending” into “saving” right from the start.  \n\nFeel free to let me know if you’d like a simple budget template or tips on automating these checks!",
+  "api_response": {
+    "query": "Compare my spending this month and last month",
+    "intent": "PERIOD_COMPARISON",
+    "entities": {
+      "intent": "PERIOD_COMPARISON",
+      "operation": "PERIOD_COMPARISON",
+      "category": null,
+      "merchant": null,
+      "amount": null,
+      "amount_min": null,
+      "amount_max": null,
+      "limit": null,
+      "sort_by": "date",
+      "sort_direction": "DESC",
+      "reporting_date": "2026-10-01",
+      "comparison_reporting_date": "2026-11-01",
+      "date_range": "start_date=datetime.date(2026, 10, 1) end_date=datetime.date(2026, 10, 31) reporting_period='2026-10'",
+      "comparison_date_range": "start_date=datetime.date(2026, 11, 1) end_date=datetime.date(2026, 11, 30) reporting_period='2026-11'",
+      "trend_months": null,
+      "raw_query": "Compare my spending this month and last month",
+      "is_followup": false,
+      "needs_clarification": false,
+      "clarification_type": null,
+      "clarification_message": null,
+      "exclude_transfers": true,
+      "query_plan": "operation=<OperationType.PERIOD_COMPARISON: 'PERIOD_COMPARISON'> raw_query='Compare my spending this month and last month' date_range=DateRange(start_date=datetime.date(2026, 10, 1), end_date=datetime.date(2026, 10, 31), reporting_period='2026-10') comparison_date_range=DateRange(start_date=datetime.date(2026, 11, 1), end_date=datetime.date(2026, 11, 30), reporting_period='2026-11') trend_months=None category=None merchant=None amount=None amount_min=None amount_max=None sort_by='date' sort_direction='DESC' limit=None exclude_transfers=True is_followup=False needs_clarification=False clarification_type=None clarification_message=None",
+      "turn_type": "NEW_TOPIC",
+      "is_date_ambiguous": false,
+      "first_mentioned": "this month",
+      "second_mentioned": "last month",
+      "is_variance_attribution": false
+    },
+    "math_result": {
+      "period_a": {
+        "name": "October 2026",
+        "start_date": "2026-10-01",
+        "end_date": "2026-10-31",
+        "total_spent": 0.0,
+        "transaction_count": 0
+      },
+      "period_b": {
+        "name": "November 2026",
+        "start_date": "2026-11-01",
+        "end_date": "2026-11-30",
+        "total_spent": 21000.0,
+        "transaction_count": 4
+      },
+      "category": null,
+      "merchant": null,
+      "absolute_change": 21000.0,
+      "net_difference": 21000.0,
+      "percentage_change": null,
+      "percentage_change_status": "BASELINE_ZERO",
+      "percentage_change_display": "percentage change unavailable because the baseline is zero",
+      "higher_period": "November 2026",
+      "comparison_outcome": "Higher spending in November 2026",
+      "comparison_verdict": "Your spending overall increased by ₹21,000.00 (percentage change unavailable because the baseline is zero) from October 2026 (₹0.00) to November 2026 (₹21,000.00).",
+      "category_variances": [
+        {
+          "category": "Housing",
+          "period_a_spent": 0.0,
+          "period_b_spent": 12000.0,
+          "absolute_difference": 12000.0,
+          "percentage_change": null,
+          "percentage_change_display": "N/A (baseline was ₹0)",
+          "contribution_weight_pct": 57.14,
+          "supporting_transactions": [
+            {
+              "id": "T001",
+              "description": "Monthly Rent",
+              "amount": 12000.0,
+              "date": "2026-11-05"
+            }
+          ],
+          "mathematical_contribution_note": "Category 'Housing' changed by ₹12,000.00 (+12,000.00), accounting for 57.1% mathematical contribution to the total change."
+        },
+        {
+          "category": "Food",
+          "period_a_spent": 0.0,
+          "period_b_spent": 4000.0,
+          "absolute_difference": 4000.0,
+          "percentage_change": null,
+          "percentage_change_display": "N/A (baseline was ₹0)",
+          "contribution_weight_pct": 19.05,
+          "supporting_transactions": [
+            {
+              "id": "T002",
+              "description": "Grocery Shopping",
+              "amount": 4000.0,
+              "date": "2026-11-07"
+            }
+          ],
+          "mathematical_contribution_note": "Category 'Food' changed by ₹4,000.00 (+4,000.00), accounting for 19.1% mathematical contribution to the total change."
+        },
+        {
+          "category": "Utilities",
+          "period_a_spent": 0.0,
+          "period_b_spent": 3000.0,
+          "absolute_difference": 3000.0,
+          "percentage_change": null,
+          "percentage_change_display": "N/A (baseline was ₹0)",
+          "contribution_weight_pct": 14.29,
+          "supporting_transactions": [
+            {
+              "id": "T004",
+              "description": "Electricity Bill",
+              "amount": 3000.0,
+              "date": "2026-11-09"
+            }
+          ],
+          "mathematical_contribution_note": "Category 'Utilities' changed by ₹3,000.00 (+3,000.00), accounting for 14.3% mathematical contribution to the total change."
+        },
+        {
+          "category": "Transport",
+          "period_a_spent": 0.0,
+          "period_b_spent": 2000.0,
+          "absolute_difference": 2000.0,
+          "percentage_change": null,
+          "percentage_change_display": "N/A (baseline was ₹0)",
+          "contribution_weight_pct": 9.52,
+          "supporting_transactions": [
+            {
+              "id": "T003",
+              "description": "Bus/Auto Travel",
+              "amount": 2000.0,
+              "date": "2026-11-08"
+            }
+          ],
+          "mathematical_contribution_note": "Category 'Transport' changed by ₹2,000.00 (+2,000.00), accounting for 9.5% mathematical contribution to the total change."
+        }
+      ],
+      "top_increases": [
+        {
+          "category": "Housing",
+          "period_a_spent": 0.0,
+          "period_b_spent": 12000.0,
+          "absolute_difference": 12000.0,
+          "percentage_change": null,
+          "percentage_change_display": "N/A (baseline was ₹0)",
+          "contribution_weight_pct": 57.14,
+          "supporting_transactions": [
+            {
+              "id": "T001",
+              "description": "Monthly Rent",
+              "amount": 12000.0,
+              "date": "2026-11-05"
+            }
+          ],
+          "mathematical_contribution_note": "Category 'Housing' changed by ₹12,000.00 (+12,000.00), accounting for 57.1% mathematical contribution to the total change."
+        },
+        {
+          "category": "Food",
+          "period_a_spent": 0.0,
+          "period_b_spent": 4000.0,
+          "absolute_difference": 4000.0,
+          "percentage_change": null,
+          "percentage_change_display": "N/A (baseline was ₹0)",
+          "contribution_weight_pct": 19.05,
+          "supporting_transactions": [
+            {
+              "id": "T002",
+              "description": "Grocery Shopping",
+              "amount": 4000.0,
+              "date": "2026-11-07"
+            }
+          ],
+          "mathematical_contribution_note": "Category 'Food' changed by ₹4,000.00 (+4,000.00), accounting for 19.1% mathematical contribution to the total change."
+        },
+        {
+          "category": "Utilities",
+          "period_a_spent": 0.0,
+          "period_b_spent": 3000.0,
+          "absolute_difference": 3000.0,
+          "percentage_change": null,
+          "percentage_change_display": "N/A (baseline was ₹0)",
+          "contribution_weight_pct": 14.29,
+          "supporting_transactions": [
+            {
+              "id": "T004",
+              "description": "Electricity Bill",
+              "amount": 3000.0,
+              "date": "2026-11-09"
+            }
+          ],
+          "mathematical_contribution_note": "Category 'Utilities' changed by ₹3,000.00 (+3,000.00), accounting for 14.3% mathematical contribution to the total change."
+        },
+        {
+          "category": "Transport",
+          "period_a_spent": 0.0,
+          "period_b_spent": 2000.0,
+          "absolute_difference": 2000.0,
+          "percentage_change": null,
+          "percentage_change_display": "N/A (baseline was ₹0)",
+          "contribution_weight_pct": 9.52,
+          "supporting_transactions": [
+            {
+              "id": "T003",
+              "description": "Bus/Auto Travel",
+              "amount": 2000.0,
+              "date": "2026-11-08"
+            }
+          ],
+          "mathematical_contribution_note": "Category 'Transport' changed by ₹2,000.00 (+2,000.00), accounting for 9.5% mathematical contribution to the total change."
+        }
+      ],
+      "top_decreases": [],
+      "period_a_tx_ids": [],
+      "period_b_tx_ids": [
+        "T001",
+        "T002",
+        "T003",
+        "T004"
+      ],
+      "caveats": [
+        "Baseline period October 2026 had ₹0 spending; percentage change is mathematically unavailable."
+      ],
+      "is_sufficient_data": true,
+      "reporting_period": "October 2026 vs November 2026"
+    },
+    "evidence": [
+      {
+        "label": "Baseline Total (October 2026)",
+        "value": "₹0",
+        "source": "Period A Transactions",
+        "formula": "Sum of 0 eligible expenses (2026-10-01 to 2026-10-31)",
+        "source_node_ids": []
+      },
+      {
+        "label": "Comparison Total (November 2026)",
+        "value": "₹21,000",
+        "source": "Period B Transactions",
+        "formula": "Sum of 4 eligible expenses (2026-11-01 to 2026-11-30)",
+        "source_node_ids": [
+          "Transaction:T001",
+          "Transaction:T002",
+          "Transaction:T003",
+          "Transaction:T004"
+        ]
+      },
+      {
+        "label": "Absolute Change",
+        "value": "+₹21,000",
+        "source": "Deterministic Math",
+        "formula": "Period B Total - Period A Total",
+        "source_node_ids": []
+      },
+      {
+        "label": "Percentage Change",
+        "value": "percentage change unavailable because the baseline is zero",
+        "source": "Deterministic Math",
+        "formula": "Baseline Zero",
+        "source_node_ids": []
+      },
+      {
+        "label": "Category Variance: Housing",
+        "value": "+₹12,000 (N/A (baseline was ₹0))",
+        "source": "Variance Attribution",
+        "formula": "Category 'Housing' changed by ₹12,000.00 (+12,000.00), accounting for 57.1% mathematical contribution to the total change.",
+        "source_node_ids": [
+          "Transaction:T001"
+        ]
+      },
+      {
+        "label": "Category Variance: Food",
+        "value": "+₹4,000 (N/A (baseline was ₹0))",
+        "source": "Variance Attribution",
+        "formula": "Category 'Food' changed by ₹4,000.00 (+4,000.00), accounting for 19.1% mathematical contribution to the total change.",
+        "source_node_ids": [
+          "Transaction:T002"
+        ]
+      },
+      {
+        "label": "Category Variance: Utilities",
+        "value": "+₹3,000 (N/A (baseline was ₹0))",
+        "source": "Variance Attribution",
+        "formula": "Category 'Utilities' changed by ₹3,000.00 (+3,000.00), accounting for 14.3% mathematical contribution to the total change.",
+        "source_node_ids": [
+          "Transaction:T004"
+        ]
+      }
+    ],
+    "evidence_metadata": {
+      "reporting_period": "October 2026 vs November 2026",
+      "data_freshness": "Verified through latest transaction (2026-11-10)",
+      "methodology_formula": "Absolute Change = Period B Total - Period A Total; % Change = ((B - A) / A) × 100",
+      "calculation_method": "Deterministic multi-period expense comparison and category variance attribution.",
+      "caveats": [
+        "Baseline period October 2026 had ₹0 spending; percentage change is mathematically unavailable."
+      ],
+      "is_sufficient_data": true
+    },
+    "source_identifiers": [
+      "Account:A001",
+      "Goal:Emergency Fund",
+      "Goal:G001",
+      "Income:I001",
+      "Loan:L001"
+    ],
+    "graph_paths": [],
+    "explanation": "**🎯 The Quick Take**  \nYour November spending jumped to **₹21,000** from a zero baseline in October, so overall outflow is higher this month.\n\n**📊 The Numbers**  \n• Total spent in October 2026: **₹0**  \n• Total spent in November 2026: **₹21,000**  \n• Absolute change: **+₹21,000** (percentage change unavailable – baseline was zero)  \n\n**Category‑wise contribution**  \n• Housing: **+₹12,000** (≈ 57 % of the rise) – rent paid on 5 Nov  \n• Food: **+₹4,000** (≈ 19 % of the rise) – grocery run on 7 Nov  \n• Utilities: **+₹3,000** (≈ 14 % of the rise) – electricity bill on 9 Nov  \n• Transport: **+₹2,000** (≈ 10 % of the rise) – bus/auto travel on 8 Nov  \n\n**💡 Smart Insights**  \n- This is your first month with recorded expenses, so the “increase” simply reflects the start of tracking, not overspending relative to a prior habit.  \n- Housing dominates your outflow (over half of November’s spend). That’s typical for a new rental cycle, but it also means the other categories have room to be fine‑tuned.  \n- Even modest amounts in Food, Utilities, and Transport add up quickly; together they account for about 33 % of the total. Small tweaks there can free up cash for savings or goals.\n\n**🚀 What You Should Do Next**  \n1. **Set a baseline budget** for each category now that you have real numbers—aim for a target that keeps Housing at ₹12,000 and caps Food, Utilities, and Transport at levels you’re comfortable with.  \n2. **Track weekly** to spot any surprise spikes (e.g., an unexpected utility bill) before the month ends. A quick spreadsheet or budgeting app will do the trick.  \n3. **Allocate a buffer** from the remaining ₹2,000 (or more) toward your emergency fund or a short‑term goal, turning “spending” into “saving” right from the start.  \n\nFeel free to let me know if you’d like a simple budget template or tips on automating these checks!",
+    "prompt_version": "v1.1",
+    "is_followup": false,
+    "turn_type": "NEW_TOPIC",
+    "needs_clarification": false,
+    "clarification_type": null,
+    "recalculated_fresh": true,
+    "latency_breakdown": {
+      "nlu_ms": 3.0,
+      "graph_ms": 14.2,
+      "engine_ms": 0.5,
+      "llm_ms": 24161.1,
+      "total_ms": 24178.8
+    },
+    "tokens": {
+      "prompt": 2722,
+      "completion": 628,
+      "total": 3350
+    }
+  },
+  "metadata_note": "Month-over-month comparison"
+}

@@ -1,0 +1,109 @@
+{
+  "question": "What did I spend on food last month?",
+  "intent": "CATEGORY_EXPENSE",
+  "model": "openai/gpt-oss-120b",
+  "timestamp": "2026-11-01T04:08:19.241551+00:00",
+  "math_result": {
+    "requested_category": "Food",
+    "category_spent": 0.0,
+    "percentage_of_total": 0.0,
+    "total_expenses": 0.0,
+    "all_categories": [],
+    "reporting_period": "2026-10"
+  },
+  "evidence_string": "{\n  \"_graph_paths\": [],\n  \"_grounded_facts\": [\n    {\n      \"label\": \"Spend on Food\",\n      \"node_ids\": [],\n      \"source\": \"Category(Food)\",\n      \"value\": \"₹0\"\n    },\n    {\n      \"label\": \"Share of Expenses\",\n      \"node_ids\": [],\n      \"source\": \"Deterministic Math\",\n      \"value\": \"0.0%\"\n    },\n    {\n      \"label\": \"Total Expenses\",\n      \"node_ids\": [],\n      \"source\": \"Ledger Sum\",\n      \"value\": \"₹0\"\n    }\n  ],\n  \"_source_identifiers\": [],\n  \"all_categories\": [],\n  \"category_spent\": 0.0,\n  \"percentage_of_total\": 0.0,\n  \"reporting_period\": \"2026-10\",\n  \"requested_category\": \"Food\",\n  \"total_expenses\": 0.0\n}",
+  "llm_raw_text": "🎯 **The Quick Take**  \nYou didn’t record any spending on food for October 2026 – the ledger shows ₹0, which also means food made up 0 % of your total expenses.\n\n📊 **The Numbers**  \n• Food spend: **₹0**  \n• Share of total expenses: **0.0 %**  \n• Total expenses recorded: **₹0**\n\n💡 **Smart Insights**  \n- A zero balance can mean you haven’t logged any food purchases yet, or that the data source didn’t capture them.  \n- Without food expenses, it’s hard to gauge how much of your budget is going toward daily nourishment, which is a key pillar of a healthy financial plan.  \n- Double‑checking your transaction imports or manual entries will give you a clearer picture of where your money really goes.\n\n🚀 **What You Should Do Next**  \n1. **Review your transaction feed** for the month of October 2026 and ensure all food‑related purchases (groceries, dining, delivery) are correctly categorized.  \n2. **Add any missing entries** or re‑assign mis‑categorized ones so the food spend reflects reality.  \n3. **Set a realistic food budget** (e.g., 10‑15 % of your total expenses) and monitor it each month to keep your overall spending on track.  \n\nFeel free to let me know once you’ve updated the data—I’m here to help you turn those numbers into actionable insights!",
+  "api_response": {
+    "query": "What did I spend on food last month?",
+    "intent": "CATEGORY_EXPENSE",
+    "entities": {
+      "intent": "CATEGORY_EXPENSE",
+      "operation": "CATEGORY_EXPENSE",
+      "category": "Food",
+      "merchant": null,
+      "amount": null,
+      "amount_min": null,
+      "amount_max": null,
+      "limit": null,
+      "sort_by": "date",
+      "sort_direction": "DESC",
+      "reporting_date": "2026-10-01",
+      "comparison_reporting_date": null,
+      "date_range": "start_date=datetime.date(2026, 10, 1) end_date=datetime.date(2026, 10, 31) reporting_period='2026-10'",
+      "comparison_date_range": null,
+      "trend_months": null,
+      "raw_query": "What did I spend on food last month?",
+      "is_followup": false,
+      "needs_clarification": false,
+      "clarification_type": null,
+      "clarification_message": null,
+      "exclude_transfers": true,
+      "query_plan": "operation=<OperationType.CATEGORY_EXPENSE: 'CATEGORY_EXPENSE'> raw_query='What did I spend on food last month?' date_range=DateRange(start_date=datetime.date(2026, 10, 1), end_date=datetime.date(2026, 10, 31), reporting_period='2026-10') comparison_date_range=None trend_months=None category='Food' merchant=None amount=None amount_min=None amount_max=None sort_by='date' sort_direction='DESC' limit=None exclude_transfers=True is_followup=False needs_clarification=False clarification_type=None clarification_message=None",
+      "turn_type": "NEW_TOPIC",
+      "is_date_ambiguous": false
+    },
+    "math_result": {
+      "requested_category": "Food",
+      "category_spent": 0.0,
+      "percentage_of_total": 0.0,
+      "total_expenses": 0.0,
+      "all_categories": [],
+      "reporting_period": "2026-10"
+    },
+    "evidence": [
+      {
+        "label": "Spend on Food",
+        "value": "₹0",
+        "source": "Category(Food)",
+        "formula": "Sum of transactions for category Food",
+        "source_node_ids": []
+      },
+      {
+        "label": "Share of Expenses",
+        "value": "0.0%",
+        "source": "Deterministic Math",
+        "formula": "(Category Spend / Total Expenses) × 100",
+        "source_node_ids": []
+      },
+      {
+        "label": "Total Expenses",
+        "value": "₹0",
+        "source": "Ledger Sum",
+        "formula": "Sum of all monthly expenses",
+        "source_node_ids": []
+      }
+    ],
+    "evidence_metadata": {
+      "reporting_period": "2026-10",
+      "data_freshness": "As of 2026-11-01 (No historical records)",
+      "methodology_formula": "Category Proportion = (Category Spend / Total Expenses) × 100",
+      "calculation_method": "Specific category expenditure filter and proportional share computation.",
+      "caveats": [
+        "No transactions recorded for category 'Food' in this period."
+      ],
+      "is_sufficient_data": true
+    },
+    "source_identifiers": [],
+    "graph_paths": [],
+    "explanation": "🎯 **The Quick Take**  \nYou didn’t record any spending on food for October 2026 – the ledger shows ₹0, which also means food made up 0 % of your total expenses.\n\n📊 **The Numbers**  \n• Food spend: **₹0**  \n• Share of total expenses: **0.0 %**  \n• Total expenses recorded: **₹0**\n\n💡 **Smart Insights**  \n- A zero balance can mean you haven’t logged any food purchases yet, or that the data source didn’t capture them.  \n- Without food expenses, it’s hard to gauge how much of your budget is going toward daily nourishment, which is a key pillar of a healthy financial plan.  \n- Double‑checking your transaction imports or manual entries will give you a clearer picture of where your money really goes.\n\n🚀 **What You Should Do Next**  \n1. **Review your transaction feed** for the month of October 2026 and ensure all food‑related purchases (groceries, dining, delivery) are correctly categorized.  \n2. **Add any missing entries** or re‑assign mis‑categorized ones so the food spend reflects reality.  \n3. **Set a realistic food budget** (e.g., 10‑15 % of your total expenses) and monitor it each month to keep your overall spending on track.  \n\nFeel free to let me know once you’ve updated the data—I’m here to help you turn those numbers into actionable insights!",
+    "prompt_version": "v1.1",
+    "is_followup": false,
+    "turn_type": "NEW_TOPIC",
+    "needs_clarification": false,
+    "clarification_type": null,
+    "recalculated_fresh": true,
+    "latency_breakdown": {
+      "nlu_ms": 0.5,
+      "graph_ms": 483.0,
+      "engine_ms": 0.1,
+      "llm_ms": 1359.0,
+      "total_ms": 1842.6
+    },
+    "tokens": {
+      "prompt": 700,
+      "completion": 430,
+      "total": 1130
+    }
+  },
+  "metadata_note": "Category expense query"
+}

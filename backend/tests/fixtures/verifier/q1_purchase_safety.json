@@ -1,0 +1,163 @@
+{
+  "question": "Can I afford a 15000 purchase?",
+  "intent": "PURCHASE_SAFETY",
+  "model": "openai/gpt-oss-120b",
+  "timestamp": "2026-11-01T04:08:15.162737+00:00",
+  "math_result": {
+    "decision": "NOT_SAFE",
+    "risk_level": "HIGH",
+    "evidence": {
+      "current_balance": 45000.0,
+      "pending_emi": 10000.0,
+      "monthly_expenses": 21000.0,
+      "purchase_amount": 15000.0,
+      "emergency_requirement": 63000.0,
+      "balance_after_purchase": 20000.0
+    },
+    "reason": "The purchase is not financially safe. After the pending EMI and purchase, only ₹20,000 would remain, which is below the recommended emergency reserve of ₹63,000.",
+    "reporting_period": "2026-11",
+    "is_sufficient_data": true
+  },
+  "evidence_string": "{\n  \"_graph_paths\": [\n    \"(User:U001)-[:HAS_ACCOUNT]->(Account:A001)\",\n    \"(User:U001)-[:HAS_LOAN]->(Loan:L001)-[:HAS_EMI]->(EMI:E001)\"\n  ],\n  \"_grounded_facts\": [\n    {\n      \"label\": \"Current Account Balance\",\n      \"node_ids\": [\n        \"Account:A001\",\n        \"Account:Demo Bank\"\n      ],\n      \"source\": \"Account.balance\",\n      \"value\": \"₹45,000\"\n    },\n    {\n      \"label\": \"Pending EMI Obligations\",\n      \"node_ids\": [\n        \"EMI:E001\"\n      ],\n      \"source\": \"EMI.amount\",\n      \"value\": \"₹10,000\"\n    },\n    {\n      \"label\": \"Purchase Cost\",\n      \"node_ids\": [],\n      \"source\": \"User Query\",\n      \"value\": \"₹15,000\"\n    },\n    {\n      \"label\": \"Post-Purchase Remaining Balance\",\n      \"node_ids\": [\n        \"Account:A001\",\n        \"Account:Demo Bank\",\n        \"EMI:E001\"\n      ],\n      \"source\": \"Deterministic Math\",\n      \"value\": \"₹20,000\"\n    },\n    {\n      \"label\": \"Recommended 3-Month Emergency Buffer\",\n      \"node_ids\": [\n        \"Transaction:T001\",\n        \"Transaction:T002\",\n        \"Transaction:T003\",\n        \"Transaction:T004\"\n      ],\n      \"source\": \"Emergency Fund Formula\",\n      \"value\": \"₹63,000\"\n    },\n    {\n      \"label\": \"Decision & Safety Rating\",\n      \"node_ids\": [],\n      \"source\": \"Financial Engine\",\n      \"value\": \"NOT_SAFE (HIGH Risk)\"\n    }\n  ],\n  \"_source_identifiers\": [\n    \"Account:A001\",\n    \"EMI:E001\",\n    \"Loan:L001\"\n  ],\n  \"decision\": \"NOT_SAFE\",\n  \"evidence\": {\n    \"balance_after_purchase\": 20000.0,\n    \"current_balance\": 45000.0,\n    \"emergency_requirement\": 63000.0,\n    \"monthly_expenses\": 21000.0,\n    \"pending_emi\": 10000.0,\n    \"purchase_amount\": 15000.0\n  },\n  \"is_sufficient_data\": true,\n  \"reason\": \"The purchase is not financially safe. After the pending EMI and purchase, only ₹20,000 would remain, which is below the recommended emergency reserve of ₹63,000.\",\n  \"reporting_period\": \"2026-11\",\n  \"risk_level\": \"HIGH\"\n}",
+  "llm_raw_text": "**🎯 The Quick Take**  \nA ₹15,000 purchase would leave you with only ₹20,000 in the account – well short of the ₹63,000 safety cushion we recommend. In short, it’s not a financially safe move right now.\n\n---\n\n**📊 The Numbers**  \n• **Current account balance:** ₹45,000  \n• **Pending EMI this month:** ₹10,000  \n• **Cost of the item you want:** ₹15,000  \n• **Balance after the purchase:** ₹20,000  \n• **Suggested 3‑month emergency buffer:** ₹63,000  \n• **Engine’s safety rating:** **NOT_SAFE (HIGH Risk)**  \n\n---\n\n**💡 Smart Insights**  \n- After covering the EMI and the new purchase, you’d have less than one‑third of the emergency fund you’d ideally keep on hand.  \n- A thin buffer makes unexpected expenses (medical, car repair, etc.) feel much more stressful and could force you into high‑cost borrowing.  \n- Keeping a robust reserve is the single most effective way to protect your financial peace of mind.\n\n---\n\n**🚀 What You Should Do Next**  \n1. **Pause the purchase** until you’ve built a larger cash cushion – aim for at least the ₹63,000 emergency fund.  \n2. **Prioritize saving**: set aside a modest amount each month (e.g., ₹5,000) to grow your buffer faster while still meeting the EMI.  \n3. **Re‑evaluate alternatives**: if the item is essential, explore lower‑cost options or a payment plan that doesn’t dip your cash below the safety threshold.  \n\nYou’ve got a solid foundation with ₹45,000 on hand; a little disciplined saving will get you to a comfortable, low‑risk position in no time. 🌟",
+  "api_response": {
+    "query": "Can I afford a 15000 purchase?",
+    "intent": "PURCHASE_SAFETY",
+    "entities": {
+      "intent": "PURCHASE_SAFETY",
+      "operation": "PURCHASE_SAFETY",
+      "category": "Miscellaneous",
+      "merchant": null,
+      "amount": 15000.0,
+      "amount_min": null,
+      "amount_max": null,
+      "limit": null,
+      "sort_by": "date",
+      "sort_direction": "DESC",
+      "reporting_date": null,
+      "comparison_reporting_date": null,
+      "date_range": "start_date=None end_date=None reporting_period=None",
+      "comparison_date_range": null,
+      "trend_months": null,
+      "raw_query": "Can I afford a 15000 purchase?",
+      "is_followup": false,
+      "needs_clarification": false,
+      "clarification_type": null,
+      "clarification_message": null,
+      "exclude_transfers": true,
+      "query_plan": "operation=<OperationType.PURCHASE_SAFETY: 'PURCHASE_SAFETY'> raw_query='Can I afford a 15000 purchase?' date_range=DateRange(start_date=None, end_date=None, reporting_period=None) comparison_date_range=None trend_months=None category='Miscellaneous' merchant=None amount=15000.0 amount_min=None amount_max=None sort_by='date' sort_direction='DESC' limit=None exclude_transfers=True is_followup=False needs_clarification=False clarification_type=None clarification_message=None",
+      "turn_type": "NEW_TOPIC",
+      "is_date_ambiguous": false
+    },
+    "math_result": {
+      "decision": "NOT_SAFE",
+      "risk_level": "HIGH",
+      "evidence": {
+        "current_balance": 45000.0,
+        "pending_emi": 10000.0,
+        "monthly_expenses": 21000.0,
+        "purchase_amount": 15000.0,
+        "emergency_requirement": 63000.0,
+        "balance_after_purchase": 20000.0
+      },
+      "reason": "The purchase is not financially safe. After the pending EMI and purchase, only ₹20,000 would remain, which is below the recommended emergency reserve of ₹63,000.",
+      "reporting_period": "2026-11",
+      "is_sufficient_data": true
+    },
+    "evidence": [
+      {
+        "label": "Current Account Balance",
+        "value": "₹45,000",
+        "source": "Account.balance",
+        "formula": "Sum of verified liquid account balances",
+        "source_node_ids": [
+          "Account:A001",
+          "Account:Demo Bank"
+        ]
+      },
+      {
+        "label": "Pending EMI Obligations",
+        "value": "₹10,000",
+        "source": "EMI.amount",
+        "formula": "Pending EMIs due in period",
+        "source_node_ids": [
+          "EMI:E001"
+        ]
+      },
+      {
+        "label": "Purchase Cost",
+        "value": "₹15,000",
+        "source": "User Query",
+        "formula": "Requested purchase transaction",
+        "source_node_ids": []
+      },
+      {
+        "label": "Post-Purchase Remaining Balance",
+        "value": "₹20,000",
+        "source": "Deterministic Math",
+        "formula": "Current Balance - Pending EMIs - Purchase Cost",
+        "source_node_ids": [
+          "Account:A001",
+          "Account:Demo Bank",
+          "EMI:E001"
+        ]
+      },
+      {
+        "label": "Recommended 3-Month Emergency Buffer",
+        "value": "₹63,000",
+        "source": "Emergency Fund Formula",
+        "formula": "3 × Monthly Living Expenses",
+        "source_node_ids": [
+          "Transaction:T001",
+          "Transaction:T002",
+          "Transaction:T003",
+          "Transaction:T004"
+        ]
+      },
+      {
+        "label": "Decision & Safety Rating",
+        "value": "NOT_SAFE (HIGH Risk)",
+        "source": "Financial Engine",
+        "formula": "Safe if Remaining Balance >= 3-Month Buffer",
+        "source_node_ids": []
+      }
+    ],
+    "evidence_metadata": {
+      "reporting_period": "2026-11",
+      "data_freshness": "Verified through latest transaction (2026-11-10)",
+      "methodology_formula": "Post-Purchase Balance = Current Balance - Pending EMIs - Purchase Cost (Safe if remainder >= 3 × Monthly Expenses)",
+      "calculation_method": "Deterministic liquidity stress test verifying emergency reserve preservation.",
+      "caveats": [],
+      "is_sufficient_data": true
+    },
+    "source_identifiers": [
+      "Account:A001",
+      "EMI:E001",
+      "Loan:L001"
+    ],
+    "graph_paths": [
+      "(User:U001)-[:HAS_ACCOUNT]->(Account:A001)",
+      "(User:U001)-[:HAS_LOAN]->(Loan:L001)-[:HAS_EMI]->(EMI:E001)"
+    ],
+    "explanation": "**🎯 The Quick Take**  \nA ₹15,000 purchase would leave you with only ₹20,000 in the account – well short of the ₹63,000 safety cushion we recommend. In short, it’s not a financially safe move right now.\n\n---\n\n**📊 The Numbers**  \n• **Current account balance:** ₹45,000  \n• **Pending EMI this month:** ₹10,000  \n• **Cost of the item you want:** ₹15,000  \n• **Balance after the purchase:** ₹20,000  \n• **Suggested 3‑month emergency buffer:** ₹63,000  \n• **Engine’s safety rating:** **NOT_SAFE (HIGH Risk)**  \n\n---\n\n**💡 Smart Insights**  \n- After covering the EMI and the new purchase, you’d have less than one‑third of the emergency fund you’d ideally keep on hand.  \n- A thin buffer makes unexpected expenses (medical, car repair, etc.) feel much more stressful and could force you into high‑cost borrowing.  \n- Keeping a robust reserve is the single most effective way to protect your financial peace of mind.\n\n---\n\n**🚀 What You Should Do Next**  \n1. **Pause the purchase** until you’ve built a larger cash cushion – aim for at least the ₹63,000 emergency fund.  \n2. **Prioritize saving**: set aside a modest amount each month (e.g., ₹5,000) to grow your buffer faster while still meeting the EMI.  \n3. **Re‑evaluate alternatives**: if the item is essential, explore lower‑cost options or a payment plan that doesn’t dip your cash below the safety threshold.  \n\nYou’ve got a solid foundation with ₹45,000 on hand; a little disciplined saving will get you to a comfortable, low‑risk position in no time. 🌟",
+    "prompt_version": "v1.1",
+    "is_followup": false,
+    "turn_type": "NEW_TOPIC",
+    "needs_clarification": false,
+    "clarification_type": null,
+    "recalculated_fresh": true,
+    "latency_breakdown": {
+      "nlu_ms": 12.6,
+      "graph_ms": 15.2,
+      "engine_ms": 0.1,
+      "llm_ms": 2157.0,
+      "total_ms": 2185.0
+    },
+    "tokens": {
+      "prompt": 1061,
+      "completion": 583,
+      "total": 1644
+    }
+  },
+  "metadata_note": "Standard purchase safety check"
+}
