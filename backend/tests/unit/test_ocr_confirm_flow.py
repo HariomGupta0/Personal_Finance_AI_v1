@@ -10,6 +10,14 @@ from fastapi.testclient import TestClient
 
 from backend.config import APP_PASSWORD, APP_USERNAME, SESSION_SECRET
 from backend.main import app
+from backend.app.core.limiter import limiter
+
+
+@pytest.fixture(autouse=True)
+def reset_limiter():
+    limiter.reset()
+    yield
+    limiter.reset()
 
 FAKE_JPEG_BYTES = b"\xff\xd8\xff\xe0\x00\x10JFIF" + b"\x00" * 32
 

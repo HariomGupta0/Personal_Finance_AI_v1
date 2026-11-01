@@ -12,6 +12,14 @@ from fastapi.testclient import TestClient
 
 from backend.app.database.neo4j_service import hash_password, verify_password
 from backend.main import app
+from backend.app.core.limiter import limiter
+
+
+@pytest.fixture(autouse=True)
+def reset_limiter():
+    limiter.reset()
+    yield
+    limiter.reset()
 
 
 def test_password_hashing_and_verification():
