@@ -71,6 +71,28 @@ def test_redact_preserves_financial_values_dates_and_percentages():
     assert "₹1,35,000" in redacted
 
 
+def test_redact_leaves_financial_figures_and_dates_unchanged():
+    """Prove amounts like ₹1,25,000.50, 150000, 65.0%, 2.14 months, and dates 2026-10 remain unchanged while masking PII."""
+    text = (
+        "In 2026-10, the emergency runway is 2.14 months, savings rate is 65.0%, "
+        "and account balance is 150000 with ₹1,25,000.50 reserve. "
+        "User A001 paid via rahul@okaxis with card 4111 2222 3333 4444."
+    )
+    redacted = redact_pii(text)
+    # Proves financial figures and dates are unchanged
+    assert "₹1,25,000.50" in redacted
+    assert "150000" in redacted
+    assert "65.0%" in redacted
+    assert "2.14 months" in redacted
+    assert "2026-10" in redacted
+
+    # Proves PII is masked
+    assert "A001" not in redacted
+    assert "rahul@okaxis" not in redacted
+    assert "4111 2222 3333" not in redacted
+    assert "****-****-****-4444" in redacted
+
+
 def test_redact_payload_nested_structure():
     """Recursive payload redaction should sanitize nested lists and dicts."""
     data = {

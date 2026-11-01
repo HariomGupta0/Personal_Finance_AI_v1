@@ -12,14 +12,14 @@ from backend.config import APP_PASSWORD, APP_USERNAME, SESSION_SECRET
 from backend.main import app
 from backend.app.core.limiter import limiter
 
+FAKE_JPEG_BYTES = b"\xff\xd8\xff\xe0\x00\x10JFIF" + b"\x00" * 32
+
 
 @pytest.fixture(autouse=True)
 def reset_limiter():
     limiter.reset()
     yield
     limiter.reset()
-
-FAKE_JPEG_BYTES = b"\xff\xd8\xff\xe0\x00\x10JFIF" + b"\x00" * 32
 
 
 @pytest.fixture
@@ -81,6 +81,51 @@ def test_ocr_extraction_returns_preview_only_no_write(auth_client):
         assert data["preview_rows"][0]["description"] == "Cafe Coffee Day"
 
 
+def test_ocr_extract_leaves_graph_counts_identical(auth_client):
+    """
+    Proves extraction preview writes nothing to Neo4j:
+    node count and relationship count are identical before and after /api/import/image.
+    """
+    from backend.app.database.neo4j_service import get_neo4j_service
+    db = get_neo4j_service()
+
+    with db.driver.session(database=db.database) as session:
+        nodes_before = session.run("MATCH (n) RETURN count(n) AS c").single()["c"]
+        rels_before = session.run("MATCH ()-[r]->() RETURN count(r) AS c").single()["c"]
+
+    mock_extracted = {
+        "date": "2026-10-15",
+        "amount": 750.0,
+        "currency": "INR",
+        "description": "Starbucks Coffee",
+        "direction": "expense",
+        "type": "EXPENSE",
+        "transaction_status": "SUCCESS",
+        "source_ref": "REF99999",
+        "confidence": "high",
+        "warnings": [],
+        "sanity_flag": True,
+        "sanity_issues": [],
+        "implausible_amount": False,
+        "extraction_success": True,
+    }
+
+    with patch("backend.app.api.import_api.extract_from_image", return_value=mock_extracted):
+        resp = auth_client.post(
+            "/api/import/image",
+            files={"file": ("coffee_receipt.jpg", FAKE_JPEG_BYTES, "image/jpeg")},
+        )
+        assert resp.status_code == 200
+        assert resp.json()["status"] == "EXTRACTED"
+
+    with db.driver.session(database=db.database) as session:
+        nodes_after = session.run("MATCH (n) RETURN count(n) AS c").single()["c"]
+        rels_after = session.run("MATCH ()-[r]->() RETURN count(r) AS c").single()["c"]
+
+    assert nodes_before == nodes_after, f"Node count changed from {nodes_before} to {nodes_after}"
+    assert rels_before == rels_after, f"Relationship count changed from {rels_before} to {rels_after}"
+
+
 def test_sanity_flag_missing_fields(auth_client):
     """Sanity flag must be False when amount, date, or merchant is missing."""
     from backend.app.services.image_extractor import _sanitise_extraction
@@ -129,31 +174,28 @@ def test_sanity_flag_implausible_amount(auth_client):
 
 def test_confirm_flow_writes_user_approved_row(auth_client):
     """Confirm endpoint persists user-reviewed values."""
+    from backend.app.api.deps import get_neo4j_service
+
     mock_db = MagicMock()
     mock_db.get_user_accounts.return_value = [{"id": "A001", "name": "Savings"}]
-    mock_db.batch_create_transactions.return_value = {
-        "saved": 1,
-        "duplicates": 0,
+    mock_db.batch_add_transactions.return_value = {
+        "inserted": 1,
+        "skipped": 0,
         "failed": 0,
-        "errors": [],
+        "net_balance_delta": -45000,
+        "import_id": "IMP123",
     }
 
-    mock_ingestion = MagicMock()
-    mock_ingestion.ingest_transaction.return_value = {
-        "status": "SUCCESS",
-        "transaction": {"transaction_id": "TX_TEST_01", "amount": 450.0},
-    }
-
-    with patch("backend.app.api.import_api.db", mock_db), \
-         patch("backend.app.api.import_api.ingestion", mock_ingestion):
+    app.dependency_overrides[get_neo4j_service] = lambda: mock_db
+    try:
         payload = {
             "rows": [{
                 "date": "2026-10-15",
                 "amount": 450.0,
-                "description": "Cafe Coffee Day",
+                "description": "Unique Mocked Coffee",
                 "type": "EXPENSE",
                 "category": "Food",
-                "source_ref": "REF12345",
+                "source_ref": "REF_MOCK_123",
                 "source_type": "image",
             }]
         }
@@ -162,3 +204,5 @@ def test_confirm_flow_writes_user_approved_row(auth_client):
         data = resp.json()
         assert data["status"] == "SUCCESS"
         assert data["saved"] == 1
+    finally:
+        app.dependency_overrides.pop(get_neo4j_service, None)
