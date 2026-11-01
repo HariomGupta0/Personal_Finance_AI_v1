@@ -97,15 +97,15 @@ def build_deterministic_fallback(financial_result: dict | Any, error_note: str |
                 num_lines.append(f"• {pt.get('month_name')}: ₹{float(pt.get('total_spent', 0)):,.2f} ({pt.get('transaction_count', 0)} txns)")
     else:
         if "current_balance" in evidence:
-            num_lines.append(f"• Current Balance: ₹{float(evidence['current_balance']):,.0f}")
+            num_lines.append(f"• Current Balance: ₹{float(evidence['current_balance']):,.2f}")
         if "purchase_amount" in evidence:
-            num_lines.append(f"• Purchase Amount: ₹{float(evidence['purchase_amount']):,.0f}")
+            num_lines.append(f"• Purchase Amount: ₹{float(evidence['purchase_amount']):,.2f}")
         if "pending_emi" in evidence:
-            num_lines.append(f"• Pending EMIs: ₹{float(evidence['pending_emi']):,.0f}")
+            num_lines.append(f"• Pending EMIs: ₹{float(evidence['pending_emi']):,.2f}")
         if "emergency_requirement" in evidence:
-            num_lines.append(f"• Emergency Reserve Needed: ₹{float(evidence['emergency_requirement']):,.0f}")
+            num_lines.append(f"• Emergency Reserve Needed: ₹{float(evidence['emergency_requirement']):,.2f}")
         if "balance_after_purchase" in evidence:
-            num_lines.append(f"• Balance After Purchase: ₹{float(evidence['balance_after_purchase']):,.0f}")
+            num_lines.append(f"• Balance After Purchase: ₹{float(evidence['balance_after_purchase']):,.2f}")
         if savings_rate is not None and "savings_rate" not in evidence:
             num_lines.append(f"• Savings Rate: {float(savings_rate):.1f}%")
         if runway_months is not None and "runway_months" not in evidence:

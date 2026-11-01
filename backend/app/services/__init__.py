@@ -13,6 +13,13 @@ from .response_generator import (
     build_deterministic_fallback,
     verify_explanation_consistency,
 )
+from .verifier import (
+    verify_explanation,
+    build_retry_feedback,
+    ALWAYS_ALLOWED,
+    ENUM_VOCAB,
+    VerificationResult,
+)
 from .ingestion_service import IngestionService
 
 __all__ = [
@@ -30,9 +37,10 @@ __all__ = [
     "generate_explanation_async",
     "build_deterministic_fallback",
     "verify_explanation_consistency",
+    "verify_explanation",
+    "build_retry_feedback",
+    "ALWAYS_ALLOWED",
+    "ENUM_VOCAB",
+    "VerificationResult",
     "IngestionService",
 ]
-
-
-
-
