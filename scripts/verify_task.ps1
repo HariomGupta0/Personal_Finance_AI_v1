@@ -42,15 +42,25 @@ if (-not $pytestSummary) {
     $pytestSummary = ($pytestOutput | Select-Object -Last 2) -join " "
 }
 
-"--- 3. GIT STATUS ---" | Out-File -FilePath $outFile -Append -Encoding utf8
-git status --short 2>&1 | Out-File -FilePath $outFile -Append -Encoding utf8
-"" | Out-File -FilePath $outFile -Append -Encoding utf8
-
-"--- 4. GIT LOG ---" | Out-File -FilePath $outFile -Append -Encoding utf8
+"--- 3. GIT LOG ---" | Out-File -FilePath $outFile -Append -Encoding utf8
 git log --oneline -5 2>&1 | Out-File -FilePath $outFile -Append -Encoding utf8
 "" | Out-File -FilePath $outFile -Append -Encoding utf8
 
-"--- 5. GIT DIFF STAT ---" | Out-File -FilePath $outFile -Append -Encoding utf8
+"--- 4. PYTEST SUMMARY ---" | Out-File -FilePath $outFile -Append -Encoding utf8
+$pytestSummary | Out-File -FilePath $outFile -Append -Encoding utf8
+"" | Out-File -FilePath $outFile -Append -Encoding utf8
+
+"--- 5. GIT STATUS ---" | Out-File -FilePath $outFile -Append -Encoding utf8
+$rawStatus = (git status --short 2>&1)
+$statusText = if ($rawStatus) { ($rawStatus | Out-String).Trim() } else { "" }
+if ($statusText -eq "") {
+    "CLEAN" | Out-File -FilePath $outFile -Append -Encoding utf8
+} else {
+    $rawStatus | Out-File -FilePath $outFile -Append -Encoding utf8
+}
+"" | Out-File -FilePath $outFile -Append -Encoding utf8
+
+"--- 6. GIT DIFF STAT ---" | Out-File -FilePath $outFile -Append -Encoding utf8
 git diff --stat $BaseCommit 2>&1 | Out-File -FilePath $outFile -Append -Encoding utf8
 "" | Out-File -FilePath $outFile -Append -Encoding utf8
 
