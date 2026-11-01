@@ -94,7 +94,7 @@ async def run_measurements(out_path: Path, repeats: int, versions: list[str]) ->
                     f_out.write(json.dumps(record, ensure_ascii=False) + "\n")
                     f_out.flush()
 
-                    status_sym = "✓" if record["verified"] else "✗"
+                    status_sym = "PASS" if record["verified"] else "FAIL"
                     fb_sym = " [FALLBACK]" if record["fallback_used"] else ""
                     print(
                         f"  [{version}][{intent[:14]:14}] rep {rep}/{repeats} -> "
