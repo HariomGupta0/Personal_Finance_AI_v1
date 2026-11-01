@@ -94,7 +94,8 @@ def _extract_via_ocr_fallback(content: bytes, client: Groq) -> Optional[dict]:
             return None
 
         from backend.config import LLM_MODEL
-        prompt = f"{EXTRACTION_PROMPT}\n\nEXTRACT FROM THIS OCR TEXT:\n{text}"
+        from backend.app.services.redaction import redact_pii
+        prompt = f"{EXTRACTION_PROMPT}\n\nEXTRACT FROM THIS OCR TEXT:\n{redact_pii(text)}"
         response = client.chat.completions.create(
             model=LLM_MODEL,
             messages=[{"role": "user", "content": prompt}],

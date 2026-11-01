@@ -6,6 +6,7 @@ from typing import Any
 
 from groq import AsyncGroq, Groq
 
+from backend.app.services.redaction import redact_pii
 from backend.config import GROQ_API_KEY, LLM_MODEL
 
 logger = logging.getLogger(__name__)
@@ -209,8 +210,8 @@ async def ask_llm_async(
 
     messages: list[dict] = []
     if system_prompt:
-        messages.append({"role": "system", "content": system_prompt})
-    messages.append({"role": "user", "content": prompt})
+        messages.append({"role": "system", "content": redact_pii(system_prompt)})
+    messages.append({"role": "user", "content": redact_pii(prompt)})
 
     last_exc: Exception | None = None
     overall_start = time.perf_counter()
@@ -327,8 +328,8 @@ def ask_llm(
 
     messages: list[dict] = []
     if system_prompt:
-        messages.append({"role": "system", "content": system_prompt})
-    messages.append({"role": "user", "content": prompt})
+        messages.append({"role": "system", "content": redact_pii(system_prompt)})
+    messages.append({"role": "user", "content": redact_pii(prompt)})
 
     last_exc: Exception | None = None
     overall_start = time.perf_counter()
