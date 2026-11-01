@@ -63,6 +63,22 @@ ENUM_VOCAB = {
     "BASELINE_ZERO",
 }
 
+MULTI_LETTER_ENUMS = {e for e in ENUM_VOCAB if len(e) > 1}
+ANCHOR_WORDS = {"risk", "rating", "status", "level", "health", "buffer"}
+
+MONEY_UNITS = {
+    "k": Decimal("1000"),
+    "thousand": Decimal("1000"),
+    "thousands": Decimal("1000"),
+    "lakh": Decimal("100000"),
+    "lakhs": Decimal("100000"),
+    "lac": Decimal("100000"),
+    "lacs": Decimal("100000"),
+    "cr": Decimal("10000000"),
+    "crore": Decimal("10000000"),
+    "crores": Decimal("10000000"),
+}
+
 SECTION_PATTERNS = [
     ("Quick Take", r"(?:\*\*|###)?\s*(?:🎯)?\s*(?:\*\*)?\s*The Quick Take(?:\*\*)?"),
     ("The Numbers", r"(?:\*\*|###)?\s*(?:📊)?\s*(?:\*\*)?\s*The Numbers(?:\*\*)?"),
@@ -200,6 +216,53 @@ def matches_with_tolerance(shown_str: str, allowed_set: set[Decimal]) -> bool:
         return False
 
 
+def extract_money_tokens(text: str) -> list[tuple[str, Decimal]]:
+    """
+    Extract currency amounts supporting INR prefix, rupees/rs suffix,
+    k/thousand/lakh/lac/crore/cr multipliers, leading minus, and ranges.
+    Returns list of (found_string, Decimal_value).
+    """
+    results = []
+    p1 = re.compile(
+        r"(?P<prefix_sign>-)?(?:\bINR\b|₹|Rs\.?)\s*(?P<inner_sign>-)?\s*(?P<num>[0-9,]+(?:\.[0-9]+)?)\s*(?P<unit>thousand|thousands|k|lakhs?|lacs?|crores?|cr)?(?:\s*(?:rupees?|rs\.?))?",
+        re.IGNORECASE,
+    )
+    p2 = re.compile(
+        r"(?P<prefix_sign>-)?\b(?P<num>[0-9,]+(?:\.[0-9]+)?)\s*(?P<unit>thousand|thousands|k|lakhs?|lacs?|crores?|cr)?\s*(?:rupees?|rs\.?)\b",
+        re.IGNORECASE,
+    )
+    spans = []
+    for m in p1.finditer(text):
+        spans.append(m.span())
+        matched_str = m.group(0).strip()
+        num_str = m.group("num").replace(",", "")
+        sign = "-" if (m.group("prefix_sign") or m.group("inner_sign")) else ""
+        unit = (m.group("unit") or "").lower()
+        multiplier = MONEY_UNITS.get(unit, Decimal("1"))
+        try:
+            val = Decimal(sign + num_str) * multiplier
+            results.append((matched_str, val))
+        except InvalidOperation:
+            pass
+
+    for m in p2.finditer(text):
+        start, end = m.span()
+        if any(s <= start and end <= e for s, e in spans):
+            continue
+        matched_str = m.group(0).strip()
+        num_str = m.group("num").replace(",", "")
+        sign = "-" if m.group("prefix_sign") else ""
+        unit = (m.group("unit") or "").lower()
+        multiplier = MONEY_UNITS.get(unit, Decimal("1"))
+        try:
+            val = Decimal(sign + num_str) * multiplier
+            results.append((matched_str, val))
+        except InvalidOperation:
+            pass
+
+    return results
+
+
 def verify_explanation(
     explanation_text: str,
     financial_result: dict | Any,
@@ -215,6 +278,20 @@ def verify_explanation(
       - advisory_count: count of advisory items
       - scope: VERIFICATION_SCOPE
     """
+    if not explanation_text or "AI explanation temporarily unavailable" in explanation_text:
+        return VerificationResult({
+            "verified": False,
+            "violations": [{
+                "type": "LLM_ERROR",
+                "found": "_DEFAULT_FALLBACK_TEXT",
+                "section": "ALL",
+                "reason": "LLM service failed after exhausted retries; fallback text returned",
+            }],
+            "advisory": [],
+            "advisory_count": 0,
+            "scope": VERIFICATION_SCOPE,
+            "llm_error": True,
+        })
     if not explanation_text or not explanation_text.strip():
         return VerificationResult({
             "verified": False,
@@ -242,19 +319,21 @@ def verify_explanation(
     decision = financial_result.get("decision") if isinstance(financial_result, dict) else None
     risk_level = financial_result.get("risk_level") if isinstance(financial_result, dict) else None
 
+    # Decision contradiction checks (PURCHASE_SAFETY and general)
     if decision == "NOT_SAFE":
         contra_patterns = [
             r"\bdecision\s*(?:is|:)?\s*safe\b",
-            r"\bpurchase is safe\b",
-            r"\bcompletely safe to purchase\b",
+            r"\b(?:this\s+)?purchase\s+is\s+(?:completely\s+|entirely\s+)?safe\b",
+            r"\b(?:completely\s+|entirely\s+)?safe\s+(?:to\s+(?:purchase|buy)|move)\b",
+            r"\bcan\s+(?:safely\s+)?(?:purchase|buy)\b",
             r"\brisk\s*(?:is|:)?\s*low\b",
         ]
         for pat in contra_patterns:
             m = re.search(pat, text_lower)
             if m:
-                start = max(0, m.start() - 20)
+                start = max(0, m.start() - 25)
                 prefix = text_lower[start:m.start()]
-                if "not" not in prefix and "n't" not in prefix and "never" not in prefix:
+                if not any(neg in prefix for neg in ("not", "n't", "never", "un")):
                     violations.append({
                         "type": "CONTRADICTION",
                         "found": m.group(0),
@@ -265,7 +344,8 @@ def verify_explanation(
     elif decision == "SAFE":
         contra_patterns = [
             r"\bdecision\s*(?:is|:)?\s*not safe\b",
-            r"\bpurchase is not safe\b",
+            r"\b(?:this\s+)?purchase\s+is\s+not\s+safe\b",
+            r"\bunsafe\s+to\s+(?:purchase|buy)\b",
             r"\brisk\s*(?:is|:)?\s*high\b",
             r"\brisk\s*(?:is|:)?\s*very high\b",
         ]
@@ -280,13 +360,22 @@ def verify_explanation(
                 })
 
     if risk_level in ("HIGH", "VERY_HIGH"):
-        if re.search(r"\blow risk\b", text_lower) and not re.search(r"\bnot\s+low risk\b", text_lower):
-            violations.append({
-                "type": "CONTRADICTION",
-                "found": "low risk",
-                "section": "WHOLE_TEXT",
-                "reason": f"Claimed LOW risk when decision risk level is {risk_level}",
-            })
+        for m in re.finditer(r"\blow[\s\u2011\-]risk\b|\brisk\s*(?:is|:)?\s*low\b", text_lower):
+            start = max(0, m.start() - 30)
+            prefix = text_lower[start:m.start()]
+            if not any(neg in prefix for neg in ("not", "n't", "never", "get you to", "reach", "aim for", "toward")):
+                violations.append({
+                    "type": "CONTRADICTION",
+                    "found": m.group(0),
+                    "section": "WHOLE_TEXT",
+                    "reason": f"Claimed LOW risk when decision risk level is {risk_level}",
+                })
+
+    # Grade pattern: Grade X, grade of X, Health Grade: X, grade: X (X in A-D)
+    grade_pattern = re.compile(
+        r"\b(?:health\s+grade\s*[:\-]?|grade\s+(?:of\s+)?|grade\s*[:\-])\s*([A-D])\b",
+        re.IGNORECASE,
+    )
 
     # Evaluate each section
     for sec_name, sec_text in sections.items():
@@ -295,25 +384,20 @@ def verify_explanation(
         # Strip markdown bold, italic, code markers before extraction
         clean_sec = re.sub(r"[*_`]", "", sec_text)
 
-        # 1. Currency Amounts: ₹... (Money NEVER uses tolerance)
-        for m in re.findall(r"(?:₹|Rs\.?)\s*([0-9,]+(?:\.[0-9]+)?)", clean_sec):
-            clean_m = m.replace(",", "")
-            try:
-                dec_val = Decimal(clean_m)
-                matches = any(dec_val == a for a in allowed["money"])
-            except InvalidOperation:
-                matches = False
-
+        # 1. Currency Amounts: Supporting INR prefix, suffix, units, minus, ranges
+        money_matches = extract_money_tokens(clean_sec)
+        for matched_str, dec_val in money_matches:
+            matches = any(dec_val == a for a in allowed["money"])
             if not matches:
                 item = {
                     "type": "unsupported_amount",
-                    "found": f"₹{m}",
+                    "found": matched_str,
                     "section": sec_name,
                 }
                 if is_advisory_section:
                     advisory.append(item)
                 else:
-                    item["reason"] = f"Amount ₹{m} not found in evidence"
+                    item["reason"] = f"Amount {matched_str} not found in evidence"
                     violations.append(item)
 
         # 2. Percentages: XX%
@@ -346,17 +430,59 @@ def verify_explanation(
                     item["reason"] = f"Duration {m} months not found in evidence (within tolerance)"
                     violations.append(item)
 
-        # 4. Enum / Label checks (Wrong labels are ALWAYS blocking)
-        # Check capitalized engine enums appearing in prose
-        for word in re.findall(r"\b(SAFE|NOT_SAFE|HIGH|MEDIUM|LOW|VERY_HIGH|MODERATE|CRITICAL|EXCELLENT|GOOD|FAIR|POOR)\b", clean_sec):
-            if word in ENUM_VOCAB and word not in allowed["label"]:
-                # Only flag if it acts as a conflicting status indicator
+        # 4. Grade Check (A-D)
+        for gm in grade_pattern.finditer(clean_sec):
+            found_grade = gm.group(1).upper()
+            found_token = gm.group(0).strip()
+            evidence_grade = None
+            if isinstance(financial_result, dict):
+                evidence_grade = financial_result.get("grade")
+            if evidence_grade and isinstance(evidence_grade, str):
+                if found_grade != evidence_grade.upper():
+                    violations.append({
+                        "type": "WRONG_LABEL",
+                        "found": found_token,
+                        "section": sec_name,
+                        "reason": f"Grade '{found_grade}' does not match evidence grade '{evidence_grade}'",
+                    })
+            elif any(g in allowed["label"] for g in ("A", "B", "C", "D")):
+                if found_grade not in allowed["label"]:
+                    violations.append({
+                        "type": "WRONG_LABEL",
+                        "found": found_token,
+                        "section": sec_name,
+                        "reason": f"Grade '{found_grade}' does not match evidence",
+                    })
+
+        # 5. Enum / Label checks
+        # A: Check uppercase whole tokens matching MULTI_LETTER_ENUMS
+        for wm in re.finditer(r"\b[A-Z_]{2,}\b", clean_sec):
+            w = wm.group(0)
+            if w in MULTI_LETTER_ENUMS and w not in allowed["label"]:
                 violations.append({
                     "type": "WRONG_LABEL",
-                    "found": word,
+                    "found": w,
                     "section": sec_name,
-                    "reason": f"Status label {word} does not match engine evidence",
+                    "reason": f"Status label {w} does not match engine evidence",
                 })
+
+        # B: Check case-insensitive risk/status phrases with anchor words within 2 tokens
+        proximity_patterns = [
+            r"\b(low|medium|high|very\s+high|moderate|critical)\s+(?:risk|rating|level)\b",
+            r"\b(?:risk|rating|level|status|health|buffer)\s*(?:is|:)?\s*(low|medium|high|very\s+high|moderate|critical|strong|healthy|insufficient|excellent|good|fair|poor)\b",
+            r"\b(strong|healthy|insufficient|excellent|good|fair|poor)\s+(?:status|health|buffer)\b",
+        ]
+        for pat in proximity_patterns:
+            for pm in re.finditer(pat, clean_sec, re.IGNORECASE):
+                matched_phrase = pm.group(0)
+                val_word = (pm.group(1) if pm.lastindex else matched_phrase).upper().replace(" ", "_")
+                if val_word in MULTI_LETTER_ENUMS and val_word not in allowed["label"]:
+                    violations.append({
+                        "type": "WRONG_LABEL",
+                        "found": matched_phrase,
+                        "section": sec_name,
+                        "reason": f"Status phrase '{matched_phrase}' ({val_word}) does not match engine evidence",
+                    })
 
     verified = (len(violations) == 0)
 
@@ -366,6 +492,7 @@ def verify_explanation(
         "advisory": advisory,
         "advisory_count": len(advisory),
         "scope": VERIFICATION_SCOPE,
+        "llm_error": False,
     })
 
 
