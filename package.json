@@ -1,0 +1,10 @@
+{
+  "scripts": {
+    "audit": "node audit_with_claude.mjs",
+    "claude": "node claude_cli.mjs"
+  },
+  "dependencies": {
+    "@openrouter/agent": "^0.11.0",
+    "@openrouter/sdk": "^1.4.25"
+  }
+}

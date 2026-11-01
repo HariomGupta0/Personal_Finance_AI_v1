@@ -1,0 +1,222 @@
+{
+  "timestamp": "2026-10-16T20:39:41Z",
+  "total_queries": 10,
+  "metrics": {
+    "intent_accuracy_percent": 100.0,
+    "math_accuracy_percent": 60.0,
+    "grounding_completeness_percent": 10.0,
+    "currency_preservation_percent": 100.0,
+    "hallucination_free_percent": 100.0,
+    "avg_latency_ms": 1802.4,
+    "p50_latency_ms": 1008.5,
+    "p95_latency_ms": 8600.3,
+    "avg_stage_latencies_ms": {
+      "nlu_ms": 0.1,
+      "graph_ms": 11.8,
+      "engine_ms": 0.1,
+      "llm_ms": 1790.3
+    }
+  },
+  "query_evaluations": [
+    {
+      "id": "Q1",
+      "question": "Can I spend \u20b915,000 on a phone?",
+      "intent": "PURCHASE_SAFETY",
+      "intent_match": true,
+      "math_match": true,
+      "latency_ms": 1754.2,
+      "stage_breakdown": {
+        "nlu_ms": 0.8,
+        "graph_ms": 8.0,
+        "engine_ms": 0.1,
+        "llm_ms": 1745.3,
+        "total_ms": 1754.2
+      },
+      "tokens": {
+        "prompt": 490,
+        "completion": 377,
+        "total": 867
+      }
+    },
+    {
+      "id": "Q2",
+      "question": "What is my savings rate?",
+      "intent": "SAVINGS_ANALYSIS",
+      "intent_match": true,
+      "math_match": true,
+      "latency_ms": 1042.0,
+      "stage_breakdown": {
+        "nlu_ms": 0.0,
+        "graph_ms": 5.6,
+        "engine_ms": 0.1,
+        "llm_ms": 1036.1,
+        "total_ms": 1042.0
+      },
+      "tokens": {
+        "prompt": 402,
+        "completion": 387,
+        "total": 789
+      }
+    },
+    {
+      "id": "Q3",
+      "question": "How much emergency fund do I need?",
+      "intent": "EMERGENCY_FUND_ANALYSIS",
+      "intent_match": true,
+      "math_match": true,
+      "latency_ms": 893.1,
+      "stage_breakdown": {
+        "nlu_ms": 0.1,
+        "graph_ms": 4.8,
+        "engine_ms": 0.0,
+        "llm_ms": 888.2,
+        "total_ms": 893.1
+      },
+      "tokens": {
+        "prompt": 404,
+        "completion": 345,
+        "total": 749
+      }
+    },
+    {
+      "id": "Q4",
+      "question": "How many months can I survive on my runway?",
+      "intent": "EMERGENCY_RUNWAY_ANALYSIS",
+      "intent_match": true,
+      "math_match": false,
+      "latency_ms": 1229.6,
+      "stage_breakdown": {
+        "nlu_ms": 0.0,
+        "graph_ms": 61.5,
+        "engine_ms": 0.0,
+        "llm_ms": 1168.0,
+        "total_ms": 1229.6
+      },
+      "tokens": {
+        "prompt": 417,
+        "completion": 467,
+        "total": 884
+      }
+    },
+    {
+      "id": "Q5",
+      "question": "Where did I spend the most?",
+      "intent": "EXPENSE_BREAKDOWN",
+      "intent_match": true,
+      "math_match": true,
+      "latency_ms": 771.5,
+      "stage_breakdown": {
+        "nlu_ms": 0.1,
+        "graph_ms": 6.3,
+        "engine_ms": 0.1,
+        "llm_ms": 765.0,
+        "total_ms": 771.4
+      },
+      "tokens": {
+        "prompt": 491,
+        "completion": 414,
+        "total": 905
+      }
+    },
+    {
+      "id": "Q6",
+      "question": "How much did I spend on food?",
+      "intent": "CATEGORY_EXPENSE",
+      "intent_match": true,
+      "math_match": false,
+      "latency_ms": 794.1,
+      "stage_breakdown": {
+        "nlu_ms": 0.1,
+        "graph_ms": 7.0,
+        "engine_ms": 0.1,
+        "llm_ms": 786.9,
+        "total_ms": 794.1
+      },
+      "tokens": {
+        "prompt": 505,
+        "completion": 353,
+        "total": 858
+      }
+    },
+    {
+      "id": "Q7",
+      "question": "How much debt do I have?",
+      "intent": "DEBT_ANALYSIS",
+      "intent_match": true,
+      "math_match": false,
+      "latency_ms": 993.9,
+      "stage_breakdown": {
+        "nlu_ms": 0.0,
+        "graph_ms": 7.6,
+        "engine_ms": 0.0,
+        "llm_ms": 986.1,
+        "total_ms": 993.8
+      },
+      "tokens": {
+        "prompt": 424,
+        "completion": 401,
+        "total": 825
+      }
+    },
+    {
+      "id": "Q8",
+      "question": "What is my financial health score?",
+      "intent": "FINANCIAL_HEALTH",
+      "intent_match": true,
+      "math_match": true,
+      "latency_ms": 1023.2,
+      "stage_breakdown": {
+        "nlu_ms": 0.0,
+        "graph_ms": 5.1,
+        "engine_ms": 0.1,
+        "llm_ms": 1017.9,
+        "total_ms": 1023.2
+      },
+      "tokens": {
+        "prompt": 438,
+        "completion": 410,
+        "total": 848
+      }
+    },
+    {
+      "id": "Q9",
+      "question": "Can I buy a laptop for 50000?",
+      "intent": "PURCHASE_SAFETY",
+      "intent_match": true,
+      "math_match": true,
+      "latency_ms": 922.3,
+      "stage_breakdown": {
+        "nlu_ms": 0.1,
+        "graph_ms": 7.0,
+        "engine_ms": 0.0,
+        "llm_ms": 915.0,
+        "total_ms": 922.2
+      },
+      "tokens": {
+        "prompt": 491,
+        "completion": 408,
+        "total": 899
+      }
+    },
+    {
+      "id": "Q10",
+      "question": "Give me a financial summary",
+      "intent": "FINANCIAL_SUMMARY",
+      "intent_match": true,
+      "math_match": false,
+      "latency_ms": 8600.3,
+      "stage_breakdown": {
+        "nlu_ms": 0.1,
+        "graph_ms": 5.6,
+        "engine_ms": 0.2,
+        "llm_ms": 8594.4,
+        "total_ms": 8600.3
+      },
+      "tokens": {
+        "prompt": 616,
+        "completion": 718,
+        "total": 1334
+      }
+    }
+  ]
+}
