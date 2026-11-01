@@ -477,6 +477,8 @@ class TestImportAPIUnit:
             }
 
             from backend.main import app
+            from backend.app.core.limiter import limiter
+            limiter.reset()
             self.client = TestClient(app)
 
             # Login
@@ -486,6 +488,7 @@ class TestImportAPIUnit:
                 pytest.skip("[LIVE-DB] Login failed — check credentials and Neo4j")
 
             yield
+            limiter.reset()
 
     def test_csv_upload_valid_file(self):
         target = TEST_DATA_DIR / "synthetic_bank.csv"
