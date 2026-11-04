@@ -124,60 +124,26 @@ export default function App() {
   }, []);
 
   const handleLogin = async (credentials) => {
-    let response;
-    try {
-      response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(credentials)
-      });
-    } catch (networkErr) {
-      throw new Error('Cannot connect to server. Please verify the backend is running on http://127.0.0.1:8000.');
-    }
-
-    let data = null;
-    try {
-      data = await response.json();
-    } catch (jsonErr) {
-      data = null;
-    }
-
-    if (!response.ok) {
-      if (response.status === 502 || response.status === 504 || !data) {
-        throw new Error('Backend server is not running on port 8000. Start it with: python -m uvicorn backend.main:app --reload --port 8000');
-      }
-      throw new Error(data.detail || data.error || 'Unable to sign in');
-    }
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(credentials)
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.detail || 'Unable to sign in');
     setUser(data);
     setLoading(true);
     await fetchAllData();
   };
 
   const handleSignup = async (payload) => {
-    let response;
-    try {
-      response = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-    } catch (networkErr) {
-      throw new Error('Cannot connect to server. Please verify the backend is running on http://127.0.0.1:8000.');
-    }
-
-    let data = null;
-    try {
-      data = await response.json();
-    } catch (jsonErr) {
-      data = null;
-    }
-
-    if (!response.ok) {
-      if (response.status === 502 || response.status === 504 || !data) {
-        throw new Error('Backend server is not running on port 8000. Start it with: python -m uvicorn backend.main:app --reload --port 8000');
-      }
-      throw new Error(data.detail || data.error || 'Unable to create account');
-    }
+    const response = await fetch('/api/auth/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.detail || 'Unable to create account');
     setUser(data);
     setLoading(true);
     await fetchAllData();
@@ -209,7 +175,7 @@ export default function App() {
       body: JSON.stringify(payload)
     });
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
+      const err = await res.json();
       throw new Error(err.detail || 'Failed to add transaction');
     }
     // Refresh all financial metrics and transaction table immediately
@@ -222,7 +188,7 @@ export default function App() {
       method: 'DELETE'
     });
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
+      const err = await res.json();
       alert('Delete failed: ' + (err.detail || 'Server error'));
       return;
     }
