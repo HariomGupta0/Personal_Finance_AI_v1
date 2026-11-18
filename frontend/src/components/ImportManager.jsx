@@ -161,7 +161,7 @@ function DropZone({ mode, onFile, disabled }) {
 // Preview table for parsed CSV rows
 // ---------------------------------------------------------------------------
 
-function PreviewTable({ rows, selectedIds, onToggle, onToggleAll, onEdit }) {
+function PreviewTable({ rows, selectedIds, onToggle, onToggleAll, onToggleTransfer, onEdit }) {
   const allSelected = rows.every(r => selectedIds.has(r._id));
   const dupCount = rows.filter(r => r.duplicate_status === 'POSSIBLE_DUPLICATE').length;
   const confirmedDup = rows.filter(r => r.duplicate_status === 'CONFIRMED_DUPLICATE').length;
@@ -241,9 +241,28 @@ function PreviewTable({ rows, selectedIds, onToggle, onToggleAll, onEdit }) {
                     {isIncome ? '+' : '-'}{sym}{fmt(row.amount)}
                   </td>
                   <td style={{ padding: '10px 10px', textAlign: 'center' }}>
-                    {isConfDup && <Badge label="Duplicate" color="danger" />}
-                    {isDup && <Badge label="Review" color="warning" />}
-                    {!isDup && !isConfDup && <Badge label="OK" color="success" />}
+                    {row.is_transfer_candidate ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                        <label style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: '0.74rem', cursor: 'pointer', color: row.is_transfer ? '#38bdf8' : 'var(--text-muted)' }}>
+                          <input
+                            type="checkbox"
+                            checked={Boolean(row.is_transfer)}
+                            onChange={() => onToggleTransfer && onToggleTransfer(row._id)}
+                            style={{ width: 14, height: 14, cursor: 'pointer' }}
+                          />
+                          <span>{row.is_transfer ? "Confirmed Transfer" : "Mark as Transfer"}</span>
+                        </label>
+                        <span style={{ fontSize: '0.67rem', color: '#94a3b8' }}>
+                          Candidate ({row.transfer_confidence || 'MED'} conf)
+                        </span>
+                      </div>
+                    ) : (
+                      <>
+                        {isConfDup && <Badge label="Duplicate" color="danger" />}
+                        {isDup && <Badge label="Review" color="warning" />}
+                        {!isDup && !isConfDup && <Badge label="OK" color="success" />}
+                      </>
+                    )}
                   </td>
                   <td style={{ padding: '10px 10px', textAlign: 'center' }}>
                     <button
@@ -307,6 +326,22 @@ function RowEditor({ row, onSave, onCancel }) {
         <div>
           <label style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginBottom: 4, display: 'block' }}>Category</label>
           <input style={inputStyle} value={form.category || ''} onChange={e => set('category', e.target.value)} />
+        </div>
+        <div style={{ gridColumn: '1 / -1', marginTop: 4 }}>
+          <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: '0.8rem', cursor: 'pointer', color: form.is_transfer ? '#38bdf8' : 'var(--text-main)' }}>
+            <input
+              type="checkbox"
+              checked={Boolean(form.is_transfer)}
+              onChange={e => set('is_transfer', e.target.checked)}
+              style={{ width: 15, height: 15, cursor: 'pointer' }}
+            />
+            <span>Mark as Internal Bank Transfer (excludes from spending & income)</span>
+          </label>
+          {form.transfer_confidence && (
+            <span style={{ fontSize: '0.72rem', color: '#94a3b8', marginLeft: 8 }}>
+              ({form.transfer_confidence} confidence match)
+            </span>
+          )}
         </div>
       </div>
       <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
@@ -502,8 +537,12 @@ export default function ImportManager({ onImportComplete, onViewPlan }) {
       const data = await resp.json();
       if (!resp.ok) throw new Error(data.detail || 'Upload failed');
 
-      // Add stable _id to each row for selection tracking
-      const tagged = data.valid_rows.map((r, i) => ({ ...r, _id: `row_${i}` }));
+      // Add stable _id to each row. All candidates start with is_transfer=false until explicitly approved by user
+      const tagged = data.valid_rows.map((r, i) => ({
+        ...r,
+        _id: `row_${i}`,
+        is_transfer: false,
+      }));
       setParseResult(data);
       setRows(tagged);
       // Pre-select all rows except confirmed duplicates
@@ -555,6 +594,10 @@ export default function ImportManager({ onImportComplete, onViewPlan }) {
           category: r.category || 'General',
           source_ref: r.source_ref || null,
           source_type: r.source_type || 'csv',
+          account_id: r.account_id || null,
+          is_transfer: Boolean(r.is_transfer),
+          paired_transaction_id: r.paired_transaction_id || null,
+          transfer_confidence: r.transfer_confidence || null,
         })),
       };
       const resp = await fetch('/api/import/confirm', {
@@ -610,6 +653,22 @@ export default function ImportManager({ onImportComplete, onViewPlan }) {
   const handleSaveEdit = (updated) => {
     setRows(prev => prev.map(r => r._id === updated._id ? updated : r));
     setEditingId(null);
+  };
+
+  const toggleTransfer = (id) => {
+    setRows(prev => {
+      const target = prev.find(r => r._id === id);
+      if (!target) return prev;
+      const nextVal = !target.is_transfer;
+      return prev.map(r => {
+        if (r._id === id) return { ...r, is_transfer: nextVal };
+        // If part of an intra-batch pair, keep both sides in sync
+        if (target.transfer_candidate_id && r.transfer_candidate_id === target.transfer_candidate_id) {
+          return { ...r, is_transfer: nextVal };
+        }
+        return r;
+      });
+    });
   };
 
   const toggleRow = (id) => setSelectedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
@@ -760,6 +819,7 @@ export default function ImportManager({ onImportComplete, onViewPlan }) {
               selectedIds={selectedIds}
               onToggle={toggleRow}
               onToggleAll={toggleAll}
+              onToggleTransfer={toggleTransfer}
               onEdit={handleEdit}
             />
           ) : (

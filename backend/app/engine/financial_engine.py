@@ -119,7 +119,7 @@ def _monthly_transactions(context, reporting_date=None):
     target = _resolve_reporting_date(context, reporting_date)
     return [
         tx for tx in context.get("transactions", [])
-        if isinstance(tx, dict) and _is_in_reporting_month(tx, target)
+        if isinstance(tx, dict) and _is_in_reporting_month(tx, target) and not tx.get("is_transfer", False)
     ]
 
 
@@ -129,7 +129,7 @@ def _monthly_incomes(context, reporting_date=None):
     target = _resolve_reporting_date(context, reporting_date)
     return [
         income for income in context.get("incomes", [])
-        if isinstance(income, dict) and _is_in_reporting_month(income, target)
+        if isinstance(income, dict) and _is_in_reporting_month(income, target) and not income.get("is_transfer", False)
     ]
 
 

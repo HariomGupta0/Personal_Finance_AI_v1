@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="100%" height="100%">
+  <defs>
+    <style>
+      .title { font-family: 'Segoe UI', Arial, sans-serif; font-size: 16px; font-weight: bold; fill: #0f172a; }
+      .actor-box { fill: #f1f5f9; stroke: #64748b; stroke-width: 1.5; rx: 6px; }
+      .actor-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; font-weight: bold; fill: #1e293b; text-anchor: middle; }
+      .lifeline { stroke: #cbd5e1; stroke-width: 1.5; stroke-dasharray: 4 4; }
+      .msg-line { stroke: #3b82f6; stroke-width: 1.5; marker-end: url(#arrow-blue); }
+      .ret-line { stroke: #10b981; stroke-width: 1.5; stroke-dasharray: 4 3; marker-end: url(#arrow-green); }
+      .msg-text { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11px; fill: #334155; }
+    </style>
+    <marker id="arrow-blue" markerWidth="6" markerHeight="5" refX="5" refY="2.5" orient="auto">
+      <polygon points="0 0, 6 2.5, 0 5" fill="#3b82f6" />
+    </marker>
+    <marker id="arrow-green" markerWidth="6" markerHeight="5" refX="5" refY="2.5" orient="auto">
+      <polygon points="0 0, 6 2.5, 0 5" fill="#10b981" />
+    </marker>
+  </defs>
+
+  <rect width="900" height="600" fill="#ffffff" />
+  <text x="450" y="30" text-anchor="middle" class="title">Figure 2.2: End-to-End Query Execution Sequence Flow</text>
+
+  <!-- Actors -->
+  <rect x="40" y="50" width="100" height="35" class="actor-box" />
+  <text x="90" y="72" class="actor-text">Client (UI)</text>
+  <line x1="90" y1="85" x2="90" y2="560" class="lifeline" />
+
+  <rect x="180" y="50" width="110" height="35" class="actor-box" />
+  <text x="235" y="72" class="actor-text">FastAPI Gateway</text>
+  <line x1="235" y1="85" x2="235" y2="560" class="lifeline" />
+
+  <rect x="330" y="50" width="110" height="35" class="actor-box" />
+  <text x="385" y="72" class="actor-text">Question Parser</text>
+  <line x1="385" y1="85" x2="385" y2="560" class="lifeline" />
+
+  <rect x="480" y="50" width="110" height="35" class="actor-box" />
+  <text x="535" y="72" class="actor-text">Neo4j Graph</text>
+  <line x1="535" y1="85" x2="535" y2="560" class="lifeline" />
+
+  <rect x="630" y="50" width="110" height="35" class="actor-box" />
+  <text x="685" y="72" class="actor-text">Financial Engine</text>
+  <line x1="685" y1="85" x2="685" y2="560" class="lifeline" />
+
+  <rect x="770" y="50" width="100" height="35" class="actor-box" />
+  <text x="820" y="72" class="actor-text">LLM &amp; Verifier</text>
+  <line x1="820" y1="85" x2="820" y2="560" class="lifeline" />
+
+  <!-- Step 1: User Query -->
+  <line x1="90" y1="110" x2="230" y2="110" class="msg-line" />
+  <text x="100" y="103" class="msg-text">1. POST /api/assistant/chat ("Can I spend ₹15k?")</text>
+
+  <!-- Step 2: NLU Parsing -->
+  <line x1="235" y1="140" x2="380" y2="140" class="msg-line" />
+  <text x="245" y="133" class="msg-text">2. parse_question(text, history)</text>
+
+  <line x1="380" y1="170" x2="240" y2="170" class="ret-line" />
+  <text x="250" y="163" class="msg-text">3. {intent: 'PURCHASE_SAFETY', amt: 15000}</text>
+
+  <!-- Step 3: Graph Retrieval -->
+  <line x1="235" y1="200" x2="530" y2="200" class="msg-line" />
+  <text x="250" y="193" class="msg-text">4. retrieve_subgraph(User, PURCHASE_SAFETY)</text>
+
+  <line x1="530" y1="235" x2="240" y2="235" class="ret-line" />
+  <text x="260" y="228" class="msg-text">5. Subgraph (Accounts: ₹45k, Pending EMIs: ₹10k, Living Expenses)</text>
+
+  <!-- Step 4: Deterministic Math -->
+  <line x1="235" y1="270" x2="680" y2="270" class="msg-line" />
+  <text x="280" y="263" class="msg-text">6. check_purchase_safety(Context, 1500000 paise)</text>
+
+  <line x1="680" y1="310" x2="240" y2="310" class="ret-line" />
+  <text x="290" y="303" class="msg-text">7. Decision: NOT_SAFE (BalAfter: ₹20k &lt; ReserveBuffer: ₹63k)</text>
+
+  <!-- Step 5: LLM Generation & Verification -->
+  <line x1="235" y1="350" x2="815" y2="350" class="msg-line" />
+  <text x="310" y="343" class="msg-text">8. build_prompt(Evidence, v1.1) -> Groq API</text>
+
+  <line x1="820" y1="390" x2="820" y2="420" class="msg-line" />
+  <text x="730" y="410" class="msg-text">9. verify_explanation()</text>
+
+  <line x1="815" y1="450" x2="240" y2="450" class="ret-line" />
+  <text x="350" y="443" class="msg-text">10. Verified 4-Section Executive Text + Fact Card</text>
+
+  <!-- Step 6: Client Delivery -->
+  <line x1="235" y1="490" x2="95" y2="490" class="ret-line" />
+  <text x="110" y="483" class="msg-text">11. JSON Response: Formatted Card &amp; Graph Metrics</text>
+
+  <!-- Completion Note -->
+  <rect x="250" y="520" width="400" height="30" rx="4" fill="#ecfdf5" stroke="#10b981" />
+  <text x="450" y="540" text-anchor="middle" class="msg-text" style="font-weight: bold; fill: #065f46;">
+    100% Deterministic Math Accuracy Guaranteed — Zero Hallucination
+  </text>
+</svg>

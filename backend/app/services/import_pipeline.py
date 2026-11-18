@@ -17,6 +17,7 @@ from datetime import date, datetime, timedelta
 from typing import Optional
 
 from backend.app.core.money import normalize_rupees, to_paise
+from backend.app.services.transfer_detector import detect_intra_batch_transfers, detect_retroactive_transfers
 
 # ---------------------------------------------------------------------------
 # Category inference (reuses same logic as transaction_extractor.py)
@@ -287,6 +288,50 @@ def run_pipeline(
             row.setdefault("duplicate_status", "OK")
             row.setdefault("duplicate_matches", [])
 
+    # -----------------------------------------------------------------------
+    # Internal Transfer Candidate Detection (Intra-batch + Retroactive)
+    # -----------------------------------------------------------------------
+    transfer_candidates = []
+    user_accounts = []
+    if db and hasattr(db, "get_user_accounts") and user_id:
+        try:
+            user_accounts = db.get_user_accounts(user_id)
+        except Exception:
+            pass
+
+    # 1. Intra-batch candidate pairs
+    intra_candidates = detect_intra_batch_transfers(valid_rows, user_accounts)
+    matched_indices = set()
+    for cand in intra_candidates:
+        d_idx = cand["debit_index"]
+        c_idx = cand["credit_index"]
+        matched_indices.add(d_idx)
+        matched_indices.add(c_idx)
+
+        valid_rows[d_idx]["is_transfer_candidate"] = True
+        valid_rows[d_idx]["transfer_role"] = "DEBIT"
+        valid_rows[d_idx]["transfer_candidate_id"] = cand["candidate_id"]
+        valid_rows[d_idx]["transfer_confidence"] = cand["confidence"]
+
+        valid_rows[c_idx]["is_transfer_candidate"] = True
+        valid_rows[c_idx]["transfer_role"] = "CREDIT"
+        valid_rows[c_idx]["transfer_candidate_id"] = cand["candidate_id"]
+        valid_rows[c_idx]["transfer_confidence"] = cand["confidence"]
+        transfer_candidates.append(cand)
+
+    # 2. Retroactive candidate discovery for remaining unmatched rows
+    if db and not skip_dedup:
+        unmatched_rows = [(idx, r) for idx, r in enumerate(valid_rows) if idx not in matched_indices]
+        retro_candidates = detect_retroactive_transfers(unmatched_rows, user_id, db, user_accounts)
+        for rcand in retro_candidates:
+            b_idx = rcand["batch_row_index"]
+            valid_rows[b_idx]["is_transfer_candidate"] = True
+            valid_rows[b_idx]["paired_transaction_id"] = rcand["existing_transaction_id"]
+            valid_rows[b_idx]["transfer_candidate_id"] = rcand["candidate_id"]
+            valid_rows[b_idx]["transfer_confidence"] = rcand["confidence"]
+            valid_rows[b_idx]["is_retroactive"] = True
+            transfer_candidates.append(rcand)
+
     accepted_rows = [r for r in valid_rows if r.get("duplicate_status") == "OK"]
     duplicate_rows = [
         r for r in valid_rows
@@ -302,4 +347,6 @@ def run_pipeline(
         "accepted_count": len(accepted_rows),
         "duplicate_count": len(duplicate_rows),
         "invalid_count": len(invalid_rows),
+        "transfer_candidates": transfer_candidates,
+        "transfer_count": len(transfer_candidates),
     }
