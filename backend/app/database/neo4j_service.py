@@ -1273,7 +1273,8 @@ class Neo4jService:
         query = """
         MATCH (u:User)
         WHERE toLower(u.username) = $username OR toLower(u.name) = $username
-        RETURN u.id AS user_id, u.username AS username, u.name AS name, u.password_hash AS password_hash, u.salt AS salt
+        RETURN u.id AS user_id, u.username AS username, u.name AS name, u.password_hash AS password_hash, u.salt AS salt,
+               coalesce(u.onboarding_completed, false) AS onboarding_completed
         """
         with self.driver.session(database=self.database) as session:
             result = session.run(query, username=clean_username)
@@ -1286,7 +1287,8 @@ class Neo4jService:
                     return {
                         "user_id": user["user_id"],
                         "username": user.get("username") or user["name"],
-                        "name": user["name"]
+                        "name": user["name"],
+                        "onboarding_completed": bool(user.get("onboarding_completed", False))
                     }
                 return None
             return None
@@ -1294,14 +1296,86 @@ class Neo4jService:
     def get_user_by_id(self, user_id):
         query = """
         MATCH (u:User {id: $user_id})
-        RETURN u.id AS user_id, u.username AS username, u.name AS name
+        RETURN u.id AS user_id, u.username AS username, u.name AS name,
+               coalesce(u.onboarding_completed, false) AS onboarding_completed
         """
         with self.driver.session(database=self.database) as session:
             result = session.run(query, user_id=user_id)
             record = result.single()
             if record:
-                return dict(record)
+                res = dict(record)
+                res["onboarding_completed"] = bool(res.get("onboarding_completed", False))
+                return res
             return None
+
+    def bootstrap_user_financials(self, user_id: str, bank_name: str, liquid_balance: float, monthly_income: float, monthly_emi: float = 0.0, loan_type: str = "Personal Loan"):
+        if not user_id:
+            raise ValueError("user_id must be non-empty")
+        
+        balance_paise = to_paise(liquid_balance)
+        income_paise = to_paise(monthly_income)
+        emi_paise = to_paise(monthly_emi)
+        
+        query = """
+        MATCH (u:User {id: $user_id})
+        SET u.onboarding_completed = true,
+            u.updated_at = datetime()
+
+        // 1. Primary Account
+        MERGE (u)-[:HAS_ACCOUNT]->(a:Account {id: $user_id + '_ACC_PRIMARY'})
+        ON CREATE SET
+            a.bank = $bank_name,
+            a.account_type = 'Savings',
+            a.balance_paise = $balance_paise,
+            a.balance = round(toFloat($balance_paise) / 100.0, 2),
+            a.opened_date = date(),
+            a.status = 'ACTIVE'
+        ON MATCH SET
+            a.bank = $bank_name,
+            a.balance_paise = $balance_paise,
+            a.balance = round(toFloat($balance_paise) / 100.0, 2)
+
+        // 2. Monthly Income
+        MERGE (u)-[:RECEIVED_INCOME]->(inc:Income {id: $user_id + '_INC_PRIMARY'})
+        ON CREATE SET
+            inc.source = 'Primary Income',
+            inc.amount_paise = $income_paise,
+            inc.amount = round(toFloat($income_paise) / 100.0, 2),
+            inc.frequency = 'MONTHLY',
+            inc.date = date()
+        ON MATCH SET
+            inc.amount_paise = $income_paise,
+            inc.amount = round(toFloat($income_paise) / 100.0, 2)
+
+        // 3. Optional Loan / EMI
+        FOREACH (_ IN CASE WHEN $emi_paise > 0 THEN [1] ELSE [] END |
+            MERGE (u)-[:HAS_LOAN]->(l:Loan {id: $user_id + '_LOAN_PRIMARY'})
+            ON CREATE SET
+                l.type = $loan_type,
+                l.monthly_emi_paise = $emi_paise,
+                l.monthly_emi = round(toFloat($emi_paise) / 100.0, 2),
+                l.status = 'ACTIVE',
+                l.start_date = date()
+            ON MATCH SET
+                l.type = $loan_type,
+                l.monthly_emi_paise = $emi_paise,
+                l.monthly_emi = round(toFloat($emi_paise) / 100.0, 2)
+        )
+
+        RETURN u.id AS user_id, u.onboarding_completed AS onboarding_completed, a.id AS account_id, a.balance_paise AS balance_paise
+        """
+        with self.driver.session(database=self.database) as session:
+            result = session.run(
+                query,
+                user_id=user_id,
+                bank_name=bank_name or "HDFC Bank",
+                balance_paise=balance_paise,
+                income_paise=income_paise,
+                emi_paise=emi_paise,
+                loan_type=loan_type or "Personal Loan"
+            )
+            record = result.single()
+            return dict(record) if record else None
 
     def assert_money_migrated(self) -> None:
         """

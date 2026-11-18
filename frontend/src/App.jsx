@@ -10,7 +10,8 @@ import {
   TrendingUp,
   Shield,
   LogOut,
-  Upload
+  Upload,
+  Building
 } from 'lucide-react';
 import KPICards from './components/KPICards';
 import ExpenseAnalytics from './components/ExpenseAnalytics';
@@ -20,6 +21,8 @@ import AssistantChat from './components/AssistantChat';
 import LoginScreen from './components/LoginScreen';
 import ImportManager from './components/ImportManager';
 import FinancialPlan from './components/FinancialPlan';
+import OnboardingWizardModal from './components/OnboardingWizardModal';
+import ConnectBankModal from './components/ConnectBankModal';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -63,6 +66,8 @@ export default function App() {
   const [refreshing, setRefreshing] = useState(false);
   const [user, setUser] = useState(null);
   const [authChecking, setAuthChecking] = useState(true);
+  const [showOnboardingModal, setShowOnboardingModal] = useState(false);
+  const [showConnectModal, setShowConnectModal] = useState(false);
 
   const fetchFinancialPlan = async (forceRefresh = false) => {
     try {
@@ -113,8 +118,12 @@ export default function App() {
       try {
         const response = await fetch('/api/auth/session');
         if (!response.ok) return;
-        setUser(await response.json());
+        const userData = await response.json();
+        setUser(userData);
         await fetchAllData();
+        if (userData && !userData.onboarding_completed) {
+          setShowOnboardingModal(true);
+        }
       } finally {
         setAuthChecking(false);
         setLoading(false);
@@ -134,6 +143,9 @@ export default function App() {
     setUser(data);
     setLoading(true);
     await fetchAllData();
+    if (data && !data.onboarding_completed) {
+      setShowOnboardingModal(true);
+    }
   };
 
   const handleSignup = async (payload) => {
@@ -147,6 +159,9 @@ export default function App() {
     setUser(data);
     setLoading(true);
     await fetchAllData();
+    if (data && !data.onboarding_completed) {
+      setShowOnboardingModal(true);
+    }
   };
 
   const handleLogout = async () => {
@@ -299,6 +314,28 @@ export default function App() {
             </button>
           </div>
 
+          {/* Connect Bank Action Button */}
+          <button
+            onClick={() => setShowConnectModal(true)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '8px 16px',
+              borderRadius: '10px',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '0.85rem',
+              fontWeight: '700',
+              background: 'linear-gradient(135deg, #004c8f, #06b6d4)',
+              color: '#ffffff',
+              boxShadow: '0 0 15px rgba(6, 182, 212, 0.25)',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <Building size={16} /> Connect Bank
+          </button>
+
           <button
             onClick={fetchAllData}
             className="btn-secondary"
@@ -424,6 +461,32 @@ export default function App() {
           )}
         </ErrorBoundary>
       )}
+
+      {/* 60-Second Rapid Onboarding Modal */}
+      <OnboardingWizardModal
+        isOpen={showOnboardingModal}
+        onClose={() => setShowOnboardingModal(false)}
+        onComplete={async () => {
+          setUser((prev) => ({ ...prev, onboarding_completed: true }));
+          await fetchAllData();
+          await fetchFinancialPlan(true);
+        }}
+        onOpenConnectBank={() => {
+          setShowOnboardingModal(false);
+          setShowConnectModal(true);
+        }}
+      />
+
+      {/* Setu Account Aggregator & Bank Statement Modal */}
+      <ConnectBankModal
+        isOpen={showConnectModal}
+        onClose={() => setShowConnectModal(false)}
+        onSyncComplete={async () => {
+          setUser((prev) => ({ ...prev, onboarding_completed: true }));
+          await fetchAllData();
+          await fetchFinancialPlan(true);
+        }}
+      />
     </div>
   );
 }

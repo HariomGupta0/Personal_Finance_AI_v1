@@ -20,7 +20,7 @@ from __future__ import annotations
 import logging
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from pydantic import BaseModel, Field, field_validator
 
 from backend.app.api.deps import (
@@ -38,6 +38,14 @@ from backend.app.services.image_extractor import (
 )
 from backend.app.services.import_pipeline import run_pipeline
 from backend.app.services.ingestion_service import IngestionService
+from backend.app.services.setu_client import setu_client, BANK_METADATA
+from backend.app.services.pdf_parser import (
+    extract_text_from_pdf,
+    convert_pdf_text_to_csv,
+    PDFPasswordRequiredError,
+    PDFIncorrectPasswordError,
+    PDFParseError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -98,6 +106,25 @@ class ConfirmImportRequest(BaseModel):
     import_id: Optional[str] = Field(None, description="Optional idempotency key / import job identifier")
 
 
+class AADiscoverRequest(BaseModel):
+    phone: str = Field(..., min_length=10, max_length=15)
+    fip_id: Optional[str] = None
+
+
+class AAConsentRequest(BaseModel):
+    phone: str = Field(..., min_length=10, max_length=15)
+    fip_id: str
+    account_id: str
+
+
+class AASyncRequest(BaseModel):
+    phone: str = Field(..., min_length=10, max_length=15)
+    otp: str = Field(..., min_length=4, max_length=10)
+    account_id: str
+    fip_id: Optional[str] = None
+    consent_id: Optional[str] = None
+
+
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
@@ -105,12 +132,13 @@ class ConfirmImportRequest(BaseModel):
 @router.post("/csv")
 async def upload_csv(
     file: UploadFile = File(...),
+    password: Optional[str] = Form(None),
     user_id: str = Depends(get_current_user_id),
     user_mapping: Optional[str] = None,   # JSON string of column mapping override
     db: Neo4jService = Depends(get_neo4j_service),
 ):
     """
-    Parse a bank statement CSV and return a preview for user confirmation.
+    Parse a bank statement CSV or PDF and return a preview for user confirmation.
     Does NOT write anything to the database.
     """
     # Size check
@@ -118,7 +146,7 @@ async def upload_csv(
     if len(content) > MAX_CSV_BYTES:
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail=f"CSV file exceeds {MAX_CSV_BYTES // (1024 * 1024)} MB limit.",
+            detail=f"File exceeds {MAX_CSV_BYTES // (1024 * 1024)} MB limit.",
         )
 
     # Empty check
@@ -128,20 +156,50 @@ async def upload_csv(
             detail="Uploaded file is empty.",
         )
 
-    # Binary check (null bytes indicate binary/executable files)
-    if b"\x00" in content[:1024]:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Binary file detected. Only plain-text CSV, TSV, or TXT statements are supported.",
-        )
-
-    # Filename extension check (soft — not a security boundary)
     filename = file.filename or ""
-    if not filename.lower().endswith((".csv", ".tsv", ".txt")):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Only .csv / .tsv / .txt files are accepted.",
-        )
+    is_pdf = filename.lower().endswith(".pdf") or content.startswith(b"%PDF")
+
+    if not is_pdf:
+        # Binary check (null bytes indicate binary/executable files)
+        if b"\x00" in content[:1024]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Binary file detected. Only plain-text CSV, TSV, TXT, or PDF statements are supported.",
+            )
+
+        # Filename extension check (soft — not a security boundary)
+        if not filename.lower().endswith((".csv", ".tsv", ".txt")):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Only .csv / .tsv / .txt / .pdf files are accepted.",
+            )
+    else:
+        # Process PDF statement
+        try:
+            pdf_text = extract_text_from_pdf(content, password=password)
+            csv_str = convert_pdf_text_to_csv(pdf_text)
+            content = csv_str.encode("utf-8")
+        except PDFPasswordRequiredError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={"error_code": "PASSWORD_REQUIRED", "message": str(exc)},
+            )
+        except PDFIncorrectPasswordError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={"error_code": "INCORRECT_PASSWORD", "message": str(exc)},
+            )
+        except PDFParseError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={"error_code": "PDF_PARSE_FAILED", "message": str(exc)},
+            )
+        except Exception as exc:
+            logger.error("Unexpected PDF parsing error: %s", exc)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Failed to process PDF statement: {exc}",
+            )
 
     # Parse user_mapping override if supplied
     parsed_mapping = None
@@ -561,3 +619,158 @@ def _attach_source_ref(db: Neo4jService, label: str, node_id: str, source_ref: s
             session.run(cypher, node_id=node_id, source_ref=source_ref, source_type=source_type or "import")
     except Exception:
         pass  # Non-fatal
+
+
+# ---------------------------------------------------------------------------
+# Account Aggregator (Setu FIU) Endpoints
+# ---------------------------------------------------------------------------
+
+@router.get("/aa/banks")
+async def get_aa_banks():
+    """
+    Returns the supported Indian banks in the Setu Account Aggregator ecosystem.
+    """
+    return {"banks": [{"id": k, **v} for k, v in BANK_METADATA.items()]}
+
+
+@router.post("/aa/discover")
+async def aa_discover(
+    payload: AADiscoverRequest,
+    user_id: str = Depends(get_current_user_id),
+):
+    """
+    Discover accounts linked to mobile number across Indian FIP banks via Setu AA.
+    """
+    result = setu_client.discover_accounts(phone=payload.phone, fip_id=payload.fip_id)
+    return result
+
+
+@router.post("/aa/consent")
+async def aa_consent(
+    payload: AAConsentRequest,
+    user_id: str = Depends(get_current_user_id),
+):
+    """
+    Create a secure consent request session with Setu FIU.
+    """
+    result = setu_client.create_consent_request(
+        phone=payload.phone,
+        fip_id=payload.fip_id,
+        account_id=payload.account_id,
+    )
+    return result
+
+
+@router.post("/aa/sync")
+async def aa_sync(
+    payload: AASyncRequest,
+    user_id: str = Depends(get_current_user_id),
+    db: Neo4jService = Depends(get_neo4j_service),
+):
+    """
+    Verify OTP with Setu, fetch encrypted statements, run deduplication & normalization,
+    and persist verified transactions into the Neo4j Knowledge Graph.
+    """
+    clean_otp = payload.otp.strip()
+    if len(clean_otp) < 4 or not clean_otp.isdigit():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid OTP. Please enter a valid 6-digit verification code.",
+        )
+
+    # 1. Fetch raw statement rows from Setu Client (with resilient circuit breaker fallback)
+    try:
+        statement_res = setu_client.fetch_statement_rows(
+            phone=payload.phone,
+            otp=clean_otp,
+            account_id=payload.account_id,
+            fip_id=payload.fip_id,
+        )
+        raw_rows = statement_res[0] if isinstance(statement_res, tuple) else statement_res
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        )
+    except Exception as exc:
+        logger.error("Failed to fetch statement rows from Setu client: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Failed to fetch bank statements from Account Aggregator: {exc}",
+        )
+
+    if not raw_rows:
+        return {
+            "status": "SUCCESS",
+            "message": "No transactions found for this account period.",
+            "synced_transactions": 0,
+            "duplicate_count": 0,
+            "accounts_linked": 1,
+        }
+
+    # 2. Run Ingestion Pipeline (Normalizes, computes SHA-256 fingerprints, categorizes, detects transfers)
+    pipeline_result = run_pipeline(
+        raw_rows=raw_rows,
+        user_id=user_id,
+        db=db,
+    )
+
+    accepted_rows = pipeline_result.get("accepted_rows", [])
+    duplicate_rows = pipeline_result.get("duplicate_rows", [])
+    transfer_candidates = pipeline_result.get("transfer_candidates", [])
+
+    # 3. Persist to Neo4j Knowledge Graph
+    saved_count = 0
+    skipped_count = len(duplicate_rows)
+    net_balance_delta = 0.0
+
+    if accepted_rows:
+        try:
+            res = db.batch_add_transactions(
+                user_id=user_id,
+                account_id=payload.account_id,
+                rows=accepted_rows,
+            )
+            saved_count = res.get("inserted", 0)
+            skipped_count += res.get("skipped", 0)
+            net_balance_delta = res.get("net_balance_delta", 0.0)
+        except Exception as exc:
+            logger.warning("Batch insertion via account_id failed, falling back to primary account: %s", exc)
+            res = db.batch_add_transactions(
+                user_id=user_id,
+                account_id=None,
+                rows=accepted_rows,
+            )
+            saved_count = res.get("inserted", 0)
+            skipped_count += res.get("skipped", 0)
+            net_balance_delta = res.get("net_balance_delta", 0.0)
+
+    # Link transfer pairs if detected
+    transfers_linked = 0
+    if transfer_candidates and hasattr(db, "link_internal_transfers"):
+        try:
+            transfers_linked = db.link_internal_transfers(user_id=user_id, pairs=transfer_candidates)
+        except Exception as exc:
+            logger.warning("Transfer linking warning: %s", exc)
+
+    # Mark user onboarding completed
+    try:
+        with db.driver.session(database=db.database) as session:
+            session.run(
+                "MATCH (u:User {id: $uid}) SET u.onboarding_completed = true",
+                uid=user_id,
+            )
+    except Exception:
+        pass
+
+    return {
+        "status": "SUCCESS",
+        "message": f"Successfully synced {saved_count} transactions from {payload.fip_id or 'Bank'}.",
+        "synced_transactions": saved_count,
+        "duplicate_count": skipped_count,
+        "accounts_linked": 1,
+        "account_id": payload.account_id,
+        "net_balance_delta": round(net_balance_delta, 2),
+        "transfers_linked": transfers_linked,
+        "sample_transactions": accepted_rows[:5],
+    }
