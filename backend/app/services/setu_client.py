@@ -205,28 +205,37 @@ class SetuClient:
             except Exception as e:
                 logger.warning(f"Setu cloud session fetch failed ({e}). Triggering resilient fallback statement generator.")
 
-        # Circuit Breaker Fallback: Read verified 3-month dataset
-        rows = self._load_fallback_statement(bank_code=bank_code, account_id=account_id)
+        # Circuit Breaker Fallback: Generate persona-specific or multi-month statement
+        rows = self._load_fallback_statement(bank_code=bank_code, account_id=account_id, phone=phone)
         return rows
 
-    def _load_fallback_statement(self, bank_code: str, account_id: str) -> list[dict]:
+    def _load_fallback_statement(self, bank_code: str, account_id: str, phone: str = "") -> list[dict]:
         """
-        Loads the verified multi-month bank statement from disk,
-        adapting dates and accounts dynamically.
+        Loads the verified bank statement adapted dynamically to today's dates
+        and the specific developer persona (High Salaried vs Overdraft vs Standard).
         """
+        clean_phone = phone.strip().replace(" ", "").replace("+91", "")
+        if clean_phone.endswith("9999") or clean_phone == "9999999999":
+            return self._generate_high_salaried_statement(bank_code=bank_code, account_id=account_id)
+        elif clean_phone.endswith("8888") or clean_phone == "8888888888":
+            return self._generate_overdraft_statement(bank_code=bank_code, account_id=account_id)
+
         rows = []
         if os.path.exists(DEMO_STATEMENT_PATH):
             try:
+                today = date.today()
                 with open(DEMO_STATEMENT_PATH, "r", encoding="utf-8") as f:
-                    reader = csv.DictReader(f)
+                    reader = list(csv.DictReader(f))
+                    total_count = len(reader)
                     for idx, r in enumerate(reader):
-                        dt = r.get("Date") or r.get("date")
+                        # Dynamically shift dates to past 60 days
+                        days_offset = int((total_count - idx) * 0.5) + 1
+                        dt = (today - timedelta(days=days_offset)).isoformat()
                         desc = r.get("Narration") or r.get("Description") or r.get("description") or "Bank Transaction"
                         debit = r.get("Debit") or r.get("debit")
                         credit = r.get("Credit") or r.get("credit")
                         bal = r.get("Balance") or r.get("balance")
 
-                        # Format into standard ingestion row
                         is_debit = bool(debit and float(debit or 0) > 0)
                         row_type = "EXPENSE" if is_debit else "INCOME"
                         amount = float(debit) if is_debit else float(credit or 0)
@@ -243,40 +252,112 @@ class SetuClient:
             except Exception as e:
                 logger.error(f"Error reading demo statement CSV: {e}")
 
-        # If file could not be read, generate high-quality fallback dynamically
         if not rows:
-            rows = self._generate_dynamic_statement(bank_code=bank_code, account_id=account_id)
+            rows = self._generate_high_salaried_statement(bank_code=bank_code, account_id=account_id)
 
         return rows
 
-    def _generate_dynamic_statement(self, bank_code: str, account_id: str) -> list[dict]:
-        """Generates dynamic Indian banking transactions for 90 days."""
+    def _generate_high_salaried_statement(self, bank_code: str, account_id: str) -> list[dict]:
+        """Generates dynamic Indian banking transactions for a High-Income/Salaried persona."""
         meta = BANK_METADATA.get(bank_code.upper(), BANK_METADATA["HDFC"])
         today = date.today()
         rows = []
-        balance = 45000.0
+        balance = 185000.0
 
-        # Salary credit
+        # Salary credit 1 (18 days ago)
         rows.append({
             "account_id": account_id,
-            "date": (today - timedelta(days=25)).isoformat(),
-            "description": f"NEFT-{meta['code']}0012-TECHCORP-SALARY-OCT",
-            "narration": f"NEFT-{meta['code']}0012-TECHCORP-SALARY-OCT",
+            "date": (today - timedelta(days=18)).isoformat(),
+            "description": f"NEFT-SALARY-TECHCORP-SOLUTIONS",
+            "narration": f"NEFT-SALARY-TECHCORP-SOLUTIONS",
             "type": "INCOME",
-            "amount": 50000.0,
-            "balance": balance + 50000.0
+            "amount": 125000.0,
+            "balance": balance + 125000.0,
+            "source_ref": f"CMS_SAL_{account_id}_01"
         })
 
-        # Regular living expenses
+        # Performance Bonus (45 days ago)
+        rows.append({
+            "account_id": account_id,
+            "date": (today - timedelta(days=45)).isoformat(),
+            "description": "INFOSYS TECH CONSULTING BONUS",
+            "narration": "INFOSYS TECH CONSULTING BONUS",
+            "type": "INCOME",
+            "amount": 55000.0,
+            "balance": balance + 55000.0,
+            "source_ref": f"CMS_BONUS_{account_id}_02"
+        })
+
+        # High-salaried living expenses
         expenses = [
-            ("Swiggy Food Delivery", 420.0, 2),
-            ("Zomato Online Order", 650.0, 5),
-            ("Uber India Rides", 340.0, 7),
-            ("Tata Power Electricity Bill", 1850.0, 10),
-            ("DMart Supermarket Grocery", 3200.0, 14),
-            ("Apollo Pharmacy Medicine", 840.0, 18),
-            ("Airtel Broadband Fiber", 999.0, 21),
-            ("Amazon India Retail", 1450.0, 23)
+            ("Swiggy Gourmet Feast", 940.0, 1, "FOOD"),
+            ("Uber Premier Airport Drop", 850.0, 2, "TRAVEL"),
+            ("DMart Supermarket Grocery", 4200.0, 3, "GROCERIES"),
+            ("Zomato Dinner Order", 680.0, 4, "FOOD"),
+            ("Cult.fit Annual Fitness Subscription", 3500.0, 6, "HEALTH"),
+            ("Amazon India Electronics Order", 3890.0, 8, "SHOPPING"),
+            ("Starbucks Coffee & Snacks", 480.0, 9, "FOOD"),
+            ("Sharma Apartments Monthly House Rent", 32000.0, 11, "RENT"),
+            ("Tata Power Electricity BESCOM", 2850.0, 13, "UTILITIES"),
+            ("Airtel Xstream Fiber Broadband", 1199.0, 15, "UTILITIES"),
+            ("Myntra Fashion Shopping", 2450.0, 17, "SHOPPING"),
+            ("Apollo 247 Pharmacy Healthcare", 780.0, 20, "HEALTH"),
+            ("HDFC Regalia Credit Card Payment", 18500.0, 22, "FINANCIAL"),
+            ("Swiggy Instamart Daily Needs", 520.0, 24, "GROCERIES"),
+            ("Zara Apparel Premium Fashion", 4800.0, 27, "SHOPPING"),
+            ("Ola Electric Scooter Ride", 220.0, 29, "TRAVEL"),
+            ("PVR Cinemas Movie & Snacks", 1100.0, 32, "ENTERTAINMENT"),
+            ("Apple Services Monthly iCloud", 499.0, 35, "UTILITIES"),
+            ("Blinkit Quick Delivery Store", 640.0, 38, "GROCERIES"),
+            ("HPCL Petrol Fuel Auto Refill", 2400.0, 41, "TRAVEL"),
+            ("Sharma Apartments Monthly House Rent", 32000.0, 42, "RENT"),
+            ("Zerodha Broking Stock Investment", 15000.0, 46, "INVESTMENT")
+        ]
+
+        for desc, amt, days_ago, ref in expenses:
+            dt = (today - timedelta(days=days_ago)).isoformat()
+            balance -= amt
+            rows.append({
+                "account_id": account_id,
+                "date": dt,
+                "description": desc,
+                "narration": desc,
+                "type": "EXPENSE",
+                "amount": amt,
+                "balance": balance,
+                "source_ref": f"TX_{account_id}_{days_ago}_{ref}"
+            })
+
+        return rows
+
+    def _generate_overdraft_statement(self, bank_code: str, account_id: str) -> list[dict]:
+        """Generates dynamic Indian banking transactions for an Overdraft/Variable persona."""
+        today = date.today()
+        rows = []
+        balance = 12000.0
+
+        # Freelance Payout
+        rows.append({
+            "account_id": account_id,
+            "date": (today - timedelta(days=12)).isoformat(),
+            "description": "RAZORPAY FREELANCE ESCROW DISBURSEMENT",
+            "narration": "RAZORPAY FREELANCE ESCROW DISBURSEMENT",
+            "type": "INCOME",
+            "amount": 38000.0,
+            "balance": balance + 38000.0,
+            "source_ref": f"RZP_{account_id}_01"
+        })
+
+        expenses = [
+            ("Overdraft Protection Charge", 590.0, 2),
+            ("Zomato Late Night Delivery", 420.0, 3),
+            ("Airtel Prepaid Mobile Recharge", 399.0, 5),
+            ("Electricity Bill Bescom", 1450.0, 8),
+            ("Uber Auto Trip", 140.0, 10),
+            ("Local Kirana Store Groceries", 1800.0, 14),
+            ("Credit Card Minimum Due AutoDebit", 6500.0, 18),
+            ("Pharmacy Medicine Purchase", 680.0, 21),
+            ("Late Payment Surcharge", 750.0, 25)
         ]
         for desc, amt, days_ago in expenses:
             dt = (today - timedelta(days=days_ago)).isoformat()
@@ -288,8 +369,11 @@ class SetuClient:
                 "narration": desc,
                 "type": "EXPENSE",
                 "amount": amt,
-                "balance": balance
+                "balance": balance,
+                "source_ref": f"TX_{account_id}_{days_ago}_OD"
             })
+
+        return rows
 
         return rows
 

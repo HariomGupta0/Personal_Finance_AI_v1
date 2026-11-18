@@ -639,7 +639,10 @@ export default function ConnectBankModal({ isOpen, onClose, onSyncComplete }) {
 
                 <button
                   type="button"
-                  onClick={onClose}
+                  onClick={() => {
+                    if (onSyncComplete) onSyncComplete();
+                    onClose();
+                  }}
                   className="btn-primary"
                   style={{ width: '100%', padding: '12px' }}
                 >

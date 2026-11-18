@@ -715,34 +715,74 @@ async def aa_sync(
         db=db,
     )
 
+    valid_rows = pipeline_result.get("valid_rows", [])
     accepted_rows = pipeline_result.get("accepted_rows", [])
     duplicate_rows = pipeline_result.get("duplicate_rows", [])
     transfer_candidates = pipeline_result.get("transfer_candidates", [])
 
-    # 3. Persist to Neo4j Knowledge Graph
+    # Target account info
+    target_acc_id = payload.account_id or f"ACC_{payload.fip_id or 'HDFC'}_{payload.phone[-4:]}"
+    bank_name = f"{payload.fip_id or 'Bank'} Account"
+    if payload.fip_id and payload.fip_id.upper() in BANK_METADATA:
+        bank_name = BANK_METADATA[payload.fip_id.upper()]["name"]
+
+    # 1. Guarantee account node exists and is connected to user in Neo4j
+    try:
+        with db.driver.session(database=db.database) as session:
+            session.run(
+                """
+                MATCH (u:User {id: $uid})
+                MERGE (u)-[:HAS_ACCOUNT]->(a:Account {id: $acc_id})
+                ON CREATE SET 
+                    a.name = $bank_name,
+                    a.bank = $bank_name,
+                    a.type = "SAVINGS",
+                    a.balance_paise = 0,
+                    a.balance = 0.0,
+                    a.created_at = datetime()
+                ON MATCH SET
+                    a.bank = coalesce(a.bank, $bank_name),
+                    a.name = coalesce(a.name, $bank_name)
+                """,
+                uid=user_id,
+                acc_id=target_acc_id,
+                bank_name=bank_name,
+            )
+    except Exception as exc:
+        logger.warning("Error ensuring account node exists: %s", exc)
+
+    # 2. Persist to Neo4j Knowledge Graph:
+    # batch_add_transactions natively deduplicates by exact SHA-256 fingerprint on the account.
+    rows_to_insert = [
+        r for r in valid_rows 
+        if r.get("duplicate_status") != "CONFIRMED_DUPLICATE"
+    ]
+    if not rows_to_insert and valid_rows:
+        rows_to_insert = valid_rows
+
     saved_count = 0
     skipped_count = len(duplicate_rows)
     net_balance_delta = 0.0
 
-    if accepted_rows:
+    if rows_to_insert:
         try:
             res = db.batch_add_transactions(
                 user_id=user_id,
-                account_id=payload.account_id,
-                rows=accepted_rows,
+                account_id=target_acc_id,
+                rows=rows_to_insert,
             )
             saved_count = res.get("inserted", 0)
-            skipped_count += res.get("skipped", 0)
+            skipped_count = res.get("skipped", 0)
             net_balance_delta = res.get("net_balance_delta", 0.0)
         except Exception as exc:
             logger.warning("Batch insertion via account_id failed, falling back to primary account: %s", exc)
             res = db.batch_add_transactions(
                 user_id=user_id,
                 account_id=None,
-                rows=accepted_rows,
+                rows=rows_to_insert,
             )
             saved_count = res.get("inserted", 0)
-            skipped_count += res.get("skipped", 0)
+            skipped_count = res.get("skipped", 0)
             net_balance_delta = res.get("net_balance_delta", 0.0)
 
     # Link transfer pairs if detected
