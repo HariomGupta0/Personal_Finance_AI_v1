@@ -1069,6 +1069,60 @@ def parse_question_rules(question: str, conversation_history: list[dict] | None 
             "is_date_ambiguous": False,
         }
 
+    # ─────────────────────────────────────────────────────────────────────────
+    # O. General Financial Knowledge & Literacy (New Topic)
+    # ─────────────────────────────────────────────────────────────────────────
+    has_personal_ledger = any(re.search(r"\b" + re.escape(phrase) + r"\b", q_lower) for phrase in [
+        "my account", "my bank", "my balance", "my transactions", "my spending", "my expense",
+        "my expenses", "my money", "my runway", "my debt", "my emi", "my liabilities",
+        "my savings", "my savings rate", "my health score", "my financial situation", "my finances",
+        "i spend", "i spent", "did i spend", "have i spent", "did i buy", "can i afford", "can i buy",
+        "can i spend", "should i buy", "is it safe to buy", "is it safe to spend", "where did my money go"
+    ])
+    is_purchase_attempt = bool(candidate_amounts and any(w in q_lower for w in ["buy", "purchase", "spend", "afford", "cost"]))
+
+    if not has_personal_ledger and not is_purchase_attempt:
+        general_concepts = [
+            "index fund", "index funds", "mutual fund", "mutual funds", "sip", "systematic investment",
+            "swp", "stp", "etf", "etfs", "exchange traded fund", "compound interest", "simple interest",
+            "inflation", "purchasing power", "50/30/20", "50-30-20", "rule of 72", "emergency fund rule",
+            "equity", "equities", "debt fund", "debt funds", "sovereign gold bond", "sgb", "gold etf",
+            "ppf", "public provident fund", "nps", "national pension", "fixed deposit", "recurring deposit",
+            "fd", "rd", "p/e ratio", "pe ratio", "market cap", "nifty", "sensex", "bull market", "bear market",
+            "diversification", "asset allocation", "rebalancing", "dividend", "dividends", "capital gains",
+            "ltcg", "stcg", "liquid fund", "credit score", "cibil score", "cibil", "credit card", "debit card",
+            "section 80c", "80c", "tax regime", "tax deduction", "tax deductions", "tax slab", "tax slabs",
+            "term insurance", "term life", "health insurance", "life insurance", "repo rate", "cagr", "xirr",
+            "financial literacy", "budgeting rule", "budgeting rules", "rupee cost averaging", "arbitrage fund"
+        ]
+        has_concept = any(re.search(r"\b" + re.escape(c) + r"\b", q_lower) for c in general_concepts)
+
+        inquiry_patterns = [
+            r"\b(?:what is|what are|what does|what do you mean by)\b",
+            r"\b(?:how does|how do|how to calculate|how can one)\b",
+            r"\b(?:explain|define|definition of|tell me about|meaning of)\b",
+            r"\b(?:difference between|differ between|versus|\bvs\b|compare)\b",
+            r"\b(?:pros and cons|advantages of|benefits of|disadvantages of)\b",
+            r"\b(?:is it better to|should one invest|why should|when to)\b",
+            r"\b(?:guide to|tips for|rules of|principles of|rule of)\b",
+        ]
+        has_inquiry = any(re.search(pat, q_lower) for pat in inquiry_patterns)
+
+        if has_concept and (has_inquiry or len(q_lower.split()) <= 4):
+            return {
+                "intent": "GENERAL_FINANCIAL_KNOWLEDGE",
+                "amount": None,
+                "category": None,
+                "reporting_date": reporting_date,
+                "raw_query": q,
+                "is_followup": False,
+                "turn_type": "NEW_TOPIC",
+                "needs_clarification": False,
+                "clarification_type": None,
+                "clarification_message": None,
+                "is_date_ambiguous": False,
+            }
+
     return None
 
 
@@ -1082,7 +1136,7 @@ def parse_question_llm(question: str) -> dict:
     prompt = f"""
 You are a precise financial intent parser. Classify the user query into a JSON object matching this schema:
 {{
-  "intent": "<PURCHASE_SAFETY | SAVINGS_ANALYSIS | EMERGENCY_FUND_ANALYSIS | EMERGENCY_RUNWAY_ANALYSIS | EXPENSE_BREAKDOWN | CATEGORY_EXPENSE | MERCHANT_EXPENSE | TOP_TRANSACTIONS | PERIOD_COMPARISON | SPENDING_TREND | DEBT_ANALYSIS | FINANCIAL_HEALTH | FINANCIAL_SUMMARY | UNKNOWN>",
+  "intent": "<PURCHASE_SAFETY | SAVINGS_ANALYSIS | EMERGENCY_FUND_ANALYSIS | EMERGENCY_RUNWAY_ANALYSIS | EXPENSE_BREAKDOWN | CATEGORY_EXPENSE | MERCHANT_EXPENSE | TOP_TRANSACTIONS | PERIOD_COMPARISON | SPENDING_TREND | DEBT_ANALYSIS | FINANCIAL_HEALTH | FINANCIAL_SUMMARY | GENERAL_FINANCIAL_KNOWLEDGE | UNKNOWN>",
   "amount": <number or null>,
   "category": "<category string or null>",
   "merchant": "<merchant name string or null>",
@@ -1090,6 +1144,10 @@ You are a precise financial intent parser. Classify the user query into a JSON o
   "amount_min": <number or null>,
   "amount_max": <number or null>
 }}
+
+Note:
+- Use GENERAL_FINANCIAL_KNOWLEDGE when the user asks conceptual, general, or educational questions about finance, investing, taxes, budgeting rules, or market terminology without querying their personal bank statement.
+- Use UNKNOWN when the query is completely unrelated to finance (e.g. general trivia, coding, jokes).
 
 User Query: "{question}"
 Return ONLY raw JSON. No explanation, no markdown.

@@ -124,6 +124,54 @@ class TestTransactionIngestionIntent:
         assert res["amount"] == 500.0
 
 
+class TestGeneralFinancialKnowledgeIntent:
+    def test_index_fund_question(self):
+        res = parse_question_rules("What is an index fund?")
+        assert res is not None
+        assert res["intent"] == "GENERAL_FINANCIAL_KNOWLEDGE"
+
+    def test_compound_interest_question(self):
+        res = parse_question_rules("Explain compound interest")
+        assert res is not None
+        assert res["intent"] == "GENERAL_FINANCIAL_KNOWLEDGE"
+
+    def test_50_30_20_rule_question(self):
+        res = parse_question_rules("What is the 50/30/20 rule?")
+        assert res is not None
+        assert res["intent"] == "GENERAL_FINANCIAL_KNOWLEDGE"
+
+    def test_mutual_fund_how_it_works(self):
+        res = parse_question_rules("How does a mutual fund work?")
+        assert res is not None
+        assert res["intent"] == "GENERAL_FINANCIAL_KNOWLEDGE"
+
+    def test_insurance_difference(self):
+        res = parse_question_rules("Difference between term insurance and life insurance")
+        assert res is not None
+        assert res["intent"] == "GENERAL_FINANCIAL_KNOWLEDGE"
+
+    def test_section_80c_question(self):
+        res = parse_question_rules("What is Section 80C?")
+        assert res is not None
+        assert res["intent"] == "GENERAL_FINANCIAL_KNOWLEDGE"
+
+    def test_cibil_score_question(self):
+        res = parse_question_rules("What is a good CIBIL score?")
+        assert res is not None
+        assert res["intent"] == "GENERAL_FINANCIAL_KNOWLEDGE"
+
+    def test_personal_query_not_hijacked_as_general(self):
+        # Queries with personal indicators must NOT become GENERAL_FINANCIAL_KNOWLEDGE
+        res_spend = parse_question_rules("Can I spend ₹15,000 on a phone?")
+        assert res_spend["intent"] == "PURCHASE_SAFETY"
+
+        res_sav = parse_question_rules("What is my savings rate?")
+        assert res_sav["intent"] == "SAVINGS_ANALYSIS"
+
+        res_exp = parse_question_rules("How much did I spend on food?")
+        assert res_exp["intent"] == "CATEGORY_EXPENSE"
+
+
 class TestUnknownFallback:
     def test_unmatched_rules_without_llm(self):
         res = parse_question("Random irrelevant gibberish xyz abc", use_llm_fallback=False)

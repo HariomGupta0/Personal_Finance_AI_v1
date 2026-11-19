@@ -325,3 +325,65 @@ def test_neo4j_service_retrieve_grounded_subgraph_user_isolation():
     assert mock_session.run.call_count >= 1
     call_kwargs = mock_session.run.call_args[1]
     assert call_kwargs["user_id"] == "USER_ALICE"
+
+
+# =====================================================================
+# Test 5: General Financial Knowledge Fast-Path (Sync & Async)
+# =====================================================================
+def test_general_financial_knowledge_sync():
+    """
+    Verifies that general educational queries bypass Neo4j and deterministic math
+    and directly return an educational explanation with zero graph latency.
+    """
+    mock_db = MagicMock(spec=Neo4jService)
+    rag = GraphRAG(db=mock_db)
+
+    with patch("backend.app.rag.graph_rag.ask_llm") as mock_ask:
+        mock_ask.return_value = {
+            "content": "An index fund is a type of mutual fund tracking a market index.",
+            "prompt_tokens": 120,
+            "completion_tokens": 80,
+            "tokens_used": 200,
+            "model": "gpt-oss-120b",
+        }
+
+        res = rag.process_query("What is an index fund?")
+
+        assert res["intent"] == "GENERAL_FINANCIAL_KNOWLEDGE"
+        assert res["decision"] == "EDUCATIONAL"
+        assert res["evidence"] == []
+        assert "index fund" in res["explanation"].lower()
+        assert res["latency_breakdown"]["graph_ms"] == 0
+        assert res["latency_breakdown"]["engine_ms"] == 0
+        # Ensure Neo4j was NEVER queried
+        mock_db.retrieve_grounded_subgraph.assert_not_called()
+        mock_db.get_financial_context.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_general_financial_knowledge_async():
+    """
+    Verifies that async processing of general knowledge questions routes correctly
+    to ask_llm_async and produces educational result without graph retrieval.
+    """
+    mock_db = MagicMock(spec=Neo4jService)
+    rag = GraphRAG(db=mock_db)
+
+    with patch("backend.app.rag.graph_rag.ask_llm_async") as mock_ask_async:
+        mock_ask_async.return_value = {
+            "content": "The 50/30/20 rule divides your after-tax income into needs, wants, and savings.",
+            "prompt_tokens": 110,
+            "completion_tokens": 70,
+            "tokens_used": 180,
+            "model": "gpt-oss-120b",
+        }
+
+        res = await rag.process_query_async("Explain the 50/30/20 rule")
+
+        assert res["intent"] == "GENERAL_FINANCIAL_KNOWLEDGE"
+        assert res["decision"] == "EDUCATIONAL"
+        assert res["evidence"] == []
+        assert "50/30/20" in res["explanation"]
+        assert res["latency_breakdown"]["graph_ms"] == 0
+        mock_db.retrieve_grounded_subgraph.assert_not_called()
+

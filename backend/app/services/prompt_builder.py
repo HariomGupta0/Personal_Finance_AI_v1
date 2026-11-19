@@ -393,11 +393,46 @@ def build_financial_explanation_prompt(
     )
 
 
+def build_general_financial_knowledge_prompt(
+    question: str,
+    conversation_history: list[dict] | None = None,
+) -> str:
+    """
+    Builds an educational financial literacy prompt for conceptual, market,
+    tax, or budgeting principles that do not query personal bank transactions.
+    """
+    history_context = ""
+    if conversation_history:
+        turns = []
+        for turn in conversation_history[-4:]:
+            r = turn.get("role", "user").capitalize()
+            c = str(turn.get("content", ""))[:500]
+            turns.append(f"{r}: {c}")
+        if turns:
+            history_context = "Recent conversation context:\n" + "\n".join(turns) + "\n\n"
+
+    return f"""You are a knowledgeable, accessible, and structured financial literacy educator.
+Explain the following financial concept clearly and concisely for an everyday user.
+
+{history_context}User Financial Question: "{question}"
+
+Formatting & Structure Guidelines:
+1. **The Core Concept**: Define or explain the principle simply in 1-2 paragraphs using accessible, plain language. Avoid unnecessary jargon.
+2. **How It Works / Real-World Example**: Provide a concrete, easy-to-understand analogy or practical example (using typical numbers, e.g., ₹5,000 monthly SIP or typical Indian market contexts like Nifty 50, FD, PPF, or standard tax slabs where relevant).
+3. **Key Advantages & Considerations**: Use clean bullet points to outline the main benefits and things to watch out for / risks.
+4. **Actionable Takeaway**: Provide 1-2 practical rules of thumb or best practices (e.g. "Start early", "Match with your risk horizon").
+5. **Educational Disclaimer**: Always finish with this exact footer:
+   \n---\n*ℹ️ Note: This explanation is for general financial education and literacy, not personalized investment or tax advice.*
+
+Respond directly in clean GitHub-flavored markdown. Do NOT invent fake personal transactions or reference nonexistent account numbers."""
+
+
 __all__ = [
     "PromptTemplate",
     "PROMPT_REGISTRY",
     "get_prompt_template",
     "list_prompt_versions",
     "build_financial_explanation_prompt",
+    "build_general_financial_knowledge_prompt",
 ]
 

@@ -20,7 +20,10 @@ from backend.app.engine.financial_engine import (
 )
 
 from backend.config import DEFAULT_PROMPT_VERSION
-from backend.app.services.prompt_builder import build_financial_explanation_prompt
+from backend.app.services.prompt_builder import (
+    build_financial_explanation_prompt,
+    build_general_financial_knowledge_prompt,
+)
 from backend.app.services.llm_service import ask_llm, ask_llm_async
 from backend.app.services.verifier import verify_explanation, build_retry_feedback, VerificationResult
 from backend.app.services.response_generator import build_deterministic_fallback
@@ -722,6 +725,61 @@ class GraphRAG:
                 "tokens": {"prompt": 0, "completion": 0, "total": 0},
             }
 
+        if intent == "GENERAL_FINANCIAL_KNOWLEDGE":
+            llm_t0 = time.perf_counter()
+            prompt = build_general_financial_knowledge_prompt(
+                question=question,
+                conversation_history=conversation_history,
+            )
+            llm_result = ask_llm(prompt)
+            llm_ms = (time.perf_counter() - llm_t0) * 1000
+            total_ms = (time.perf_counter() - pipeline_start) * 1000
+
+            explanation_text = llm_result.get("content", "").strip()
+            if not explanation_text:
+                explanation_text = (
+                    "I encountered an issue generating an explanation for this financial topic. "
+                    "Please try asking again."
+                )
+
+            logger.info("general_knowledge_done | user=%s | llm_ms=%.0f | total_ms=%.0f", user_id, llm_ms, total_ms)
+            return {
+                "query": question,
+                "intent": "GENERAL_FINANCIAL_KNOWLEDGE",
+                "decision": "EDUCATIONAL",
+                "math_result": {"decision": "EDUCATIONAL", "topic": question},
+                "evidence": [],
+                "evidence_metadata": {
+                    "reporting_period": None,
+                    "data_freshness": f"As of {date.today().isoformat()}",
+                    "methodology_formula": None,
+                    "calculation_method": "General financial literacy reasoning",
+                    "caveats": ["Educational financial literacy content; not personalized investment or tax advice."],
+                    "is_sufficient_data": True,
+                },
+                "source_identifiers": [],
+                "graph_paths": [],
+                "explanation": explanation_text,
+                "is_followup": parsed.get("is_followup", False),
+                "turn_type": parsed.get("turn_type", "NEW_TOPIC"),
+                "needs_clarification": False,
+                "clarification_type": None,
+                "recalculated_fresh": True,
+                "latency_breakdown": {
+                    "nlu_ms": round(nlu_ms, 1),
+                    "graph_ms": 0,
+                    "engine_ms": 0,
+                    "llm_ms": round(llm_ms, 1),
+                    "total_ms": round(total_ms, 1),
+                },
+                "tokens": {
+                    "prompt": llm_result.get("prompt_tokens", 0),
+                    "completion": llm_result.get("completion_tokens", 0),
+                    "total": llm_result.get("tokens_used", 0),
+                },
+                "model": llm_result.get("model", ""),
+            }
+
         # ── Stage 2: Graph retrieval ──────────────────────────────────────────
         graph_t0 = time.perf_counter()
         context = self.retrieve_subgraph(user_id, intent, entities=parsed)
@@ -1001,6 +1059,61 @@ class GraphRAG:
                 "recalculated_fresh": True,
                 "latency_breakdown": {"nlu_ms": round(nlu_ms, 1), "graph_ms": 0, "engine_ms": 0, "llm_ms": 0, "total_ms": round(total_ms, 1)},
                 "tokens": {"prompt": 0, "completion": 0, "total": 0},
+            }
+
+        if intent == "GENERAL_FINANCIAL_KNOWLEDGE":
+            llm_t0 = time.perf_counter()
+            prompt = build_general_financial_knowledge_prompt(
+                question=question,
+                conversation_history=conversation_history,
+            )
+            llm_result = await ask_llm_async(prompt)
+            llm_ms = (time.perf_counter() - llm_t0) * 1000
+            total_ms = (time.perf_counter() - pipeline_start) * 1000
+
+            explanation_text = llm_result.get("content", "").strip()
+            if not explanation_text:
+                explanation_text = (
+                    "I encountered an issue generating an explanation for this financial topic. "
+                    "Please try asking again."
+                )
+
+            logger.info("async_general_knowledge_done | user=%s | llm_ms=%.0f | total_ms=%.0f", user_id, llm_ms, total_ms)
+            return {
+                "query": question,
+                "intent": "GENERAL_FINANCIAL_KNOWLEDGE",
+                "decision": "EDUCATIONAL",
+                "math_result": {"decision": "EDUCATIONAL", "topic": question},
+                "evidence": [],
+                "evidence_metadata": {
+                    "reporting_period": None,
+                    "data_freshness": f"As of {date.today().isoformat()}",
+                    "methodology_formula": None,
+                    "calculation_method": "General financial literacy reasoning",
+                    "caveats": ["Educational financial literacy content; not personalized investment or tax advice."],
+                    "is_sufficient_data": True,
+                },
+                "source_identifiers": [],
+                "graph_paths": [],
+                "explanation": explanation_text,
+                "is_followup": parsed.get("is_followup", False),
+                "turn_type": parsed.get("turn_type", "NEW_TOPIC"),
+                "needs_clarification": False,
+                "clarification_type": None,
+                "recalculated_fresh": True,
+                "latency_breakdown": {
+                    "nlu_ms": round(nlu_ms, 1),
+                    "graph_ms": 0,
+                    "engine_ms": 0,
+                    "llm_ms": round(llm_ms, 1),
+                    "total_ms": round(total_ms, 1),
+                },
+                "tokens": {
+                    "prompt": llm_result.get("prompt_tokens", 0),
+                    "completion": llm_result.get("completion_tokens", 0),
+                    "total": llm_result.get("tokens_used", 0),
+                },
+                "model": llm_result.get("model", ""),
             }
 
         # ── Stage 2: Graph retrieval ──────────────────────────────────────────
