@@ -67,7 +67,82 @@ export default function FinancialPlan({ plan, loading, onRefresh, onOpenImport, 
     );
   }
 
-  if (!plan) return null;
+  if (!plan) {
+    return (
+      <div
+        className="glass-card animate-fade-in"
+        style={{
+          marginTop: '28px',
+          padding: '32px 28px',
+          background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(17, 24, 39, 0.7) 100%)',
+          border: '1px solid rgba(99, 102, 241, 0.22)',
+          borderRadius: '16px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '20px',
+          boxShadow: '0 8px 32px -4px rgba(0, 0, 0, 0.25)'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '18px', maxWidth: '640px' }}>
+          <div
+            style={{
+              width: '52px',
+              height: '52px',
+              borderRadius: '14px',
+              background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(168, 85, 247, 0.25) 100%)',
+              border: '1px solid rgba(99, 102, 241, 0.4)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--accent-primary)',
+              flexShrink: 0
+            }}
+          >
+            <Sparkles size={24} />
+          </div>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+              <h3 style={{ fontSize: '1.18rem', color: 'var(--text-main)', fontWeight: '600', margin: 0 }}>
+                Personalized Financial Plan
+              </h3>
+              <span className="badge badge-info" style={{ fontSize: '0.72rem', padding: '2px 8px' }}>
+                AI Advisory
+              </span>
+            </div>
+            <p style={{ fontSize: '0.84rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
+              Generate an audit of your discretionary spending, 3-month emergency buffer, debt burden, and prioritized action plan based on your statement data.
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={() => onRefresh && onRefresh()}
+          disabled={loading}
+          className="btn-primary"
+          style={{
+            padding: '11px 22px',
+            fontSize: '0.9rem',
+            fontWeight: '600',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            borderRadius: '10px',
+            background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+            boxShadow: '0 4px 14px rgba(99, 102, 241, 0.35)',
+            cursor: 'pointer',
+            border: 'none',
+            color: '#fff',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          <Zap size={16} />
+          <span>Generate Financial Plan</span>
+        </button>
+      </div>
+    );
+  }
 
   const {
     financial_summary = {},

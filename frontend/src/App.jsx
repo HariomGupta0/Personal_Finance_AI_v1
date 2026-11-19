@@ -103,8 +103,7 @@ export default function App() {
         const txData = await txRes.json();
         setTransactions(txData.transactions || []);
       }
-      // Also refresh the personalized financial plan asynchronously
-      fetchFinancialPlan();
+      // Note: Financial plan is now generated on-demand when the user clicks the button
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
     } finally {
