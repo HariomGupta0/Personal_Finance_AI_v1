@@ -473,6 +473,13 @@ def confirm_import(
                 is_repeat = (int(total_inserted) == 0 and int(total_skipped) > 0)
             except Exception:
                 is_repeat = False
+
+            try:
+                from backend.app.services.financial_planner import invalidate_plan_cache
+                invalidate_plan_cache(user_id)
+            except Exception:
+                pass
+
             return {
                 "status": "SUCCESS",
                 "saved": total_inserted,

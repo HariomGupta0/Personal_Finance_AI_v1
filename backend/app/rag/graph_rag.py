@@ -740,10 +740,10 @@ class GraphRAG:
         used_version = prompt_version or DEFAULT_PROMPT_VERSION
 
         evidence_for_prompt = dict(math_result)
-        evidence_for_prompt["_source_identifiers"] = evidence_payload.get("source_identifiers", [])
+        evidence_for_prompt["_source_identifiers"] = evidence_payload.get("source_identifiers", [])[:10]
         evidence_for_prompt["_graph_paths"] = evidence_payload.get("graph_paths", [])
         evidence_for_prompt["_grounded_facts"] = [
-            {"label": item["label"], "value": item["value"], "source": item["source"], "node_ids": item.get("source_node_ids", [])}
+            {"label": item["label"], "value": item["value"], "source": item["source"], "node_ids": item.get("source_node_ids", [])[:3]}
             for item in evidence_payload.get("facts", [])
         ]
 
@@ -1021,10 +1021,10 @@ class GraphRAG:
         used_version = prompt_version or DEFAULT_PROMPT_VERSION
 
         evidence_for_prompt = dict(math_result)
-        evidence_for_prompt["_source_identifiers"] = evidence_payload.get("source_identifiers", [])
+        evidence_for_prompt["_source_identifiers"] = evidence_payload.get("source_identifiers", [])[:10]
         evidence_for_prompt["_graph_paths"] = evidence_payload.get("graph_paths", [])
         evidence_for_prompt["_grounded_facts"] = [
-            {"label": item["label"], "value": item["value"], "source": item["source"], "node_ids": item.get("source_node_ids", [])}
+            {"label": item["label"], "value": item["value"], "source": item["source"], "node_ids": item.get("source_node_ids", [])[:3]}
             for item in evidence_payload.get("facts", [])
         ]
 

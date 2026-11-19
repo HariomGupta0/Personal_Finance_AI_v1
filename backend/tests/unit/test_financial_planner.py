@@ -23,7 +23,15 @@ from backend.app.services.financial_planner import (
     _detect_recurring_commitments,
     _calculate_budget_limits,
     _calculate_savings_and_emergency_targets,
+    invalidate_plan_cache,
 )
+
+
+@pytest.fixture(autouse=True)
+def _clear_plan_cache():
+    invalidate_plan_cache()
+    yield
+    invalidate_plan_cache()
 from backend.tests.unit.test_financial_engine import (
     MOCK_CONTEXT,
     ZERO_INCOME_CONTEXT,

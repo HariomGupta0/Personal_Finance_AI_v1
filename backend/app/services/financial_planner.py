@@ -22,6 +22,7 @@ from __future__ import annotations
 from decimal import Decimal
 import json
 import logging
+import time
 from datetime import date, datetime
 from typing import Any, Optional
 
@@ -574,6 +575,39 @@ async def _enrich_with_llm(
     return deterministic_base
 
 
+_PLAN_CACHE: dict[str, tuple[float, dict]] = {}
+_PLAN_CACHE_TTL_SECONDS = 600.0  # 10 minutes cache
+
+
+def _context_cache_key(user_id: str, context: dict) -> str:
+    """Generate a cache key based on user and context contents."""
+    txs = context.get("transactions", [])
+    incs = context.get("incomes", [])
+    accs = context.get("accounts", [])
+    loans = context.get("loans", [])
+    goals = context.get("goals", [])
+    # Distinctive signature based on item counts and first/last items
+    sig = (
+        f"{user_id}:tx={len(txs)}:inc={len(incs)}:acc={len(accs)}:loan={len(loans)}:goal={len(goals)}"
+    )
+    if txs and isinstance(txs[0], dict):
+        sig += f":t0={txs[0].get('id', '')}"
+    if incs and isinstance(incs[0], dict):
+        sig += f":i0={incs[0].get('id', incs[0].get('amount', ''))}"
+    return sig
+
+
+def invalidate_plan_cache(user_id: str | None = None) -> None:
+    """Invalidate plan cache for a specific user, or all users if user_id is None."""
+    global _PLAN_CACHE
+    if user_id:
+        keys_to_del = [k for k in _PLAN_CACHE if k.startswith(f"{user_id}:")]
+        for k in keys_to_del:
+            _PLAN_CACHE.pop(k, None)
+    else:
+        _PLAN_CACHE.clear()
+
+
 async def generate_financial_plan(
     context: dict,
     user_id: str = "U001",
@@ -599,6 +633,14 @@ async def generate_financial_plan(
     dict
         Structured financial plan ready for frontend consumption and automated testing.
     """
+    base_key = _context_cache_key(user_id, context) if isinstance(context, dict) else user_id
+    cache_key = f"{base_key}:ai={use_ai}"
+    if not force_refresh and cache_key in _PLAN_CACHE:
+        cached_time, cached_plan = _PLAN_CACHE[cache_key]
+        if time.time() - cached_time < _PLAN_CACHE_TTL_SECONDS:
+            logger.debug("Returning cached financial plan for user %s", user_id)
+            return cached_plan
+
     if not isinstance(context, dict):
         context = {}
 
@@ -686,7 +728,7 @@ async def generate_financial_plan(
         enriched_narrative = deterministic_base
 
     # 8. Assemble Complete Final Plan
-    return {
+    plan_result = {
         "status": "SUCCESS",
         "user_id": user_id,
         "generated_at": datetime.now().isoformat(),
@@ -731,3 +773,6 @@ async def generate_financial_plan(
             "model": enriched_narrative.get("model"),
         },
     }
+
+    _PLAN_CACHE[cache_key] = (time.time(), plan_result)
+    return plan_result
