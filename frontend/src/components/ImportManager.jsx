@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import DocumentScanner from './DocumentScanner';
 import {
   Upload,
   FileText,
@@ -634,13 +633,9 @@ export default function ImportManager({ onImportComplete, onViewPlan }) {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [editingId, setEditingId] = useState(null);
 
-  // Image & Scanner state
+  // Image state
   const [imageResult, setImageResult] = useState(null);
   const [showImageForm, setShowImageForm] = useState(false);
-  const [scanningFile, setScanningFile] = useState(null);
-  const [isScanning, setIsScanning] = useState(false);
-  const [scanError, setScanError] = useState(null);
-  const [scanExtractedData, setScanExtractedData] = useState(null);
   const [uploadedImageFile, setUploadedImageFile] = useState(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState(null);
 
@@ -655,7 +650,6 @@ export default function ImportManager({ onImportComplete, onViewPlan }) {
     setStep(0); setLoading(false); setError(null);
     setParseResult(null); setRows([]); setSelectedIds(new Set()); setEditingId(null);
     setImageResult(null); setShowImageForm(false); setConfirmResult(null);
-    setScanningFile(null); setIsScanning(false); setScanError(null); setScanExtractedData(null);
     setUploadedImageFile(null);
     if (imagePreviewUrl) {
       URL.revokeObjectURL(imagePreviewUrl);
@@ -703,14 +697,11 @@ export default function ImportManager({ onImportComplete, onViewPlan }) {
   };
 
   // -------------------------------------------------------------------------
-  // Image & Document Scanner upload handler
+  // Image upload handler
   // -------------------------------------------------------------------------
   const handleImageFile = async (file) => {
     setError(null);
-    setScanningFile(file);
-    setIsScanning(true);
-    setScanError(null);
-    setScanExtractedData(null);
+    setLoading(true);
     setUploadedImageFile(file);
 
     if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
@@ -734,11 +725,13 @@ export default function ImportManager({ onImportComplete, onViewPlan }) {
         throw new Error(errorMsg);
       }
 
-      setScanExtractedData(data);
-      setIsScanning(false);
+      setImageResult(data);
+      setShowImageForm(true);
+      setStep(1);
     } catch (err) {
-      setScanError(err.message);
-      setIsScanning(false);
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -861,13 +854,13 @@ export default function ImportManager({ onImportComplete, onViewPlan }) {
 
       <Steps current={step} />
 
-      {/* ── STEP 0: UPLOAD & SCANNER ── */}
+      {/* ── STEP 0: UPLOAD ── */}
       {step === 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {/* Mode selector */}
           <div style={{ display: 'flex', gap: 8 }}>
             {[['csv', FileText, 'CSV Bank Statement'], ['image', Image, 'Receipt / Screenshot']].map(([m, Icon, label]) => (
-              <button key={m} onClick={() => { setMode(m); setError(null); setScanningFile(null); }}
+              <button key={m} onClick={() => { setMode(m); setError(null); }}
                 style={{
                   flex: 1, padding: '10px 16px', borderRadius: 10, border: 'none', cursor: 'pointer',
                   display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center',
@@ -881,41 +874,12 @@ export default function ImportManager({ onImportComplete, onViewPlan }) {
             ))}
           </div>
 
-          {scanningFile ? (
-            <DocumentScanner
-              file={scanningFile}
-              isProcessing={isScanning}
-              error={scanError}
-              extractedData={scanExtractedData}
-              onComplete={(data) => {
-                setImageResult(data);
-                setShowImageForm(true);
-                setScanningFile(null);
-                setIsScanning(false);
-                setStep(1);
-              }}
-              onCancel={() => {
-                setScanningFile(null);
-                setIsScanning(false);
-                setScanError(null);
-                setScanExtractedData(null);
-                setUploadedImageFile(null);
-                if (imagePreviewUrl) {
-                  URL.revokeObjectURL(imagePreviewUrl);
-                  setImagePreviewUrl(null);
-                }
-              }}
-            />
-          ) : (
-            <>
-              <DropZone mode={mode} onFile={mode === 'csv' ? handleCsvFile : handleImageFile} disabled={loading} />
+          <DropZone mode={mode} onFile={mode === 'csv' ? handleCsvFile : handleImageFile} disabled={loading} />
 
-              {loading && mode === 'csv' && (
-                <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
-                  <Spinner /> Uploading and parsing CSV…
-                </div>
-              )}
-            </>
+          {loading && (
+            <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+              <Spinner /> {mode === 'csv' ? 'Uploading and parsing CSV…' : 'Uploading and analyzing document…'}
+            </div>
           )}
 
           {error && <Alert type="error">{error}</Alert>}
