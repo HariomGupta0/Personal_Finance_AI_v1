@@ -22,7 +22,9 @@ import {
   Plus,
   Trash2,
   X,
-  Check
+  Check,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 
 const sym = '₹';
@@ -38,6 +40,7 @@ const GOAL_PRESETS = [
 ];
 
 export default function FinancialPlan({ plan, loading, onRefresh, onOpenImport, onDataChange }) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const [activeBudgetFilter, setActiveBudgetFilter] = useState('all'); // 'all' | 'needs' | 'wants'
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
   const [goalFormData, setGoalFormData] = useState({
@@ -51,47 +54,33 @@ export default function FinancialPlan({ plan, loading, onRefresh, onOpenImport, 
   const [goalError, setGoalError] = useState('');
   const [goalNotification, setGoalNotification] = useState('');
 
-  if (loading && !plan) {
-    return (
-      <div className="glass-card" style={{ marginTop: '28px', padding: '40px 24px', textAlign: 'center' }}>
-        <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '56px', height: '56px', borderRadius: '16px', background: 'rgba(99, 102, 241, 0.1)', color: 'var(--accent-primary)', marginBottom: '16px' }}>
-          <Sparkles size={28} className="glow-pulse" />
-        </div>
-        <h3 style={{ fontSize: '1.25rem', marginBottom: '8px', color: 'var(--text-main)' }}>
-          Generating Your Personalized Financial Plan...
-        </h3>
-        <p style={{ fontSize: '0.86rem', color: 'var(--text-muted)', maxWidth: '520px', margin: '0 auto' }}>
-          Analyzing transaction statements, computing discretionary spending caps, auditing recurring commitments, and calculating your emergency fund runway.
-        </p>
-      </div>
-    );
-  }
-
-  if (!plan) {
+  // 1. Collapsed state (Default): Render a slim, elegant 1-line banner
+  if (!isExpanded) {
     return (
       <div
         className="glass-card animate-fade-in"
         style={{
           marginTop: '28px',
-          padding: '32px 28px',
-          background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(17, 24, 39, 0.7) 100%)',
-          border: '1px solid rgba(99, 102, 241, 0.22)',
-          borderRadius: '16px',
+          padding: '14px 22px',
+          background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(15, 23, 42, 0.8) 100%)',
+          border: '1px solid rgba(99, 102, 241, 0.25)',
+          borderRadius: '14px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: 'wrap',
-          gap: '20px',
-          boxShadow: '0 8px 32px -4px rgba(0, 0, 0, 0.25)'
+          gap: '14px',
+          boxShadow: '0 4px 20px -2px rgba(0, 0, 0, 0.35)',
+          transition: 'all 0.25s ease'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '18px', maxWidth: '640px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
           <div
             style={{
-              width: '52px',
-              height: '52px',
-              borderRadius: '14px',
-              background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(168, 85, 247, 0.25) 100%)',
+              width: '36px',
+              height: '36px',
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(6, 182, 212, 0.25) 100%)',
               border: '1px solid rgba(99, 102, 241, 0.4)',
               display: 'flex',
               alignItems: 'center',
@@ -100,46 +89,124 @@ export default function FinancialPlan({ plan, loading, onRefresh, onOpenImport, 
               flexShrink: 0
             }}
           >
-            <Sparkles size={24} />
+            <Sparkles size={18} />
           </div>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-              <h3 style={{ fontSize: '1.18rem', color: 'var(--text-main)', fontWeight: '600', margin: 0 }}>
-                Personalized Financial Plan
-              </h3>
-              <span className="badge badge-info" style={{ fontSize: '0.72rem', padding: '2px 8px' }}>
-                AI Advisory
-              </span>
-            </div>
-            <p style={{ fontSize: '0.84rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
-              Generate an audit of your discretionary spending, 3-month emergency buffer, debt burden, and prioritized action plan based on your statement data.
-            </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.92rem', color: 'var(--text-main)', fontWeight: '600' }}>
+              Personalized Financial Plan: Audit &amp; Budget Recommendations
+            </span>
+            <span className="badge badge-info" style={{ fontSize: '0.68rem', padding: '2px 8px' }}>
+              {plan ? 'Ready to View' : 'AI Advisory'}
+            </span>
           </div>
         </div>
 
         <button
-          onClick={() => onRefresh && onRefresh()}
+          onClick={() => {
+            if (!plan && onRefresh) onRefresh();
+            setIsExpanded(true);
+          }}
           disabled={loading}
           className="btn-primary"
           style={{
-            padding: '11px 22px',
-            fontSize: '0.9rem',
+            padding: '8px 18px',
+            fontSize: '0.84rem',
             fontWeight: '600',
             display: 'inline-flex',
             alignItems: 'center',
             gap: '8px',
-            borderRadius: '10px',
-            background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-            boxShadow: '0 4px 14px rgba(99, 102, 241, 0.35)',
+            borderRadius: '9px',
             cursor: 'pointer',
-            border: 'none',
-            color: '#fff',
-            transition: 'all 0.2s ease'
           }}
         >
-          <Zap size={16} />
-          <span>Generate Financial Plan</span>
+          {loading ? (
+            <>
+              <RefreshCw size={14} className="glow-pulse" />
+              <span>Generating...</span>
+            </>
+          ) : (
+            <>
+              <span>{plan ? 'View Plan' : 'Generate & View Plan'}</span>
+              <ChevronDown size={15} />
+            </>
+          )}
         </button>
+      </div>
+    );
+  }
+
+  // 2. Loading state while expanded
+  if (loading && !plan) {
+    return (
+      <div className="glass-card" style={{ marginTop: '28px', padding: '36px 24px', textAlign: 'center' }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '50px', height: '50px', borderRadius: '15px', background: 'rgba(99, 102, 241, 0.1)', color: 'var(--accent-primary)', marginBottom: '16px' }}>
+          <Sparkles size={26} className="glow-pulse" />
+        </div>
+        <h3 style={{ fontSize: '1.2rem', marginBottom: '8px', color: 'var(--text-main)' }}>
+          Generating Your Personalized Financial Plan...
+        </h3>
+        <p style={{ fontSize: '0.84rem', color: 'var(--text-muted)', maxWidth: '520px', margin: '0 auto 16px auto' }}>
+          Analyzing transaction statements, computing discretionary spending caps, auditing recurring commitments, and calculating your emergency fund runway.
+        </p>
+        <button
+          onClick={() => setIsExpanded(false)}
+          className="btn-secondary"
+          style={{ fontSize: '0.8rem', padding: '6px 14px' }}
+        >
+          ✕ Cancel
+        </button>
+      </div>
+    );
+  }
+
+  // 3. Fallback if expanded without plan and not loading
+  if (!plan) {
+    return (
+      <div
+        className="glass-card animate-fade-in"
+        style={{
+          marginTop: '28px',
+          padding: '24px 26px',
+          background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(17, 24, 39, 0.7) 100%)',
+          border: '1px solid rgba(99, 102, 241, 0.22)',
+          borderRadius: '16px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '16px',
+        }}
+      >
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+            <h3 style={{ fontSize: '1.05rem', color: 'var(--text-main)', fontWeight: '600', margin: 0 }}>
+              Personalized Financial Plan
+            </h3>
+            <span className="badge badge-info" style={{ fontSize: '0.68rem', padding: '2px 8px' }}>
+              AI Advisory
+            </span>
+          </div>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
+            Click generate to produce your budget limits, emergency cushion timeline, and action items.
+          </p>
+        </div>
+
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button
+            onClick={() => onRefresh && onRefresh()}
+            className="btn-primary"
+            style={{ padding: '8px 18px', fontSize: '0.84rem' }}
+          >
+            <Zap size={15} /> Generate Plan
+          </button>
+          <button
+            onClick={() => setIsExpanded(false)}
+            className="btn-secondary"
+            style={{ padding: '8px 14px', fontSize: '0.84rem' }}
+          >
+            ✕ Hide
+          </button>
+        </div>
       </div>
     );
   }
@@ -334,16 +401,39 @@ export default function FinancialPlan({ plan, loading, onRefresh, onOpenImport, 
           </div>
         </div>
 
-        <button
-          onClick={onRefresh}
-          disabled={loading}
-          className="btn-secondary"
-          style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', fontSize: '0.84rem' }}
-          title="Regenerate plan using latest statement transactions"
-        >
-          <RefreshCw size={15} className={loading ? 'glow-pulse' : ''} />
-          {loading ? 'Re-analyzing...' : 'Refresh Plan'}
-        </button>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <button
+            onClick={onRefresh}
+            disabled={loading}
+            className="btn-secondary"
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', fontSize: '0.84rem' }}
+            title="Regenerate plan using latest statement transactions"
+          >
+            <RefreshCw size={15} className={loading ? 'glow-pulse' : ''} />
+            {loading ? 'Re-analyzing...' : 'Refresh Plan'}
+          </button>
+
+          <button
+            onClick={() => setIsExpanded(false)}
+            className="btn-secondary"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 16px',
+              fontSize: '0.84rem',
+              fontWeight: '600',
+              background: 'rgba(239, 68, 68, 0.12)',
+              borderColor: 'rgba(239, 68, 68, 0.35)',
+              color: '#f87171',
+              cursor: 'pointer'
+            }}
+            title="Hide financial plan and return to dashboard"
+          >
+            <ChevronUp size={15} />
+            <span>✕ Hide Plan ▲</span>
+          </button>
+        </div>
       </div>
 
       {/* Data Limitations Banner (if income is unrecorded or history short) */}
@@ -1377,6 +1467,32 @@ export default function FinancialPlan({ plan, loading, onRefresh, onOpenImport, 
             );
           })}
         </div>
+      </div>
+
+      {/* Bottom Dismiss / Collapse Footer Button */}
+      <div style={{ display: 'flex', justifyContent: 'center', marginTop: '30px', paddingTop: '20px', borderTop: '1px solid var(--border-subtle)' }}>
+        <button
+          onClick={() => {
+            setIsExpanded(false);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          className="btn-secondary"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 24px',
+            fontSize: '0.86rem',
+            fontWeight: '600',
+            background: 'rgba(255, 255, 255, 0.05)',
+            borderColor: 'var(--border-subtle)',
+            color: 'var(--text-main)',
+            cursor: 'pointer'
+          }}
+        >
+          <ChevronUp size={16} />
+          <span>✕ Collapse Plan &amp; Return to Dashboard</span>
+        </button>
       </div>
 
     </section>
