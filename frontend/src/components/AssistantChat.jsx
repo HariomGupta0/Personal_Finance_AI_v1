@@ -17,7 +17,12 @@ import {
   AlertTriangle,
   Calendar,
   Clock,
-  Code2
+  Code2,
+  BookOpen,
+  Layers,
+  Scale,
+  Compass,
+  Info
 } from 'lucide-react';
 
 const SUGGESTIONS = [
@@ -29,6 +34,33 @@ const SUGGESTIONS = [
   "Give me a financial summary",
   "How much debt do I have?"
 ];
+
+function parseEducationalSections(text) {
+  if (!text) return null;
+
+  // 1. Concept Spotlight / The Core Concept
+  const conceptMatch = text.match(/(?:(?:###?|\*\*|📖)\s*)?(?:The\s+)?(?:Core\s+Concept|Concept\s+Spotlight|Concept\s+Overview)[:*]*\s*\n([\s\S]*?)(?=(?:(?:###?|\*\*|⚙️)\s*)?How\s+It\s+Works|(?:(?:###?|\*\*|⚖️)\s*)?(?:Key\s+)?Advantages|$)/i);
+
+  // 2. How It Works & Practical Example / Real-World Example
+  const exampleMatch = text.match(/(?:(?:###?|\*\*|⚙️)\s*)?How\s+It\s+Works[^\n]*\n([\s\S]*?)(?=(?:(?:###?|\*\*|⚖️)\s*)?(?:Key\s+)?Advantages|(?:(?:###?|\*\*|🧭)\s*)?(?:Best\s+Practices|Actionable\s+Takeaway)|$)/i);
+
+  // 3. Advantages & Considerations / Watch-Outs
+  const prosConsMatch = text.match(/(?:(?:###?|\*\*|⚖️)\s*)?(?:Key\s+)?Advantages[^\n]*\n([\s\S]*?)(?=(?:(?:###?|\*\*|🧭)\s*)?(?:Best\s+Practices|Actionable\s+Takeaway|Actionable\s+Takeaways|Smart\s+Rules)|---\s*\n\s*\*?ℹ️|$)/i);
+
+  // 4. Best Practices & Rules of Thumb / Actionable Takeaways
+  const takeawaysMatch = text.match(/(?:(?:###?|\*\*|🧭)\s*)?(?:Best\s+Practices|Actionable\s+Takeaway|Actionable\s+Takeaways|Smart\s+Rules)[^\n]*\n([\s\S]*?)(?=(?:---\s*\n\s*\*?ℹ️|\*?ℹ️\s*Note:|$))/i);
+
+  if (!conceptMatch && !exampleMatch && !prosConsMatch && !takeawaysMatch) {
+    return null;
+  }
+
+  return {
+    concept: conceptMatch ? conceptMatch[1].trim() : null,
+    example: exampleMatch ? exampleMatch[1].trim() : null,
+    prosCons: prosConsMatch ? prosConsMatch[1].trim() : null,
+    takeaways: takeawaysMatch ? takeawaysMatch[1].trim() : null
+  };
+}
 
 function parseAssistantSections(text) {
   if (!text) return null;
@@ -51,7 +83,74 @@ function parseAssistantSections(text) {
   };
 }
 
-function FormattedAssistantMessage({ text }) {
+function FormattedAssistantMessage({ text, intent }) {
+  const isEducational = intent === 'GENERAL_FINANCIAL_KNOWLEDGE';
+  const eduSections = parseEducationalSections(text);
+
+  // Render Educational Cards if it's general knowledge or matched educational sections
+  if (isEducational || eduSections) {
+    if (eduSections) {
+      return (
+        <div className="ai-bubble-container">
+          {/* 1. Concept Spotlight Card */}
+          {eduSections.concept && (
+            <div className="ai-card-edu-concept">
+              <div className="ai-card-edu-concept-header">
+                <BookOpen size={15} /> Concept Spotlight
+              </div>
+              <div className="ai-card-edu-concept-content ai-md-body">
+                <ReactMarkdown>{eduSections.concept}</ReactMarkdown>
+              </div>
+            </div>
+          )}
+
+          {/* 2. How It Works & Practical Example */}
+          {eduSections.example && (
+            <div className="ai-card-edu-example">
+              <div className="ai-card-edu-example-header">
+                <Layers size={15} /> How It Works & Practical Example
+              </div>
+              <div className="ai-md-body">
+                <ReactMarkdown>{eduSections.example}</ReactMarkdown>
+              </div>
+            </div>
+          )}
+
+          {/* 3. Advantages & Considerations */}
+          {eduSections.prosCons && (
+            <div className="ai-card-edu-proscons">
+              <div className="ai-card-edu-proscons-header">
+                <Scale size={15} /> Advantages & Considerations
+              </div>
+              <div className="ai-md-body">
+                <ReactMarkdown>{eduSections.prosCons}</ReactMarkdown>
+              </div>
+            </div>
+          )}
+
+          {/* 4. Best Practices & Rules of Thumb */}
+          {eduSections.takeaways && (
+            <div className="ai-card-edu-rules">
+              <div className="ai-card-edu-rules-header">
+                <Compass size={15} /> Smart Rules of Thumb
+              </div>
+              <div className="ai-md-body">
+                <ReactMarkdown>{eduSections.takeaways}</ReactMarkdown>
+              </div>
+            </div>
+          )}
+
+          {/* 5. Educational Disclaimer Badge */}
+          <div className="ai-card-edu-disclaimer">
+            <Info size={13} />
+            <span>General financial literacy guide • Not personalized investment or tax advice</span>
+          </div>
+        </div>
+      );
+    }
+  }
+
+  // Personal Analytical Sections
   const sections = parseAssistantSections(text);
 
   if (!sections) {
@@ -296,7 +395,7 @@ export default function AssistantChat() {
                 color: 'var(--text-main)',
                 width: '100%'
               }}>
-                <FormattedAssistantMessage text={msg.text} />
+                <FormattedAssistantMessage text={msg.text} intent={msg.intent} />
               </div>
             )}
 
