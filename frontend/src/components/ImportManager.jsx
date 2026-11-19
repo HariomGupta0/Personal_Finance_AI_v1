@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import DocumentScanner from './DocumentScanner';
 import {
   Upload,
@@ -16,6 +16,9 @@ import {
   Send,
   RefreshCw,
   Sparkles,
+  ZoomIn,
+  ExternalLink,
+  CheckSquare,
 } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
@@ -354,10 +357,10 @@ function RowEditor({ row, onSave, onCancel }) {
 }
 
 // ---------------------------------------------------------------------------
-// Image review form
+// Image review form (Side-by-Side Document Verification)
 // ---------------------------------------------------------------------------
 
-function ImageReviewForm({ extraction, onSave, onCancel }) {
+function ImageReviewForm({ extraction, file, previewUrl, onSave, onCancel }) {
   const [form, setForm] = useState({
     date: extraction.date || '',
     amount: extraction.amount || '',
@@ -365,66 +368,189 @@ function ImageReviewForm({ extraction, onSave, onCancel }) {
     type: extraction.type || 'EXPENSE',
     category: '',
   });
+  const [zoomLevel, setZoomLevel] = useState(1);
+
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const inputStyle = {
     background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-subtle)',
-    borderRadius: 8, padding: '6px 10px', color: 'var(--text-main)',
-    fontSize: '0.82rem', outline: 'none', width: '100%',
+    borderRadius: 8, padding: '8px 12px', color: 'var(--text-main)',
+    fontSize: '0.86rem', outline: 'none', width: '100%',
   };
 
+  const isPdf = file?.type === 'application/pdf' || file?.name?.toLowerCase().endsWith('.pdf');
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      {extraction.warnings && extraction.warnings.length > 0 && (
-        <Alert type="warning">
-          {extraction.warnings.map((w, i) => <div key={i}>• {w}</div>)}
-        </Alert>
-      )}
-      <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-        Review and correct the extracted fields before importing.
-        Fields highlighted with a ⚠️ require special attention.
-      </p>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-        <div>
-          <label style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginBottom: 4, display: 'block' }}>
-            {!form.date ? '⚠️ ' : ''}Date (YYYY-MM-DD)
-          </label>
-          <input style={{ ...inputStyle, borderColor: !form.date ? 'rgba(245,158,11,0.4)' : undefined }}
-            value={form.date} onChange={e => set('date', e.target.value)} />
+    <div className="receipt-split-container">
+      {/* ── Left Pane: Document Inspector ── */}
+      <div className="receipt-inspector-pane">
+        <div className="receipt-inspector-header">
+          <div className="receipt-inspector-title">
+            <Eye size={15} style={{ color: 'var(--accent-secondary)' }} />
+            <span>Document Preview</span>
+          </div>
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            {previewUrl && !isPdf && (
+              <>
+                <button
+                  type="button"
+                  className="receipt-tool-btn"
+                  onClick={() => setZoomLevel(z => (z === 1 ? 1.5 : z === 1.5 ? 2 : 1))}
+                  title="Toggle Zoom"
+                >
+                  <ZoomIn size={13} /> {Math.round(zoomLevel * 100)}%
+                </button>
+                <a
+                  href={previewUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="receipt-tool-btn"
+                  title="Open original image in new tab"
+                >
+                  <ExternalLink size={13} />
+                </a>
+              </>
+            )}
+            <span className="badge badge-info" style={{ fontSize: '0.68rem', textTransform: 'none' }}>
+              {file?.name ? (file.name.length > 20 ? file.name.slice(0, 18) + '…' : file.name) : 'Receipt / Bill'}
+            </span>
+          </div>
         </div>
-        <div>
-          <label style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginBottom: 4, display: 'block' }}>
-            {!form.amount ? '⚠️ ' : ''}Amount (₹)
-          </label>
-          <input style={{ ...inputStyle, borderColor: !form.amount ? 'rgba(245,158,11,0.4)' : undefined }}
-            type="number" step="0.01" min="0.01"
-            value={form.amount} onChange={e => set('amount', parseFloat(e.target.value))} />
-        </div>
-        <div style={{ gridColumn: '1 / -1' }}>
-          <label style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginBottom: 4, display: 'block' }}>
-            {!form.description ? '⚠️ ' : ''}Merchant / Recipient
-          </label>
-          <input style={inputStyle} value={form.description}
-            onChange={e => set('description', e.target.value)} />
-        </div>
-        <div>
-          <label style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginBottom: 4, display: 'block' }}>Type</label>
-          <select style={inputStyle} value={form.type} onChange={e => set('type', e.target.value)}>
-            <option value="EXPENSE">EXPENSE</option>
-            <option value="INCOME">INCOME</option>
-          </select>
-        </div>
-        <div>
-          <label style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginBottom: 4, display: 'block' }}>Category (optional)</label>
-          <input style={inputStyle} value={form.category} onChange={e => set('category', e.target.value)} placeholder="e.g. Food" />
+
+        <div className="receipt-inspector-viewport">
+          {previewUrl && !isPdf ? (
+            <div className="receipt-image-scroll-wrapper">
+              <img
+                src={previewUrl}
+                alt="Uploaded receipt"
+                className="receipt-inspector-image"
+                style={{
+                  transform: `scale(${zoomLevel})`,
+                  transformOrigin: 'top center',
+                  transition: 'transform 0.2s ease',
+                  cursor: zoomLevel > 1 ? 'grab' : 'zoom-in',
+                }}
+                onClick={() => setZoomLevel(z => (z === 1 ? 1.5 : z === 1.5 ? 2 : 1))}
+              />
+            </div>
+          ) : previewUrl && isPdf ? (
+            <div className="doc-scanner-pdf-card" style={{ height: '100%' }}>
+              <FileText size={52} className="doc-scanner-pdf-icon" />
+              <span className="doc-scanner-pdf-name">{file?.name}</span>
+              <a
+                href={previewUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="btn-secondary"
+                style={{ marginTop: 12, fontSize: '0.78rem', padding: '6px 12px' }}
+              >
+                <ExternalLink size={13} /> Open PDF in Viewer
+              </a>
+            </div>
+          ) : (
+            <div className="doc-scanner-placeholder">
+              <FileText size={36} />
+              <span>No document preview available</span>
+            </div>
+          )}
         </div>
       </div>
-      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-        <button className="btn-secondary" style={{ padding: '6px 14px', fontSize: '0.8rem' }} onClick={onCancel}>Cancel</button>
-        <button className="btn-primary" style={{ padding: '6px 14px', fontSize: '0.8rem' }}
-          disabled={!form.amount || !form.date || !form.description}
-          onClick={() => onSave(form)}>
-          Confirm &amp; Import
-        </button>
+
+      {/* ── Right Pane: Extracted Fields Review Form ── */}
+      <div className="receipt-form-pane">
+        <div className="receipt-form-header">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <CheckSquare size={16} style={{ color: 'var(--accent-primary)' }} />
+            <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-main)' }}>
+              Extracted Fields
+            </h4>
+          </div>
+          {extraction.confidence && (
+            <span className={`badge ${extraction.confidence === 'high' ? 'badge-success' : 'badge-warning'}`}>
+              {extraction.confidence} confidence
+            </span>
+          )}
+        </div>
+
+        {extraction.warnings && extraction.warnings.length > 0 && (
+          <Alert type="warning">
+            {extraction.warnings.map((w, i) => <div key={i}>• {w}</div>)}
+          </Alert>
+        )}
+
+        <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+          Review and correct the extracted fields before importing. Fields highlighted with a ⚠️ require special attention.
+        </p>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div>
+            <label style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginBottom: 4, display: 'block' }}>
+              {!form.date ? '⚠️ ' : ''}Date (YYYY-MM-DD)
+            </label>
+            <input
+              style={{ ...inputStyle, borderColor: !form.date ? 'rgba(245,158,11,0.5)' : undefined }}
+              value={form.date}
+              placeholder="YYYY-MM-DD"
+              onChange={e => set('date', e.target.value)}
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginBottom: 4, display: 'block' }}>
+              {!form.amount ? '⚠️ ' : ''}Amount (₹)
+            </label>
+            <input
+              style={{ ...inputStyle, borderColor: !form.amount ? 'rgba(245,158,11,0.5)' : undefined }}
+              type="number"
+              step="0.01"
+              min="0.01"
+              value={form.amount}
+              onChange={e => set('amount', parseFloat(e.target.value) || '')}
+            />
+          </div>
+
+          <div style={{ gridColumn: '1 / -1' }}>
+            <label style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginBottom: 4, display: 'block' }}>
+              {!form.description ? '⚠️ ' : ''}Merchant / Recipient
+            </label>
+            <input
+              style={inputStyle}
+              value={form.description}
+              placeholder="Merchant or recipient name"
+              onChange={e => set('description', e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginBottom: 4, display: 'block' }}>Type</label>
+            <select style={inputStyle} value={form.type} onChange={e => set('type', e.target.value)}>
+              <option value="EXPENSE">EXPENSE</option>
+              <option value="INCOME">INCOME</option>
+            </select>
+          </div>
+
+          <div>
+            <label style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginBottom: 4, display: 'block' }}>Category (optional)</label>
+            <input
+              style={inputStyle}
+              value={form.category}
+              onChange={e => set('category', e.target.value)}
+              placeholder="e.g. Food, Groceries, Utilities"
+            />
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 10, paddingTop: 14, borderTop: '1px solid var(--border-subtle)' }}>
+          <button className="btn-secondary" style={{ padding: '8px 16px', fontSize: '0.84rem' }} onClick={onCancel}>
+            Cancel
+          </button>
+          <button
+            className="btn-primary"
+            style={{ padding: '8px 18px', fontSize: '0.84rem' }}
+            disabled={!form.amount || !form.date || !form.description}
+            onClick={() => onSave(form)}
+          >
+            Confirm &amp; Import
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -515,6 +641,8 @@ export default function ImportManager({ onImportComplete, onViewPlan }) {
   const [isScanning, setIsScanning] = useState(false);
   const [scanError, setScanError] = useState(null);
   const [scanExtractedData, setScanExtractedData] = useState(null);
+  const [uploadedImageFile, setUploadedImageFile] = useState(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState(null);
 
   // Confirm result
   const [confirmResult, setConfirmResult] = useState(null);
@@ -528,7 +656,20 @@ export default function ImportManager({ onImportComplete, onViewPlan }) {
     setParseResult(null); setRows([]); setSelectedIds(new Set()); setEditingId(null);
     setImageResult(null); setShowImageForm(false); setConfirmResult(null);
     setScanningFile(null); setIsScanning(false); setScanError(null); setScanExtractedData(null);
+    setUploadedImageFile(null);
+    if (imagePreviewUrl) {
+      URL.revokeObjectURL(imagePreviewUrl);
+      setImagePreviewUrl(null);
+    }
   };
+
+  useEffect(() => {
+    return () => {
+      if (imagePreviewUrl) {
+        URL.revokeObjectURL(imagePreviewUrl);
+      }
+    };
+  }, [imagePreviewUrl]);
 
   // -------------------------------------------------------------------------
   // CSV upload handler
@@ -570,6 +711,11 @@ export default function ImportManager({ onImportComplete, onViewPlan }) {
     setIsScanning(true);
     setScanError(null);
     setScanExtractedData(null);
+    setUploadedImageFile(file);
+
+    if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+    const url = URL.createObjectURL(file);
+    setImagePreviewUrl(url);
 
     try {
       const body = new FormData();
@@ -588,7 +734,6 @@ export default function ImportManager({ onImportComplete, onViewPlan }) {
         throw new Error(errorMsg);
       }
 
-      // Signal scanner component that real backend analysis arrived
       setScanExtractedData(data);
       setIsScanning(false);
     } catch (err) {
@@ -754,6 +899,11 @@ export default function ImportManager({ onImportComplete, onViewPlan }) {
                 setIsScanning(false);
                 setScanError(null);
                 setScanExtractedData(null);
+                setUploadedImageFile(null);
+                if (imagePreviewUrl) {
+                  URL.revokeObjectURL(imagePreviewUrl);
+                  setImagePreviewUrl(null);
+                }
               }}
             />
           ) : (
@@ -896,11 +1046,13 @@ export default function ImportManager({ onImportComplete, onViewPlan }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <Alert type={imageResult.requires_review ? 'warning' : 'info'}>
             {imageResult.requires_review
-              ? 'Review required — extraction confidence is not high or transaction status is unclear. Verify all fields before importing.'
-              : 'Fields extracted with high confidence. Please verify before importing.'}
+              ? 'Review required — extraction confidence is not high or transaction status is unclear. Verify all fields side by side before importing.'
+              : 'Fields extracted with high confidence. Please verify side by side before importing.'}
           </Alert>
           <ImageReviewForm
             extraction={imageResult.extraction}
+            file={uploadedImageFile}
+            previewUrl={imagePreviewUrl}
             onSave={handleImageSave}
             onCancel={reset}
           />
