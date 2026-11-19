@@ -12,14 +12,20 @@ import {
 export default function KPICards({ summary, health, runway, debt }) {
   const sym = "₹";
 
+  const totalBalance = (summary?.accounts || []).reduce((acc, curr) => acc + (curr.balance || 0), 0);
+  const accountCount = summary?.accounts?.length || 0;
+  const accountSubtitle = accountCount > 1 
+    ? `${accountCount} Linked Accounts (${summary?.accounts?.map(a => a.bank).filter(Boolean).slice(0, 2).join(', ')}${accountCount > 2 ? '...' : ''})`
+    : (summary?.accounts?.[0]?.bank || "No account available");
+
   const cards = [
     {
       title: "Current Balance",
-      value: `${sym}${(summary?.accounts?.[0]?.balance ?? 0).toLocaleString()}`,
-      subtitle: summary?.accounts?.[0]?.bank || "No account available",
+      value: `${sym}${totalBalance.toLocaleString()}`,
+      subtitle: accountSubtitle,
       icon: Wallet,
       color: "var(--accent-primary)",
-      badge: "Active",
+      badge: accountCount > 1 ? `${accountCount} Banks` : "Active",
       badgeType: "badge-info"
     },
     {

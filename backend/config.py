@@ -24,6 +24,12 @@ VISION_MODEL = os.getenv("VISION_MODEL", "qwen/qwen3.8-27b")
 DEFAULT_PROMPT_VERSION = os.getenv("DEFAULT_PROMPT_VERSION", "v1.1")
 
 
+# Setu Account Aggregator Configuration
+SETU_CLIENT_ID = os.getenv("SETU_CLIENT_ID", "")
+SETU_CLIENT_SECRET = os.getenv("SETU_CLIENT_SECRET", "")
+SETU_PRODUCT_INSTANCE_ID = os.getenv("SETU_PRODUCT_INSTANCE_ID", "")
+SETU_BASE_URL = os.getenv("SETU_BASE_URL", "https://fiu-sandbox.setu.co")
+
 # Application authentication. These must be configured in the deployment
 # environment; no browser-supplied user identifier is trusted by the API.
 APP_USERNAME = os.getenv("APP_USERNAME", "Rahul")
