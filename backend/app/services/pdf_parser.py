@@ -77,76 +77,100 @@ def extract_text_from_pdf(content: bytes, password: Optional[str] = None) -> str
     return "\n".join(full_text)
 
 
+def _format_csv_row(txn_date: str, remaining: str) -> Optional[str]:
+    amounts = AMOUNT_REGEX.findall(remaining)
+    if not amounts:
+        return None
+
+    desc_part = remaining
+    for amt in amounts:
+        desc_part = desc_part.replace(amt, "", 1)
+
+    desc = re.sub(r"\s+", " ", desc_part).strip(" -|;,")
+    if not desc:
+        desc = "Bank Transaction"
+
+    clean_desc = desc.replace('"', '""')
+    debit = ""
+    credit = ""
+    balance = ""
+
+    lower_line = f"{desc} {remaining}".lower()
+    if len(amounts) == 1:
+        amt_val = amounts[0]
+        if any(k in lower_line for k in ["cr", "credit", "deposit", "salary"]):
+            credit = amt_val
+        else:
+            debit = amt_val
+    elif len(amounts) == 2:
+        amt_val = amounts[0]
+        balance = amounts[1]
+        if any(k in lower_line for k in ["cr", "credit", "deposit", "refund", "salary"]):
+            credit = amt_val
+        else:
+            debit = amt_val
+    elif len(amounts) >= 3:
+        debit = amounts[0]
+        credit = amounts[1]
+        balance = amounts[2]
+
+    return f'"{txn_date}","{clean_desc}","{debit}","{credit}","{balance}"'
+
+
 def convert_pdf_text_to_csv(text: str) -> str:
     """
     Heuristically extracts transaction table rows from extracted text and
     formats them into a clean CSV string suitable for parse_csv.
+    Supports both single-line tabular rows and multi-line column extractions.
     """
     lines = [line.strip() for line in text.split("\n") if line.strip()]
-    csv_rows: List[str] = ["Date,Description,Debit,Credit,Balance"]
 
+    # Strategy 1: Check if transactions are already formatted on single lines
+    csv_rows: List[str] = ["Date,Description,Debit,Credit,Balance"]
     for line in lines:
-        # Check if line begins with or contains a date
+        if "statement period" in line.lower():
+            continue
         date_match = DATE_REGEX.search(line)
         if not date_match:
             continue
 
         txn_date = date_match.group(1)
         remaining = (line[:date_match.start()] + " " + line[date_match.end():]).strip()
+        row = _format_csv_row(txn_date, remaining)
+        if row:
+            csv_rows.append(row)
 
-        # Find all amounts in the line
-        amounts = AMOUNT_REGEX.findall(remaining)
-        if not amounts:
+    if len(csv_rows) > 2:
+        return "\n".join(csv_rows)
+
+    # Strategy 2: Multi-line chunk grouping (where pypdf extracts date, narration, and amounts on sequential lines)
+    multi_rows: List[str] = ["Date,Description,Debit,Credit,Balance"]
+    current_date = None
+    current_tokens: List[str] = []
+
+    for line in lines:
+        if "statement period" in line.lower():
             continue
+        date_match = DATE_REGEX.search(line)
+        if date_match and (date_match.start() == 0 or len(line.split()) <= 3):
+            if current_date and current_tokens:
+                row = _format_csv_row(current_date, " ".join(current_tokens))
+                if row:
+                    multi_rows.append(row)
+            current_date = date_match.group(1)
+            rem = (line[:date_match.start()] + " " + line[date_match.end():]).strip()
+            current_tokens = [rem] if rem else []
+        elif current_date:
+            current_tokens.append(line)
 
-        # Bank statements usually have 1, 2, or 3 amounts at the end of the line:
-        # e.g.: [Debit/Credit, Balance] or [Debit, Credit, Balance]
-        # Clean narration is the text preceding the numbers
-        # Remove amounts from remaining text to get description
-        desc_part = remaining
-        for amt in amounts:
-            desc_part = desc_part.replace(amt, "", 1)
-        
-        # Clean description
-        desc = re.sub(r"\s+", " ", desc_part).strip(" -|;,")
-        if not desc:
-            desc = "Bank Transaction"
+    if current_date and current_tokens:
+        row = _format_csv_row(current_date, " ".join(current_tokens))
+        if row:
+            multi_rows.append(row)
 
-        # Escape quotes in description for CSV
-        clean_desc = desc.replace('"', '""')
+    if len(multi_rows) > 1:
+        return "\n".join(multi_rows)
 
-        debit = ""
-        credit = ""
-        balance = ""
-
-        # Determine debit vs credit from line keywords (CR, DR, UPI, Deposit, etc.) or amount positioning
-        lower_line = line.lower()
-        if len(amounts) == 1:
-            amt_val = amounts[0]
-            if "cr" in lower_line or "credit" in lower_line or "deposit" in lower_line or "salary" in lower_line:
-                credit = amt_val
-            else:
-                debit = amt_val
-        elif len(amounts) == 2:
-            # Often [Txn Amount, Balance]
-            amt_val = amounts[0]
-            balance = amounts[1]
-            if "cr" in lower_line or "credit" in lower_line or "deposit" in lower_line or "refund" in lower_line or "salary" in lower_line:
-                credit = amt_val
-            else:
-                debit = amt_val
-        elif len(amounts) >= 3:
-            # Often [Debit, Credit, Balance]
-            debit = amounts[0]
-            credit = amounts[1]
-            balance = amounts[2]
-
-        csv_rows.append(f'"{txn_date}","{clean_desc}","{debit}","{credit}","{balance}"')
-
-    if len(csv_rows) <= 1:
-        # Fallback: could not detect standard tabular lines
-        raise PDFParseError(
-            "Could not detect structured transaction rows in PDF statement. Please ensure it is an official bank e-statement."
-        )
-
-    return "\n".join(csv_rows)
+    raise PDFParseError(
+        "Could not detect structured transaction rows in PDF statement. Please ensure it is an official bank e-statement."
+    )
