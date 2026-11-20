@@ -109,54 +109,56 @@ When a user interacts with the AI Financial Twin, the system queries targeted su
 
 ## 🏛️ System Architecture
 
+<p align="left">
+  <img src="https://shieldcn.dev/badge/Architecture-Decoupled%205--Tier-blue.svg?variant=secondary" alt="Decoupled Architecture" />
+  <img src="https://shieldcn.dev/badge/Math%20Engine-Paise%20Precision-009688.svg?variant=secondary" alt="Paise Precision" />
+  <img src="https://shieldcn.dev/badge/Graph%20Engine-Neo4j%20Cypher-008CC1.svg?variant=secondary" alt="Neo4j Cypher" />
+</p>
+
 The architecture is cleanly decoupled into 5 operational tiers, ensuring a strict unidirectional flow of verified facts into the presentation layer:
 
 ```mermaid
 flowchart TD
     %% TIER 1: INGESTION
-    subgraph T1 ["Tier 1: Multi-Channel Ingestion Layer"]
-        direction LR
-        AA["Live Account Aggregator<br/>(Setu v2 OAuth 2.0 API)"]
-        PDF["Bank Statement PDF<br/>(In-Memory AES Decryption)"]
-        CSV["CSV / TSV Statements<br/>(Auto Dialect Detection)"]
-        OCR["Receipt / Screenshot OCR<br/>(Groq Vision qwen3.8-27b)"]
+    subgraph Tier1 ["1. Multi-Channel Ingestion"]
+        AA["Live Account Aggregator (Setu v2 OAuth 2.0)"]
+        PDF["Bank Statement PDF (In-Memory AES Decryption)"]
+        CSV["CSV / TSV Statements (Auto Dialect Detection)"]
+        OCR["Receipt / Screenshot OCR (Groq Vision)"]
     end
 
     %% TIER 2: INTEGRITY
-    subgraph T2 ["Tier 2: Ingestion & Integrity Pipeline"]
-        direction LR
-        Norm["Merchant Normalizer<br/>(Channel Classifier & Category Rules)"]
-        Dedup["Integrity & Transfer Engine<br/>(Intra-Batch Matching & SHA-256 Fingerprint)"]
+    subgraph Tier2 ["2. Ingestion & Integrity Engine"]
+        Norm["Merchant Normalizer & 4-Tier Categorizer"]
+        Dedup["Transfer Detector & SHA-256 Deduplication"]
         Norm --> Dedup
     end
 
     %% TIER 3: GRAPH STORAGE
-    subgraph T3 ["Tier 3: Core Knowledge Graph Layer"]
-        Neo4j[("Neo4j Property Knowledge Graph<br/>(:User)-[:HAS_ACCOUNT]->(:Account)<br/>-[:MADE_TRANSACTION]->(:Transaction)")]
+    subgraph Tier3 ["3. Core Knowledge Graph Layer"]
+        Neo4j[("Neo4j Property Knowledge Graph")]
     end
 
     %% TIER 4: COMPUTATION & RETRIEVAL
-    subgraph T4 ["Tier 4: Deterministic Math & GraphRAG Retrieval"]
-        direction LR
-        Math["Python Paise Engine<br/>• 50/30/20 Budgeting<br/>• Emergency Runway<br/>• Health Score (0-100)"]
-        RAG["Targeted GraphRAG<br/>• Subgraph Traversal<br/>• XML-Bounded Evidence Card"]
-        Math <--> RAG
+    subgraph Tier4 ["4. Deterministic Math & GraphRAG Retrieval"]
+        Math["Python Paise Engine (50/30/20, Runway, Health Score)"]
+        RAG["Targeted GraphRAG (Subgraph Traversal & Evidence Builder)"]
+        Math --- RAG
     end
 
     %% TIER 5: PRESENTATION
-    subgraph T5 ["Tier 5: Grounded Explanation & Presentation"]
-        direction LR
-        LLM["Grounded LLM Reasoning<br/>(Groq Cloud • Strict ₹ Currency)"]
-        UI["React 18 + Vite Dashboard<br/>(KPI Cards • Modals • AI Chat)"]
+    subgraph Tier5 ["5. Grounded Explanation & Presentation"]
+        LLM["Grounded LLM Reasoning (Groq Cloud)"]
+        UI["React 18 + Vite Dashboard (KPI Cards & AI Chat)"]
         LLM --> UI
     end
 
     %% INTER-TIER CONNECTIONS
-    T1 -->|Raw Input Stream| T2
-    T2 -->|Mutate & Propagate Balances| T3
-    T3 <-->|Authorized Subgraph Queries| T4
-    T4 -->|Structured Immutable Evidence| T5
-    UI -.->|REST API Request| T4
+    Tier1 -->|Raw Input Stream| Tier2
+    Tier2 -->|Mutate & Propagate Balances| Tier3
+    Tier3 <-->|Authorized Subgraph Queries| Tier4
+    Tier4 -->|Structured Immutable Evidence| LLM
+    UI -.->|Natural Language Inquiries| Tier4
 ```
 
 ---
@@ -166,6 +168,9 @@ flowchart TD
 To ensure clarity, the system divides workflows into two discrete pipelines: **Data Ingestion** and **Conversational Advisory**.
 
 ### Pipeline A: Bank Ingestion & Knowledge Graph Mutation
+<p align="left">
+  <img src="https://shieldcn.dev/badge/Pipeline%20A-Data%20Ingestion%20%26%20Mutation-10B981.svg?variant=secondary" alt="Pipeline A: Data Ingestion" />
+</p>
 
 ```mermaid
 sequenceDiagram
@@ -176,22 +181,25 @@ sequenceDiagram
     participant Pipe as Integrity Pipeline
     participant DB as Neo4j Graph DB
 
-    User->>UI: Selects Bank Statement PDF (e.g. HDFC/SBI)
+    User->>UI: Selects Bank Statement PDF (e.g. HDFC or SBI)
     UI->>API: POST /api/import/csv (File Bytes + Password)
     API->>Pipe: In-memory AES Decryption (No disk writes)
-    Pipe->>Pipe: Clean banking noise (UPI/DR/123 -> Swiggy)
-    Pipe->>Pipe: 4-Tier Categorization Heuristic (Confidence 0.40–0.95)
-    Pipe->>Pipe: Detect intra-batch & retroactive self-transfers
+    Pipe->>Pipe: Clean banking noise (e.g. UPI/DR/123 to Swiggy)
+    Pipe->>Pipe: 4-Tier Categorization Heuristic (Confidence 0.40 to 0.95)
+    Pipe->>Pipe: Detect intra-batch and retroactive self-transfers
     Pipe->>DB: Batch match existing SHA-256 fingerprints
-    DB-->>API: Duplicate Status & Flagged Candidates
+    DB-->>API: Duplicate Status and Flagged Candidates
     API-->>UI: Return parsed rows preview with confidence badges
-    User->>UI: Reviews & Clicks "Confirm & Save to Graph"
+    User->>UI: Reviews and clicks "Confirm and Save to Graph"
     UI->>API: POST /api/import/confirm (Approved Rows)
-    API->>DB: Batch mutate (:Account)-[:MADE_TRANSACTION]->(:Transaction)
-    DB-->>UI: Update Dashboard Balances & KPIs
+    API->>DB: Batch mutate Account and Transaction nodes
+    DB-->>UI: Update Dashboard Balances and KPIs
 ```
 
 ### Pipeline B: GraphRAG Financial Advisory & Query Execution
+<p align="left">
+  <img src="https://shieldcn.dev/badge/Pipeline%20B-GraphRAG%20Financial%20Advisory-6366F1.svg?variant=secondary" alt="Pipeline B: GraphRAG Advisory" />
+</p>
 
 ```mermaid
 sequenceDiagram
@@ -203,15 +211,15 @@ sequenceDiagram
     participant Math as Deterministic Math Engine
     participant LLM as Grounded LLM Client
 
-    User->>UI: "Can I afford a ₹45,000 laptop this month?"
+    User->>UI: "Can I afford a Rs 45,000 laptop this month?"
     UI->>NLU: POST /api/assistant/chat (Natural Language Query)
-    NLU->>NLU: Classify Intent -> PURCHASE_SAFETY (Amount: ₹45,000)
-    NLU->>DB: Targeted Cypher (Liquid Balances + Pending EMIs + 3-Mo Expenses)
+    NLU->>NLU: Classify Intent: PURCHASE_SAFETY (Amount: Rs 45,000)
+    NLU->>DB: Targeted Cypher (Liquid Balances, Pending EMIs, 3-Mo Expenses)
     DB-->>Math: Return Authorized Subgraph Facts
     Math->>Math: Execute purchase_evaluator.py (Paise Math)
-    Note over Math: Result: NOT_SAFE (Deficit: ₹12,400, Runway: 1.4 mos)
-    Math->>LLM: Construct <financial_evidence> + Strict XML Directives
-    Note over LLM: Zero arithmetic allowed; explain verified facts only
+    Note over Math: Result: NOT_SAFE (Deficit: Rs 12,400, Runway: 1.4 mos)
+    Math->>LLM: Construct financial evidence card and strict XML directives
+    Note over LLM: Zero arithmetic allowed - explain verified facts only
     LLM-->>UI: Return Structured 4-Part Card (Take, Breakdown, Insights, Action)
     UI-->>User: Render Executive Card with Node ID References
 ```
