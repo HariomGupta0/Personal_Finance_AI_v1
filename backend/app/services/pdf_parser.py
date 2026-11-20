@@ -78,6 +78,11 @@ def extract_text_from_pdf(content: bytes, password: Optional[str] = None) -> str
 
 
 def _format_csv_row(txn_date: str, remaining: str) -> Optional[str]:
+    # Ignore header text lines that accidentally match dates
+    lower_rem = remaining.lower()
+    if any(k in lower_rem for k in ["statement period", "account number", "closing balance", "txn date", "value date"]):
+        return None
+
     amounts = AMOUNT_REGEX.findall(remaining)
     if not amounts:
         return None
@@ -86,8 +91,8 @@ def _format_csv_row(txn_date: str, remaining: str) -> Optional[str]:
     for amt in amounts:
         desc_part = desc_part.replace(amt, "", 1)
 
-    desc = re.sub(r"\s+", " ", desc_part).strip(" -|;,")
-    if not desc:
+    desc = re.sub(r"\s+", " ", desc_part).strip(" -|;,■")
+    if not desc or len(desc) < 2:
         desc = "Bank Transaction"
 
     clean_desc = desc.replace('"', '""')
@@ -98,11 +103,12 @@ def _format_csv_row(txn_date: str, remaining: str) -> Optional[str]:
     lower_line = f"{desc} {remaining}".lower()
     if len(amounts) == 1:
         amt_val = amounts[0]
-        if any(k in lower_line for k in ["cr", "credit", "deposit", "salary"]):
+        if any(k in lower_line for k in ["cr", "credit", "deposit", "salary", "refund"]):
             credit = amt_val
         else:
             debit = amt_val
     elif len(amounts) == 2:
+        # Often [Txn Amount, Balance]
         amt_val = amounts[0]
         balance = amounts[1]
         if any(k in lower_line for k in ["cr", "credit", "deposit", "refund", "salary"]):
@@ -110,6 +116,7 @@ def _format_csv_row(txn_date: str, remaining: str) -> Optional[str]:
         else:
             debit = amt_val
     elif len(amounts) >= 3:
+        # Often [Debit, Credit, Balance]
         debit = amounts[0]
         credit = amounts[1]
         balance = amounts[2]
@@ -125,10 +132,10 @@ def convert_pdf_text_to_csv(text: str) -> str:
     """
     lines = [line.strip() for line in text.split("\n") if line.strip()]
 
-    # Strategy 1: Check if transactions are already formatted on single lines
+    # Strategy 1: Single-line row matches
     csv_rows: List[str] = ["Date,Description,Debit,Credit,Balance"]
     for line in lines:
-        if "statement period" in line.lower():
+        if any(k in line.lower() for k in ["statement period", "account number", "balance as on"]):
             continue
         date_match = DATE_REGEX.search(line)
         if not date_match:
@@ -140,31 +147,39 @@ def convert_pdf_text_to_csv(text: str) -> str:
         if row:
             csv_rows.append(row)
 
-    if len(csv_rows) > 2:
+    if len(csv_rows) > 3:
         return "\n".join(csv_rows)
 
-    # Strategy 2: Multi-line chunk grouping (where pypdf extracts date, narration, and amounts on sequential lines)
+    # Strategy 2: Multi-line chunk grouping
     multi_rows: List[str] = ["Date,Description,Debit,Credit,Balance"]
-    current_date = None
-    current_tokens: List[str] = []
+    curr_date = None
+    curr_tokens: List[str] = []
 
-    for line in lines:
-        if "statement period" in line.lower():
+    for l in lines:
+        if any(k in l.lower() for k in ["statement period", "account number", "balance as on"]):
             continue
-        date_match = DATE_REGEX.search(line)
-        if date_match and (date_match.start() == 0 or len(line.split()) <= 3):
-            if current_date and current_tokens:
-                row = _format_csv_row(current_date, " ".join(current_tokens))
+        dm = DATE_REGEX.search(l)
+        if dm and (dm.start() == 0 or len(l.split()) <= 2):
+            d_val = dm.group(1)
+            # Check if this is a consecutive duplicate date (like Value Date)
+            if curr_date and not curr_tokens:
+                continue
+            if curr_date and curr_tokens:
+                rem_text = " ".join(curr_tokens)
+                row = _format_csv_row(curr_date, rem_text)
                 if row:
                     multi_rows.append(row)
-            current_date = date_match.group(1)
-            rem = (line[:date_match.start()] + " " + line[date_match.end():]).strip()
-            current_tokens = [rem] if rem else []
-        elif current_date:
-            current_tokens.append(line)
+            curr_date = d_val
+            curr_tokens = []
+            rem_l = (l[:dm.start()] + " " + l[dm.end():]).strip()
+            if rem_l:
+                curr_tokens.append(rem_l)
+        elif curr_date:
+            curr_tokens.append(l)
 
-    if current_date and current_tokens:
-        row = _format_csv_row(current_date, " ".join(current_tokens))
+    if curr_date and curr_tokens:
+        rem_text = " ".join(curr_tokens)
+        row = _format_csv_row(curr_date, rem_text)
         if row:
             multi_rows.append(row)
 
