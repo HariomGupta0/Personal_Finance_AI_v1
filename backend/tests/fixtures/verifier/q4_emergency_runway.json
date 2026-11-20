@@ -1,0 +1,146 @@
+{
+  "question": "How many months can I survive?",
+  "intent": "EMERGENCY_RUNWAY_ANALYSIS",
+  "model": "openai/gpt-oss-120b",
+  "timestamp": "2026-11-01T04:08:21.902066+00:00",
+  "math_result": {
+    "current_balance": 45000.0,
+    "monthly_expenses": 21000.0,
+    "runway_months": 2.14,
+    "status": "INSUFFICIENT",
+    "target_runway_months": 3.0,
+    "is_sufficient_data": true,
+    "data_note": null,
+    "reporting_period": "2026-11"
+  },
+  "evidence_string": "{\n  \"_graph_paths\": [],\n  \"_grounded_facts\": [\n    {\n      \"label\": \"Current Liquid Balance\",\n      \"node_ids\": [\n        \"Account:A001\",\n        \"Account:Demo Bank\"\n      ],\n      \"source\": \"Account.balance\",\n      \"value\": \"₹45,000\"\n    },\n    {\n      \"label\": \"Monthly Expenses\",\n      \"node_ids\": [\n        \"Transaction:T001\",\n        \"Transaction:T002\",\n        \"Transaction:T003\",\n        \"Transaction:T004\"\n      ],\n      \"source\": \"Transaction.amount\",\n      \"value\": \"₹21,000\"\n    },\n    {\n      \"label\": \"Months of Runway\",\n      \"node_ids\": [\n        \"Account:A001\",\n        \"Account:Demo Bank\",\n        \"Transaction:T001\",\n        \"Transaction:T002\",\n        \"Transaction:T003\",\n        \"Transaction:T004\"\n      ],\n      \"source\": \"Runway Formula\",\n      \"value\": \"2.14 months\"\n    },\n    {\n      \"label\": \"Buffer Health Status\",\n      \"node_ids\": [\n        \"Account:A001\",\n        \"Account:Demo Bank\",\n        \"Transaction:T001\",\n        \"Transaction:T002\",\n        \"Transaction:T003\",\n        \"Transaction:T004\"\n      ],\n      \"source\": \"Health Classifier\",\n      \"value\": \"INSUFFICIENT\"\n    }\n  ],\n  \"_source_identifiers\": [\n    \"Account:A001\",\n    \"Goal:Emergency Fund\",\n    \"Goal:G001\",\n    \"Income:I001\",\n    \"Loan:L001\"\n  ],\n  \"current_balance\": 45000.0,\n  \"data_note\": null,\n  \"is_sufficient_data\": true,\n  \"monthly_expenses\": 21000.0,\n  \"reporting_period\": \"2026-11\",\n  \"runway_months\": 2.14,\n  \"status\": \"INSUFFICIENT\",\n  \"target_runway_months\": 3.0\n}",
+  "llm_raw_text": "🎯 **The Quick Take**  \nYou have about **2.1 months** of cash on hand – a bit short of the healthy three‑month safety net.\n\n📊 **The Numbers**  \n• **Current liquid balance:** ₹45,000  \n• **Average monthly expenses:** ₹21,000  \n• **Runway (how long the cash lasts):** 2.14 months  \n• **Buffer health:** **INSUFFICIENT** (target is 3 months)\n\n💡 **Smart Insights**  \n• At 2.14 months you’re below the recommended three‑month cushion, so an unexpected bill could strain your finances quickly.  \n• Your expenses are steady, so any extra cash you can stash each month will stretch that runway noticeably.  \n• Building a modest emergency fund now will give you peace of mind and protect you from short‑term shocks.\n\n🚀 **What You Should Do Next**  \n1. **Set a clear emergency‑fund goal:** aim for at least 3 months of expenses (≈ ₹63,000).  \n2. **Trim discretionary spending** where possible—small weekly cuts add up fast.  \n3. **Boost cash flow:** consider a side gig, freelance work, or selling items you no longer need to bridge the gap.  \n4. **Automate savings:** schedule a small, automatic transfer to a separate high‑interest account each payday until you hit the target.  \n\nYou’ve got a solid start—just a few focused steps and you’ll be back in the safe zone!",
+  "api_response": {
+    "query": "How many months can I survive?",
+    "intent": "EMERGENCY_RUNWAY_ANALYSIS",
+    "entities": {
+      "intent": "EMERGENCY_RUNWAY_ANALYSIS",
+      "operation": "EMERGENCY_RUNWAY_ANALYSIS",
+      "category": null,
+      "merchant": null,
+      "amount": null,
+      "amount_min": null,
+      "amount_max": null,
+      "limit": null,
+      "sort_by": "date",
+      "sort_direction": "DESC",
+      "reporting_date": null,
+      "comparison_reporting_date": null,
+      "date_range": "start_date=None end_date=None reporting_period=None",
+      "comparison_date_range": null,
+      "trend_months": null,
+      "raw_query": "How many months can I survive?",
+      "is_followup": false,
+      "needs_clarification": false,
+      "clarification_type": null,
+      "clarification_message": null,
+      "exclude_transfers": true,
+      "query_plan": "operation=<OperationType.EMERGENCY_RUNWAY_ANALYSIS: 'EMERGENCY_RUNWAY_ANALYSIS'> raw_query='How many months can I survive?' date_range=DateRange(start_date=None, end_date=None, reporting_period=None) comparison_date_range=None trend_months=None category=None merchant=None amount=None amount_min=None amount_max=None sort_by='date' sort_direction='DESC' limit=None exclude_transfers=True is_followup=False needs_clarification=False clarification_type=None clarification_message=None",
+      "turn_type": "NEW_TOPIC",
+      "is_date_ambiguous": false
+    },
+    "math_result": {
+      "current_balance": 45000.0,
+      "monthly_expenses": 21000.0,
+      "runway_months": 2.14,
+      "status": "INSUFFICIENT",
+      "target_runway_months": 3.0,
+      "is_sufficient_data": true,
+      "data_note": null,
+      "reporting_period": "2026-11"
+    },
+    "evidence": [
+      {
+        "label": "Current Liquid Balance",
+        "value": "₹45,000",
+        "source": "Account.balance",
+        "formula": "Sum of liquid bank accounts",
+        "source_node_ids": [
+          "Account:A001",
+          "Account:Demo Bank"
+        ]
+      },
+      {
+        "label": "Monthly Expenses",
+        "value": "₹21,000",
+        "source": "Transaction.amount",
+        "formula": "Sum of living expense transactions",
+        "source_node_ids": [
+          "Transaction:T001",
+          "Transaction:T002",
+          "Transaction:T003",
+          "Transaction:T004"
+        ]
+      },
+      {
+        "label": "Months of Runway",
+        "value": "2.14 months",
+        "source": "Runway Formula",
+        "formula": "Liquid Balance / Monthly Expenses",
+        "source_node_ids": [
+          "Account:A001",
+          "Account:Demo Bank",
+          "Transaction:T001",
+          "Transaction:T002",
+          "Transaction:T003",
+          "Transaction:T004"
+        ]
+      },
+      {
+        "label": "Buffer Health Status",
+        "value": "INSUFFICIENT",
+        "source": "Health Classifier",
+        "formula": ">= 3.0m (Strong), >= 1.0m (Moderate), < 1.0m (Critical)",
+        "source_node_ids": [
+          "Account:A001",
+          "Account:Demo Bank",
+          "Transaction:T001",
+          "Transaction:T002",
+          "Transaction:T003",
+          "Transaction:T004"
+        ]
+      }
+    ],
+    "evidence_metadata": {
+      "reporting_period": "2026-11",
+      "data_freshness": "Verified through latest transaction (2026-11-10)",
+      "methodology_formula": "Runway Months = Liquid Account Balance / Monthly Living Expenses",
+      "calculation_method": "Depletion horizon calculation based on liquid reserves and recurring monthly burn.",
+      "caveats": [],
+      "is_sufficient_data": true
+    },
+    "source_identifiers": [
+      "Account:A001",
+      "Goal:Emergency Fund",
+      "Goal:G001",
+      "Income:I001",
+      "Loan:L001"
+    ],
+    "graph_paths": [],
+    "explanation": "🎯 **The Quick Take**  \nYou have about **2.1 months** of cash on hand – a bit short of the healthy three‑month safety net.\n\n📊 **The Numbers**  \n• **Current liquid balance:** ₹45,000  \n• **Average monthly expenses:** ₹21,000  \n• **Runway (how long the cash lasts):** 2.14 months  \n• **Buffer health:** **INSUFFICIENT** (target is 3 months)\n\n💡 **Smart Insights**  \n• At 2.14 months you’re below the recommended three‑month cushion, so an unexpected bill could strain your finances quickly.  \n• Your expenses are steady, so any extra cash you can stash each month will stretch that runway noticeably.  \n• Building a modest emergency fund now will give you peace of mind and protect you from short‑term shocks.\n\n🚀 **What You Should Do Next**  \n1. **Set a clear emergency‑fund goal:** aim for at least 3 months of expenses (≈ ₹63,000).  \n2. **Trim discretionary spending** where possible—small weekly cuts add up fast.  \n3. **Boost cash flow:** consider a side gig, freelance work, or selling items you no longer need to bridge the gap.  \n4. **Automate savings:** schedule a small, automatic transfer to a separate high‑interest account each payday until you hit the target.  \n\nYou’ve got a solid start—just a few focused steps and you’ll be back in the safe zone!",
+    "prompt_version": "v1.1",
+    "is_followup": false,
+    "turn_type": "NEW_TOPIC",
+    "needs_clarification": false,
+    "clarification_type": null,
+    "recalculated_fresh": true,
+    "latency_breakdown": {
+      "nlu_ms": 0.7,
+      "graph_ms": 1101.6,
+      "engine_ms": 0.1,
+      "llm_ms": 1552.5,
+      "total_ms": 2655.0
+    },
+    "tokens": {
+      "prompt": 919,
+      "completion": 496,
+      "total": 1415
+    }
+  },
+  "metadata_note": "Nearest supported phrasing for EMERGENCY_RUNWAY_ANALYSIS ('How long can I survive on my savings?' hits 'my savings' keyword and parses as SAVINGS_ANALYSIS)"
+}

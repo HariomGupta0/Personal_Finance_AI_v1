@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Upload,
   FileText,
@@ -14,6 +14,10 @@ import {
   Eye,
   Send,
   RefreshCw,
+  Sparkles,
+  ZoomIn,
+  ExternalLink,
+  CheckSquare,
 } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
@@ -26,9 +30,9 @@ const fmt = (n) => parseFloat(n || 0).toLocaleString('en-IN', { minimumFractionD
 function Badge({ label, color }) {
   const colors = {
     success: { bg: 'rgba(16,185,129,0.15)', color: '#34d399', border: 'rgba(16,185,129,0.3)' },
-    danger:  { bg: 'rgba(239,68,68,0.15)',  color: '#f87171', border: 'rgba(239,68,68,0.3)' },
+    danger: { bg: 'rgba(239,68,68,0.15)', color: '#f87171', border: 'rgba(239,68,68,0.3)' },
     warning: { bg: 'rgba(245,158,11,0.15)', color: '#fbbf24', border: 'rgba(245,158,11,0.3)' },
-    info:    { bg: 'rgba(99,102,241,0.15)', color: '#818cf8', border: 'rgba(99,102,241,0.3)' },
+    info: { bg: 'rgba(99,102,241,0.15)', color: '#818cf8', border: 'rgba(99,102,241,0.3)' },
   };
   const s = colors[color] || colors.info;
   return (
@@ -53,10 +57,10 @@ function Spinner() {
 
 function Alert({ type, children }) {
   const cfg = {
-    error:   { bg: 'rgba(239,68,68,0.08)',  border: 'rgba(239,68,68,0.3)',   color: '#f87171' },
-    warning: { bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.3)',  color: '#fbbf24' },
-    success: { bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.3)',  color: '#34d399' },
-    info:    { bg: 'rgba(99,102,241,0.08)', border: 'rgba(99,102,241,0.3)',  color: '#818cf8' },
+    error: { bg: 'rgba(239,68,68,0.08)', border: 'rgba(239,68,68,0.3)', color: '#f87171' },
+    warning: { bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.3)', color: '#fbbf24' },
+    success: { bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.3)', color: '#34d399' },
+    info: { bg: 'rgba(99,102,241,0.08)', border: 'rgba(99,102,241,0.3)', color: '#818cf8' },
   };
   const c = cfg[type] || cfg.info;
   return (
@@ -65,7 +69,7 @@ function Alert({ type, children }) {
       padding: '10px 14px', fontSize: '0.82rem', color: c.color, lineHeight: 1.5,
       display: 'flex', gap: 8, alignItems: 'flex-start'
     }}>
-      {type === 'error'   && <XCircle size={15} style={{ flexShrink: 0, marginTop: 1 }} />}
+      {type === 'error' && <XCircle size={15} style={{ flexShrink: 0, marginTop: 1 }} />}
       {type === 'warning' && <AlertTriangle size={15} style={{ flexShrink: 0, marginTop: 1 }} />}
       {type === 'success' && <CheckCircle2 size={15} style={{ flexShrink: 0, marginTop: 1 }} />}
       <span>{children}</span>
@@ -82,8 +86,8 @@ function Steps({ current }) {
   return (
     <div style={{ display: 'flex', gap: 0, marginBottom: 24, alignItems: 'center' }}>
       {steps.map((s, i) => {
-        const done    = i < current;
-        const active  = i === current;
+        const done = i < current;
+        const active = i === current;
         const pending = i > current;
         return (
           <React.Fragment key={s}>
@@ -120,10 +124,10 @@ function DropZone({ mode, onFile, disabled }) {
   const inputRef = useRef();
   const [dragging, setDragging] = useState(false);
   const accept = mode === 'csv' ? '.csv,.tsv,.txt' : '.jpg,.jpeg,.png,.webp,.gif';
-  const label  = mode === 'csv'
+  const label = mode === 'csv'
     ? 'Drop your bank statement CSV here or click to browse'
     : 'Drop a receipt / UPI screenshot here or click to browse';
-  const hint  = mode === 'csv'
+  const hint = mode === 'csv'
     ? 'Supports: debit/credit, narration/withdrawal, standard HDFC/SBI/ICICI formats · Max 5 MB'
     : 'Supports: JPEG, PNG, WebP, GIF · Max 10 MB';
 
@@ -160,9 +164,9 @@ function DropZone({ mode, onFile, disabled }) {
 // Preview table for parsed CSV rows
 // ---------------------------------------------------------------------------
 
-function PreviewTable({ rows, selectedIds, onToggle, onToggleAll, onEdit }) {
+function PreviewTable({ rows, selectedIds, onToggle, onToggleAll, onToggleTransfer, onEdit }) {
   const allSelected = rows.every(r => selectedIds.has(r._id));
-  const dupCount    = rows.filter(r => r.duplicate_status === 'POSSIBLE_DUPLICATE').length;
+  const dupCount = rows.filter(r => r.duplicate_status === 'POSSIBLE_DUPLICATE').length;
   const confirmedDup = rows.filter(r => r.duplicate_status === 'CONFIRMED_DUPLICATE').length;
 
   return (
@@ -202,9 +206,9 @@ function PreviewTable({ rows, selectedIds, onToggle, onToggleAll, onEdit }) {
           <tbody>
             {rows.map((row) => {
               const isSelected = selectedIds.has(row._id);
-              const isDup      = row.duplicate_status === 'POSSIBLE_DUPLICATE';
-              const isConfDup  = row.duplicate_status === 'CONFIRMED_DUPLICATE';
-              const isIncome   = row.type === 'INCOME';
+              const isDup = row.duplicate_status === 'POSSIBLE_DUPLICATE';
+              const isConfDup = row.duplicate_status === 'CONFIRMED_DUPLICATE';
+              const isIncome = row.type === 'INCOME';
 
               return (
                 <tr key={row._id}
@@ -240,9 +244,28 @@ function PreviewTable({ rows, selectedIds, onToggle, onToggleAll, onEdit }) {
                     {isIncome ? '+' : '-'}{sym}{fmt(row.amount)}
                   </td>
                   <td style={{ padding: '10px 10px', textAlign: 'center' }}>
-                    {isConfDup && <Badge label="Duplicate" color="danger" />}
-                    {isDup     && <Badge label="Review"    color="warning" />}
-                    {!isDup && !isConfDup && <Badge label="OK" color="success" />}
+                    {row.is_transfer_candidate ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                        <label style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: '0.74rem', cursor: 'pointer', color: row.is_transfer ? '#38bdf8' : 'var(--text-muted)' }}>
+                          <input
+                            type="checkbox"
+                            checked={Boolean(row.is_transfer)}
+                            onChange={() => onToggleTransfer && onToggleTransfer(row._id)}
+                            style={{ width: 14, height: 14, cursor: 'pointer' }}
+                          />
+                          <span>{row.is_transfer ? "Confirmed Transfer" : "Mark as Transfer"}</span>
+                        </label>
+                        <span style={{ fontSize: '0.67rem', color: '#94a3b8' }}>
+                          Candidate ({row.transfer_confidence || 'MED'} conf)
+                        </span>
+                      </div>
+                    ) : (
+                      <>
+                        {isConfDup && <Badge label="Duplicate" color="danger" />}
+                        {isDup && <Badge label="Review" color="warning" />}
+                        {!isDup && !isConfDup && <Badge label="OK" color="success" />}
+                      </>
+                    )}
                   </td>
                   <td style={{ padding: '10px 10px', textAlign: 'center' }}>
                     <button
@@ -307,20 +330,36 @@ function RowEditor({ row, onSave, onCancel }) {
           <label style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginBottom: 4, display: 'block' }}>Category</label>
           <input style={inputStyle} value={form.category || ''} onChange={e => set('category', e.target.value)} />
         </div>
+        <div style={{ gridColumn: '1 / -1', marginTop: 4 }}>
+          <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: '0.8rem', cursor: 'pointer', color: form.is_transfer ? '#38bdf8' : 'var(--text-main)' }}>
+            <input
+              type="checkbox"
+              checked={Boolean(form.is_transfer)}
+              onChange={e => set('is_transfer', e.target.checked)}
+              style={{ width: 15, height: 15, cursor: 'pointer' }}
+            />
+            <span>Mark as Internal Bank Transfer (excludes from spending & income)</span>
+          </label>
+          {form.transfer_confidence && (
+            <span style={{ fontSize: '0.72rem', color: '#94a3b8', marginLeft: 8 }}>
+              ({form.transfer_confidence} confidence match)
+            </span>
+          )}
+        </div>
       </div>
       <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
         <button className="btn-secondary" style={{ padding: '6px 14px', fontSize: '0.8rem' }} onClick={onCancel}>Cancel</button>
-        <button className="btn-primary"   style={{ padding: '6px 14px', fontSize: '0.8rem' }} onClick={() => onSave(form)}>Save</button>
+        <button className="btn-primary" style={{ padding: '6px 14px', fontSize: '0.8rem' }} onClick={() => onSave(form)}>Save</button>
       </div>
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Image review form
+// Image review form (Side-by-Side Document Verification)
 // ---------------------------------------------------------------------------
 
-function ImageReviewForm({ extraction, onSave, onCancel }) {
+function ImageReviewForm({ extraction, file, previewUrl, onSave, onCancel }) {
   const [form, setForm] = useState({
     date: extraction.date || '',
     amount: extraction.amount || '',
@@ -328,66 +367,189 @@ function ImageReviewForm({ extraction, onSave, onCancel }) {
     type: extraction.type || 'EXPENSE',
     category: '',
   });
+  const [zoomLevel, setZoomLevel] = useState(1);
+
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const inputStyle = {
     background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-subtle)',
-    borderRadius: 8, padding: '6px 10px', color: 'var(--text-main)',
-    fontSize: '0.82rem', outline: 'none', width: '100%',
+    borderRadius: 8, padding: '8px 12px', color: 'var(--text-main)',
+    fontSize: '0.86rem', outline: 'none', width: '100%',
   };
 
+  const isPdf = file?.type === 'application/pdf' || file?.name?.toLowerCase().endsWith('.pdf');
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      {extraction.warnings && extraction.warnings.length > 0 && (
-        <Alert type="warning">
-          {extraction.warnings.map((w, i) => <div key={i}>• {w}</div>)}
-        </Alert>
-      )}
-      <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-        Review and correct the extracted fields before importing.
-        Fields highlighted with a ⚠️ require special attention.
-      </p>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-        <div>
-          <label style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginBottom: 4, display: 'block' }}>
-            {!form.date ? '⚠️ ' : ''}Date (YYYY-MM-DD)
-          </label>
-          <input style={{ ...inputStyle, borderColor: !form.date ? 'rgba(245,158,11,0.4)' : undefined }}
-            value={form.date} onChange={e => set('date', e.target.value)} />
+    <div className="receipt-split-container">
+      {/* ── Left Pane: Document Inspector ── */}
+      <div className="receipt-inspector-pane">
+        <div className="receipt-inspector-header">
+          <div className="receipt-inspector-title">
+            <Eye size={15} style={{ color: 'var(--accent-secondary)' }} />
+            <span>Document Preview</span>
+          </div>
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            {previewUrl && !isPdf && (
+              <>
+                <button
+                  type="button"
+                  className="receipt-tool-btn"
+                  onClick={() => setZoomLevel(z => (z === 1 ? 1.5 : z === 1.5 ? 2 : 1))}
+                  title="Toggle Zoom"
+                >
+                  <ZoomIn size={13} /> {Math.round(zoomLevel * 100)}%
+                </button>
+                <a
+                  href={previewUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="receipt-tool-btn"
+                  title="Open original image in new tab"
+                >
+                  <ExternalLink size={13} />
+                </a>
+              </>
+            )}
+            <span className="badge badge-info" style={{ fontSize: '0.68rem', textTransform: 'none' }}>
+              {file?.name ? (file.name.length > 20 ? file.name.slice(0, 18) + '…' : file.name) : 'Receipt / Bill'}
+            </span>
+          </div>
         </div>
-        <div>
-          <label style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginBottom: 4, display: 'block' }}>
-            {!form.amount ? '⚠️ ' : ''}Amount (₹)
-          </label>
-          <input style={{ ...inputStyle, borderColor: !form.amount ? 'rgba(245,158,11,0.4)' : undefined }}
-            type="number" step="0.01" min="0.01"
-            value={form.amount} onChange={e => set('amount', parseFloat(e.target.value))} />
-        </div>
-        <div style={{ gridColumn: '1 / -1' }}>
-          <label style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginBottom: 4, display: 'block' }}>
-            {!form.description ? '⚠️ ' : ''}Merchant / Recipient
-          </label>
-          <input style={inputStyle} value={form.description}
-            onChange={e => set('description', e.target.value)} />
-        </div>
-        <div>
-          <label style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginBottom: 4, display: 'block' }}>Type</label>
-          <select style={inputStyle} value={form.type} onChange={e => set('type', e.target.value)}>
-            <option value="EXPENSE">EXPENSE</option>
-            <option value="INCOME">INCOME</option>
-          </select>
-        </div>
-        <div>
-          <label style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginBottom: 4, display: 'block' }}>Category (optional)</label>
-          <input style={inputStyle} value={form.category} onChange={e => set('category', e.target.value)} placeholder="e.g. Food" />
+
+        <div className="receipt-inspector-viewport">
+          {previewUrl && !isPdf ? (
+            <div className="receipt-image-scroll-wrapper">
+              <img
+                src={previewUrl}
+                alt="Uploaded receipt"
+                className="receipt-inspector-image"
+                style={{
+                  transform: `scale(${zoomLevel})`,
+                  transformOrigin: 'top center',
+                  transition: 'transform 0.2s ease',
+                  cursor: zoomLevel > 1 ? 'grab' : 'zoom-in',
+                }}
+                onClick={() => setZoomLevel(z => (z === 1 ? 1.5 : z === 1.5 ? 2 : 1))}
+              />
+            </div>
+          ) : previewUrl && isPdf ? (
+            <div className="doc-scanner-pdf-card" style={{ height: '100%' }}>
+              <FileText size={52} className="doc-scanner-pdf-icon" />
+              <span className="doc-scanner-pdf-name">{file?.name}</span>
+              <a
+                href={previewUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="btn-secondary"
+                style={{ marginTop: 12, fontSize: '0.78rem', padding: '6px 12px' }}
+              >
+                <ExternalLink size={13} /> Open PDF in Viewer
+              </a>
+            </div>
+          ) : (
+            <div className="doc-scanner-placeholder">
+              <FileText size={36} />
+              <span>No document preview available</span>
+            </div>
+          )}
         </div>
       </div>
-      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-        <button className="btn-secondary" style={{ padding: '6px 14px', fontSize: '0.8rem' }} onClick={onCancel}>Cancel</button>
-        <button className="btn-primary"   style={{ padding: '6px 14px', fontSize: '0.8rem' }}
-          disabled={!form.amount || !form.date || !form.description}
-          onClick={() => onSave(form)}>
-          Confirm &amp; Import
-        </button>
+
+      {/* ── Right Pane: Extracted Fields Review Form ── */}
+      <div className="receipt-form-pane">
+        <div className="receipt-form-header">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <CheckSquare size={16} style={{ color: 'var(--accent-primary)' }} />
+            <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-main)' }}>
+              Extracted Fields
+            </h4>
+          </div>
+          {extraction.confidence && (
+            <span className={`badge ${extraction.confidence === 'high' ? 'badge-success' : 'badge-warning'}`}>
+              {extraction.confidence} confidence
+            </span>
+          )}
+        </div>
+
+        {extraction.warnings && extraction.warnings.length > 0 && (
+          <Alert type="warning">
+            {extraction.warnings.map((w, i) => <div key={i}>• {w}</div>)}
+          </Alert>
+        )}
+
+        <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+          Review and correct the extracted fields before importing. Fields highlighted with a ⚠️ require special attention.
+        </p>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div>
+            <label style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginBottom: 4, display: 'block' }}>
+              {!form.date ? '⚠️ ' : ''}Date (YYYY-MM-DD)
+            </label>
+            <input
+              style={{ ...inputStyle, borderColor: !form.date ? 'rgba(245,158,11,0.5)' : undefined }}
+              value={form.date}
+              placeholder="YYYY-MM-DD"
+              onChange={e => set('date', e.target.value)}
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginBottom: 4, display: 'block' }}>
+              {!form.amount ? '⚠️ ' : ''}Amount (₹)
+            </label>
+            <input
+              style={{ ...inputStyle, borderColor: !form.amount ? 'rgba(245,158,11,0.5)' : undefined }}
+              type="number"
+              step="0.01"
+              min="0.01"
+              value={form.amount}
+              onChange={e => set('amount', parseFloat(e.target.value) || '')}
+            />
+          </div>
+
+          <div style={{ gridColumn: '1 / -1' }}>
+            <label style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginBottom: 4, display: 'block' }}>
+              {!form.description ? '⚠️ ' : ''}Merchant / Recipient
+            </label>
+            <input
+              style={inputStyle}
+              value={form.description}
+              placeholder="Merchant or recipient name"
+              onChange={e => set('description', e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginBottom: 4, display: 'block' }}>Type</label>
+            <select style={inputStyle} value={form.type} onChange={e => set('type', e.target.value)}>
+              <option value="EXPENSE">EXPENSE</option>
+              <option value="INCOME">INCOME</option>
+            </select>
+          </div>
+
+          <div>
+            <label style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginBottom: 4, display: 'block' }}>Category (optional)</label>
+            <input
+              style={inputStyle}
+              value={form.category}
+              onChange={e => set('category', e.target.value)}
+              placeholder="e.g. Food, Groceries, Utilities"
+            />
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 10, paddingTop: 14, borderTop: '1px solid var(--border-subtle)' }}>
+          <button className="btn-secondary" style={{ padding: '8px 16px', fontSize: '0.84rem' }} onClick={onCancel}>
+            Cancel
+          </button>
+          <button
+            className="btn-primary"
+            style={{ padding: '8px 18px', fontSize: '0.84rem' }}
+            disabled={!form.amount || !form.date || !form.description}
+            onClick={() => onSave(form)}
+          >
+            Confirm &amp; Import
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -397,7 +559,7 @@ function ImageReviewForm({ extraction, onSave, onCancel }) {
 // Result summary after confirm
 // ---------------------------------------------------------------------------
 
-function ResultSummary({ result, onReset }) {
+function ResultSummary({ result, onReset, onViewPlan }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div style={{ textAlign: 'center', padding: '24px 0' }}>
@@ -411,7 +573,7 @@ function ResultSummary({ result, onReset }) {
         <h3 style={{ marginTop: 12, fontSize: '1.1rem' }}>
           {result.status === 'SUCCESS' && '✅ Import Complete'}
           {result.status === 'PARTIAL' && '⚠️ Partial Import'}
-          {result.status === 'FAILED'  && '❌ Import Failed'}
+          {result.status === 'FAILED' && '❌ Import Failed'}
         </h3>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: 4 }}>
           {result.saved} saved · {result.failed} failed
@@ -441,9 +603,16 @@ function ResultSummary({ result, onReset }) {
           </div>
         </div>
       ))}
-      <button className="btn-secondary" onClick={onReset} style={{ alignSelf: 'center', marginTop: 8 }}>
-        <RefreshCw size={14} /> Import More
-      </button>
+      <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 12, flexWrap: 'wrap' }}>
+        <button className="btn-secondary" onClick={onReset}>
+          <RefreshCw size={14} /> Import More
+        </button>
+        {onViewPlan && (
+          <button className="btn-primary" onClick={onViewPlan} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Sparkles size={14} /> View Personalized Financial Plan →
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -452,34 +621,49 @@ function ResultSummary({ result, onReset }) {
 // Main ImportManager component
 // ---------------------------------------------------------------------------
 
-export default function ImportManager({ onImportComplete }) {
-  const [mode,      setMode]      = useState('csv'); // 'csv' | 'image'
-  const [step,      setStep]      = useState(0);     // 0=upload, 1=preview, 2=confirm, 3=done
-  const [loading,   setLoading]   = useState(false);
-  const [error,     setError]     = useState(null);
+export default function ImportManager({ onImportComplete, onViewPlan }) {
+  const [mode, setMode] = useState('csv'); // 'csv' | 'image'
+  const [step, setStep] = useState(0);     // 0=upload, 1=preview, 2=confirm, 3=done
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   // CSV state
   const [parseResult, setParseResult] = useState(null);
-  const [rows,        setRows]        = useState([]);
+  const [rows, setRows] = useState([]);
   const [selectedIds, setSelectedIds] = useState(new Set());
-  const [editingId,   setEditingId]   = useState(null);
+  const [editingId, setEditingId] = useState(null);
 
   // Image state
-  const [imageResult,   setImageResult]   = useState(null);
+  const [imageResult, setImageResult] = useState(null);
   const [showImageForm, setShowImageForm] = useState(false);
+  const [uploadedImageFile, setUploadedImageFile] = useState(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState(null);
 
   // Confirm result
   const [confirmResult, setConfirmResult] = useState(null);
 
   // Warnings & errors panels
-  const [showErrors,   setShowErrors]   = useState(false);
+  const [showErrors, setShowErrors] = useState(false);
   const [showWarnings, setShowWarnings] = useState(false);
 
   const reset = () => {
     setStep(0); setLoading(false); setError(null);
     setParseResult(null); setRows([]); setSelectedIds(new Set()); setEditingId(null);
     setImageResult(null); setShowImageForm(false); setConfirmResult(null);
+    setUploadedImageFile(null);
+    if (imagePreviewUrl) {
+      URL.revokeObjectURL(imagePreviewUrl);
+      setImagePreviewUrl(null);
+    }
   };
+
+  useEffect(() => {
+    return () => {
+      if (imagePreviewUrl) {
+        URL.revokeObjectURL(imagePreviewUrl);
+      }
+    };
+  }, [imagePreviewUrl]);
 
   // -------------------------------------------------------------------------
   // CSV upload handler
@@ -494,8 +678,12 @@ export default function ImportManager({ onImportComplete }) {
       const data = await resp.json();
       if (!resp.ok) throw new Error(data.detail || 'Upload failed');
 
-      // Add stable _id to each row for selection tracking
-      const tagged = data.valid_rows.map((r, i) => ({ ...r, _id: `row_${i}` }));
+      // Add stable _id to each row. All candidates start with is_transfer=false until explicitly approved by user
+      const tagged = data.valid_rows.map((r, i) => ({
+        ...r,
+        _id: `row_${i}`,
+        is_transfer: false,
+      }));
       setParseResult(data);
       setRows(tagged);
       // Pre-select all rows except confirmed duplicates
@@ -514,12 +702,29 @@ export default function ImportManager({ onImportComplete }) {
   const handleImageFile = async (file) => {
     setError(null);
     setLoading(true);
+    setUploadedImageFile(file);
+
+    if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+    const url = URL.createObjectURL(file);
+    setImagePreviewUrl(url);
+
     try {
       const body = new FormData();
       body.append('file', file);
       const resp = await fetch('/api/import/image', { method: 'POST', body, credentials: 'include' });
       const data = await resp.json();
-      if (!resp.ok) throw new Error(data.detail || 'Upload failed');
+      if (!resp.ok) {
+        let errorMsg = 'Upload and OCR analysis failed';
+        if (typeof data.detail === 'string') {
+          errorMsg = data.detail;
+        } else if (Array.isArray(data.detail)) {
+          errorMsg = data.detail.map(d => d.msg || JSON.stringify(d)).join(', ');
+        } else if (data.detail && typeof data.detail === 'object') {
+          errorMsg = data.detail.message || JSON.stringify(data.detail);
+        }
+        throw new Error(errorMsg);
+      }
+
       setImageResult(data);
       setShowImageForm(true);
       setStep(1);
@@ -540,13 +745,17 @@ export default function ImportManager({ onImportComplete }) {
     try {
       const body = {
         rows: toImport.map(r => ({
-          date:        r.date,
+          date: r.date,
           description: r.description,
-          amount:      r.amount,
-          type:        r.type,
-          category:    r.category || 'General',
-          source_ref:  r.source_ref || null,
+          amount: r.amount,
+          type: r.type,
+          category: r.category || 'General',
+          source_ref: r.source_ref || null,
           source_type: r.source_type || 'csv',
+          account_id: r.account_id || null,
+          is_transfer: Boolean(r.is_transfer),
+          paired_transaction_id: r.paired_transaction_id || null,
+          transfer_confidence: r.transfer_confidence || null,
         })),
       };
       const resp = await fetch('/api/import/confirm', {
@@ -574,12 +783,12 @@ export default function ImportManager({ onImportComplete }) {
         credentials: 'include',
         body: JSON.stringify({
           rows: [{
-            date:        formData.date,
+            date: formData.date,
             description: formData.description,
-            amount:      parseFloat(formData.amount),
-            type:        formData.type,
-            category:    formData.category || 'General',
-            source_ref:  imageResult?.extraction?.source_ref || null,
+            amount: parseFloat(formData.amount),
+            type: formData.type,
+            category: formData.category || 'General',
+            source_ref: imageResult?.extraction?.source_ref || null,
             source_type: 'image',
           }],
         }),
@@ -604,8 +813,24 @@ export default function ImportManager({ onImportComplete }) {
     setEditingId(null);
   };
 
-  const toggleRow    = (id)    => setSelectedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
-  const toggleAll    = (state) => setSelectedIds(new Set(state ? rows.filter(r => r.duplicate_status !== 'CONFIRMED_DUPLICATE').map(r => r._id) : []));
+  const toggleTransfer = (id) => {
+    setRows(prev => {
+      const target = prev.find(r => r._id === id);
+      if (!target) return prev;
+      const nextVal = !target.is_transfer;
+      return prev.map(r => {
+        if (r._id === id) return { ...r, is_transfer: nextVal };
+        // If part of an intra-batch pair, keep both sides in sync
+        if (target.transfer_candidate_id && r.transfer_candidate_id === target.transfer_candidate_id) {
+          return { ...r, is_transfer: nextVal };
+        }
+        return r;
+      });
+    });
+  };
+
+  const toggleRow = (id) => setSelectedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const toggleAll = (state) => setSelectedIds(new Set(state ? rows.filter(r => r.duplicate_status !== 'CONFIRMED_DUPLICATE').map(r => r._id) : []));
 
   // -------------------------------------------------------------------------
   // Render
@@ -653,9 +878,10 @@ export default function ImportManager({ onImportComplete }) {
 
           {loading && (
             <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
-              <Spinner /> Uploading and parsing…
+              <Spinner /> {mode === 'csv' ? 'Uploading and parsing CSV…' : 'Uploading and analyzing document…'}
             </div>
           )}
+
           {error && <Alert type="error">{error}</Alert>}
         </div>
       )}
@@ -667,15 +893,31 @@ export default function ImportManager({ onImportComplete }) {
           <div style={{
             display: 'flex', gap: 12, flexWrap: 'wrap',
             background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '10px 14px',
-            border: '1px solid var(--border-subtle)', fontSize: '0.8rem'
+            border: '1px solid var(--border-subtle)', fontSize: '0.8rem', alignItems: 'center'
           }}>
-            <span>📄 <strong>{stats.total_rows}</strong> rows read</span>
-            <span>✅ <strong style={{ color: '#34d399' }}>{stats.valid}</strong> valid</span>
-            {stats.parse_errors > 0  && <span>❌ <strong style={{ color: '#f87171' }}>{stats.parse_errors}</strong> parse errors</span>}
-            {stats.invalid > 0       && <span>⚠️ <strong style={{ color: '#fbbf24' }}>{stats.invalid}</strong> invalid</span>}
-            {stats.possible_duplicates > 0 && <span>🔁 <strong style={{ color: '#fbbf24' }}>{stats.possible_duplicates}</strong> possible duplicates</span>}
-            {stats.confirmed_duplicates > 0 && <span>🚫 <strong style={{ color: '#f87171' }}>{stats.confirmed_duplicates}</strong> already imported</span>}
+            <span>📄 <strong>{stats?.total_rows ?? 0}</strong> Total Rows</span>
+            <span>✅ <strong style={{ color: '#34d399' }}>{stats?.accepted_count ?? stats?.valid ?? 0}</strong> Accepted</span>
+            <span>🔁 <strong style={{ color: '#fbbf24' }}>{stats?.duplicate_count ?? ((stats?.possible_duplicates || 0) + (stats?.confirmed_duplicates || 0))}</strong> Duplicates</span>
+            <span>❌ <strong style={{ color: '#f87171' }}>{stats?.rejected_count ?? ((stats?.parse_errors || 0) + (stats?.invalid || 0))}</strong> Rejected</span>
+            {stats?.skipped_count > 0 && (
+              <span>⚪ <strong style={{ color: 'var(--text-muted)' }}>{stats?.skipped_count}</strong> Skipped</span>
+            )}
           </div>
+
+          {/* Unrecognized columns notice */}
+          {parseResult.unrecognized_columns && parseResult.unrecognized_columns.length > 0 && (
+            <Alert type="info">
+              <strong>ℹ️ Unrecognized Column(s) in CSV:</strong> {parseResult.unrecognized_columns.join(', ')}.
+              These columns do not match standard transaction attributes and were safely ignored.
+            </Alert>
+          )}
+
+          {/* Ambiguous date format notice */}
+          {parseResult.date_ambiguity && (
+            <Alert type="warning">
+              <strong>⚠️ Ambiguous Date Format:</strong> Dates with day and month both ≤ 12 (e.g. 01/02/2025) were parsed assuming DD/MM/YYYY. Please verify detected dates in the table below before confirming.
+            </Alert>
+          )}
 
           {/* Warnings collapsible */}
           {parseResult.warnings && parseResult.warnings.length > 0 && (
@@ -693,18 +935,20 @@ export default function ImportManager({ onImportComplete }) {
             </div>
           )}
 
-          {/* Invalid / parse error rows collapsible */}
-          {(parseResult.parse_errors?.length > 0 || parseResult.invalid_rows?.length > 0) && (
+          {/* Rejected / invalid rows collapsible */}
+          {((parseResult.rejected_rows && parseResult.rejected_rows.length > 0) || (parseResult.parse_errors?.length > 0 || parseResult.invalid_rows?.length > 0)) && (
             <div>
               <button onClick={() => setShowErrors(v => !v)}
                 style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.8rem', fontWeight: 600 }}>
-                <XCircle size={14} /> {(parseResult.parse_errors?.length || 0) + (parseResult.invalid_rows?.length || 0)} skipped rows
+                <XCircle size={14} /> {stats?.rejected_count ?? ((parseResult.parse_errors?.length || 0) + (parseResult.invalid_rows?.length || 0))} rejected rows (skipped from import)
                 {showErrors ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
               </button>
               {showErrors && (
                 <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {[...(parseResult.parse_errors || []), ...(parseResult.invalid_rows || [])].map((e, i) => (
-                    <Alert key={i} type="error">{e.error || JSON.stringify(e)}</Alert>
+                  {(parseResult.rejected_rows || [...(parseResult.parse_errors || []), ...(parseResult.invalid_rows || [])]).map((e, i) => (
+                    <Alert key={i} type="error">
+                      <strong>Row {e.row_index ?? '?'}:</strong> {e.error || e.reason || JSON.stringify(e)}
+                    </Alert>
                   ))}
                 </div>
               )}
@@ -712,10 +956,9 @@ export default function ImportManager({ onImportComplete }) {
           )}
 
           {/* Ambiguous mapping notice */}
-          {parseResult.ambiguous && (
+          {parseResult.ambiguous && !parseResult.date_ambiguity && (
             <Alert type="warning">
               The column mapping is ambiguous. Please review the detected layout above and verify the preview below is correct.
-              If columns are wrong, re-upload with a corrected file.
             </Alert>
           )}
 
@@ -735,6 +978,7 @@ export default function ImportManager({ onImportComplete }) {
               selectedIds={selectedIds}
               onToggle={toggleRow}
               onToggleAll={toggleAll}
+              onToggleTransfer={toggleTransfer}
               onEdit={handleEdit}
             />
           ) : (
@@ -744,14 +988,19 @@ export default function ImportManager({ onImportComplete }) {
           {error && <Alert type="error">{error}</Alert>}
 
           {/* Actions */}
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', paddingTop: 8, borderTop: '1px solid var(--border-subtle)' }}>
-            <button className="btn-secondary" onClick={reset} style={{ fontSize: '0.82rem' }}>← Back</button>
-            <button className="btn-primary"
-              disabled={selectedIds.size === 0 || loading}
-              onClick={handleConfirm}
-              style={{ fontSize: '0.82rem' }}>
-              {loading ? <><Spinner /> Importing…</> : <><Send size={14} /> Import {selectedIds.size} Transaction{selectedIds.size !== 1 ? 's' : ''}</>}
-            </button>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'space-between', alignItems: 'center', paddingTop: 8, borderTop: '1px solid var(--border-subtle)' }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
+              🔒 Confirmation commits to ledger &amp; is safe to repeat
+            </span>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button className="btn-secondary" onClick={reset} style={{ fontSize: '0.82rem' }}>← Back</button>
+              <button className="btn-primary"
+                disabled={selectedIds.size === 0 || loading}
+                onClick={handleConfirm}
+                style={{ fontSize: '0.82rem' }}>
+                {loading ? <><Spinner /> Importing…</> : <><Send size={14} /> Import {selectedIds.size} Transaction{selectedIds.size !== 1 ? 's' : ''}</>}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -761,11 +1010,13 @@ export default function ImportManager({ onImportComplete }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <Alert type={imageResult.requires_review ? 'warning' : 'info'}>
             {imageResult.requires_review
-              ? 'Review required — extraction confidence is not high or transaction status is unclear. Verify all fields before importing.'
-              : 'Fields extracted with high confidence. Please verify before importing.'}
+              ? 'Review required — extraction confidence is not high or transaction status is unclear. Verify all fields side by side before importing.'
+              : 'Fields extracted with high confidence. Please verify side by side before importing.'}
           </Alert>
           <ImageReviewForm
             extraction={imageResult.extraction}
+            file={uploadedImageFile}
+            previewUrl={imagePreviewUrl}
             onSave={handleImageSave}
             onCancel={reset}
           />
@@ -776,7 +1027,7 @@ export default function ImportManager({ onImportComplete }) {
 
       {/* ── STEP 3: DONE ── */}
       {step === 3 && confirmResult && (
-        <ResultSummary result={confirmResult} onReset={reset} />
+        <ResultSummary result={confirmResult} onReset={reset} onViewPlan={onViewPlan} />
       )}
 
       {/* Inline spin animation */}

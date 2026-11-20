@@ -3,9 +3,9 @@ import os
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
+from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from backend.app.core.limiter import limiter
 
 from backend.app.core.logging_config import setup_logging
 from backend.app.api.finance import router as finance_router
@@ -14,6 +14,7 @@ from backend.app.api.goals import router as goals_router
 from backend.app.api.assistant import router as assistant_router
 from backend.app.api.auth import router as auth_router
 from backend.app.api.import_api import router as import_router
+from backend.app.api.onboarding import router as onboarding_router
 from backend.config import (
     GROQ_API_KEY, NEO4J_URI, NEO4J_DATABASE, SESSION_SECRET
 )
@@ -28,8 +29,7 @@ if not SESSION_SECRET:
 # ── Logging ───────────────────────────────────────────────────────────────────
 setup_logging(level=os.getenv("LOG_LEVEL", "INFO"))
 
-# ── Rate limiter ──────────────────────────────────────────────────────────────
-limiter = Limiter(key_func=get_remote_address)
+
 
 # ── FastAPI app ───────────────────────────────────────────────────────────────
 app = FastAPI(
@@ -74,6 +74,7 @@ app.include_router(goals_router)
 app.include_router(assistant_router)
 app.include_router(auth_router)
 app.include_router(import_router)
+app.include_router(onboarding_router)
 
 
 # ── Health endpoint ───────────────────────────────────────────────────────────

@@ -137,7 +137,10 @@ class TestDetectColumns:
 
 class TestParseCsv:
     def _read(self, filename):
-        return (TEST_DATA_DIR / filename).read_bytes()
+        path = TEST_DATA_DIR / filename
+        if not path.exists():
+            pytest.skip(f"Test data file {filename} missing in {TEST_DATA_DIR}")
+        return path.read_bytes()
 
     def test_synthetic_bank_parses_correctly(self):
         content = self._read("synthetic_bank.csv")
@@ -474,6 +477,8 @@ class TestImportAPIUnit:
             }
 
             from backend.main import app
+            from backend.app.core.limiter import limiter
+            limiter.reset()
             self.client = TestClient(app)
 
             # Login
@@ -483,9 +488,13 @@ class TestImportAPIUnit:
                 pytest.skip("[LIVE-DB] Login failed — check credentials and Neo4j")
 
             yield
+            limiter.reset()
 
     def test_csv_upload_valid_file(self):
-        csv_content = (TEST_DATA_DIR / "synthetic_bank.csv").read_bytes()
+        target = TEST_DATA_DIR / "synthetic_bank.csv"
+        if not target.exists():
+            pytest.skip(f"Test data file {target} missing in {TEST_DATA_DIR}")
+        csv_content = target.read_bytes()
         resp = self.client.post(
             "/api/import/csv",
             files={"file": ("synthetic_bank.csv", csv_content, "text/csv")},

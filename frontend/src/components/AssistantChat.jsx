@@ -12,7 +12,17 @@ import {
   Lightbulb,
   Rocket,
   Zap,
-  RotateCcw
+  RotateCcw,
+  ShieldCheck,
+  AlertTriangle,
+  Calendar,
+  Clock,
+  Code2,
+  BookOpen,
+  Layers,
+  Scale,
+  Compass,
+  Info
 } from 'lucide-react';
 
 const SUGGESTIONS = [
@@ -24,6 +34,33 @@ const SUGGESTIONS = [
   "Give me a financial summary",
   "How much debt do I have?"
 ];
+
+function parseEducationalSections(text) {
+  if (!text) return null;
+
+  // 1. Concept Spotlight / The Core Concept
+  const conceptMatch = text.match(/(?:(?:###?|\*\*|📖)\s*)?(?:The\s+)?(?:Core\s+Concept|Concept\s+Spotlight|Concept\s+Overview)[:*]*\s*\n([\s\S]*?)(?=(?:(?:###?|\*\*|⚙️)\s*)?How\s+It\s+Works|(?:(?:###?|\*\*|⚖️)\s*)?(?:Key\s+)?Advantages|$)/i);
+
+  // 2. How It Works & Practical Example / Real-World Example
+  const exampleMatch = text.match(/(?:(?:###?|\*\*|⚙️)\s*)?How\s+It\s+Works[^\n]*\n([\s\S]*?)(?=(?:(?:###?|\*\*|⚖️)\s*)?(?:Key\s+)?Advantages|(?:(?:###?|\*\*|🧭)\s*)?(?:Best\s+Practices|Actionable\s+Takeaway)|$)/i);
+
+  // 3. Advantages & Considerations / Watch-Outs
+  const prosConsMatch = text.match(/(?:(?:###?|\*\*|⚖️)\s*)?(?:Key\s+)?Advantages[^\n]*\n([\s\S]*?)(?=(?:(?:###?|\*\*|🧭)\s*)?(?:Best\s+Practices|Actionable\s+Takeaway|Actionable\s+Takeaways|Smart\s+Rules)|---\s*\n\s*\*?ℹ️|$)/i);
+
+  // 4. Best Practices & Rules of Thumb / Actionable Takeaways
+  const takeawaysMatch = text.match(/(?:(?:###?|\*\*|🧭)\s*)?(?:Best\s+Practices|Actionable\s+Takeaway|Actionable\s+Takeaways|Smart\s+Rules)[^\n]*\n([\s\S]*?)(?=(?:---\s*\n\s*\*?ℹ️|\*?ℹ️\s*Note:|$))/i);
+
+  if (!conceptMatch && !exampleMatch && !prosConsMatch && !takeawaysMatch) {
+    return null;
+  }
+
+  return {
+    concept: conceptMatch ? conceptMatch[1].trim() : null,
+    example: exampleMatch ? exampleMatch[1].trim() : null,
+    prosCons: prosConsMatch ? prosConsMatch[1].trim() : null,
+    takeaways: takeawaysMatch ? takeawaysMatch[1].trim() : null
+  };
+}
 
 function parseAssistantSections(text) {
   if (!text) return null;
@@ -46,7 +83,74 @@ function parseAssistantSections(text) {
   };
 }
 
-function FormattedAssistantMessage({ text }) {
+function FormattedAssistantMessage({ text, intent }) {
+  const isEducational = intent === 'GENERAL_FINANCIAL_KNOWLEDGE';
+  const eduSections = parseEducationalSections(text);
+
+  // Render Educational Cards if it's general knowledge or matched educational sections
+  if (isEducational || eduSections) {
+    if (eduSections) {
+      return (
+        <div className="ai-bubble-container">
+          {/* 1. Concept Spotlight Card */}
+          {eduSections.concept && (
+            <div className="ai-card-edu-concept">
+              <div className="ai-card-edu-concept-header">
+                <BookOpen size={15} /> Concept Spotlight
+              </div>
+              <div className="ai-card-edu-concept-content ai-md-body">
+                <ReactMarkdown>{eduSections.concept}</ReactMarkdown>
+              </div>
+            </div>
+          )}
+
+          {/* 2. How It Works & Practical Example */}
+          {eduSections.example && (
+            <div className="ai-card-edu-example">
+              <div className="ai-card-edu-example-header">
+                <Layers size={15} /> How It Works & Practical Example
+              </div>
+              <div className="ai-md-body">
+                <ReactMarkdown>{eduSections.example}</ReactMarkdown>
+              </div>
+            </div>
+          )}
+
+          {/* 3. Advantages & Considerations */}
+          {eduSections.prosCons && (
+            <div className="ai-card-edu-proscons">
+              <div className="ai-card-edu-proscons-header">
+                <Scale size={15} /> Advantages & Considerations
+              </div>
+              <div className="ai-md-body">
+                <ReactMarkdown>{eduSections.prosCons}</ReactMarkdown>
+              </div>
+            </div>
+          )}
+
+          {/* 4. Best Practices & Rules of Thumb */}
+          {eduSections.takeaways && (
+            <div className="ai-card-edu-rules">
+              <div className="ai-card-edu-rules-header">
+                <Compass size={15} /> Smart Rules of Thumb
+              </div>
+              <div className="ai-md-body">
+                <ReactMarkdown>{eduSections.takeaways}</ReactMarkdown>
+              </div>
+            </div>
+          )}
+
+          {/* 5. Educational Disclaimer Badge */}
+          <div className="ai-card-edu-disclaimer">
+            <Info size={13} />
+            <span>General financial literacy guide • Not personalized investment or tax advice</span>
+          </div>
+        </div>
+      );
+    }
+  }
+
+  // Personal Analytical Sections
   const sections = parseAssistantSections(text);
 
   if (!sections) {
@@ -159,7 +263,7 @@ export default function AssistantChat() {
     const historyPayload = messages
       .filter(m => m.text && !m.text.startsWith('Error connecting'))
       .slice(-4)
-      .map(m => ({ role: m.role, content: m.text }));
+      .map(m => ({ role: m.role, content: (m.text || '').slice(0, 4000) }));
 
     try {
       const res = await fetch('/api/assistant/query', {
@@ -169,7 +273,15 @@ export default function AssistantChat() {
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.detail || 'Unable to analyse this question');
+        let errorMsg = 'Unable to analyse this question';
+        if (typeof data.detail === 'string') {
+          errorMsg = data.detail;
+        } else if (Array.isArray(data.detail)) {
+          errorMsg = data.detail.map(d => d.msg || (typeof d === 'string' ? d : JSON.stringify(d))).join(', ');
+        } else if (data.detail && typeof data.detail === 'object') {
+          errorMsg = data.detail.message || JSON.stringify(data.detail);
+        }
+        throw new Error(errorMsg);
       }
 
       setMessages(prev => [
@@ -178,6 +290,9 @@ export default function AssistantChat() {
           role: 'assistant',
           text: data.explanation || 'Analysis complete.',
           evidence: data.evidence || [],
+          evidence_metadata: data.evidence_metadata,
+          source_identifiers: data.source_identifiers,
+          graph_paths: data.graph_paths,
           math_result: data.math_result,
           intent: data.intent,
           latency_breakdown: data.latency_breakdown,
@@ -189,7 +304,7 @@ export default function AssistantChat() {
         ...prev,
         {
           role: 'assistant',
-          text: `Error connecting to AI Assistant: ${err.message}`,
+          text: `Error connecting to AI Assistant: ${err.message || 'Unknown network error'}`,
           evidence: [],
           math_result: null
         }
@@ -280,32 +395,179 @@ export default function AssistantChat() {
                 color: 'var(--text-main)',
                 width: '100%'
               }}>
-                <FormattedAssistantMessage text={msg.text} />
+                <FormattedAssistantMessage text={msg.text} intent={msg.intent} />
               </div>
             )}
 
-            {/* Grounded Evidence Card (for Assistant responses with evidence) */}
+            {/* Grounded Evidence Presentation (Deterministic Financial Engine) */}
             {msg.role === 'assistant' && msg.evidence && msg.evidence.length > 0 && (
               <div style={{
-                background: 'rgba(17, 24, 39, 0.85)',
-                border: '1px solid rgba(99, 102, 241, 0.3)',
+                background: 'rgba(15, 23, 42, 0.9)',
+                border: '1px solid rgba(99, 102, 241, 0.35)',
                 borderRadius: '12px',
-                padding: '14px',
-                marginTop: '4px',
-                fontSize: '0.82rem'
+                padding: '14px 16px',
+                marginTop: '6px',
+                fontSize: '0.82rem',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--accent-secondary)', fontWeight: '600', marginBottom: '8px' }}>
-                  <FileText size={14} /> Grounded Evidence & Verification
+                {/* Header: Verified Math Badge, Reporting Period & Data Freshness */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '8px',
+                  marginBottom: '10px',
+                  paddingBottom: '8px',
+                  borderBottom: '1px solid rgba(255, 255, 255, 0.06)'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#10b981', fontWeight: '600' }}>
+                    <ShieldCheck size={15} />
+                    <span>Deterministic Financial Evidence</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    {msg.evidence_metadata?.reporting_period && (
+                      <span style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        padding: '2px 8px',
+                        borderRadius: '6px',
+                        background: 'rgba(99, 102, 241, 0.15)',
+                        color: 'var(--accent-secondary)',
+                        fontSize: '0.70rem',
+                        fontWeight: '500'
+                      }}>
+                        <Calendar size={11} /> Period: {msg.evidence_metadata.reporting_period}
+                      </span>
+                    )}
+                    {msg.evidence_metadata?.data_freshness && (
+                      <span style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        padding: '2px 8px',
+                        borderRadius: '6px',
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        color: 'var(--text-muted)',
+                        fontSize: '0.70rem'
+                      }}>
+                        <Clock size={11} /> {msg.evidence_metadata.data_freshness}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '8px' }}>
+
+                {/* Missing Data Caveat Alerts */}
+                {msg.evidence_metadata?.caveats && msg.evidence_metadata.caveats.length > 0 && (
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '4px',
+                    marginBottom: '10px',
+                    padding: '8px 12px',
+                    background: 'rgba(245, 158, 11, 0.08)',
+                    border: '1px solid rgba(245, 158, 11, 0.25)',
+                    borderRadius: '8px'
+                  }}>
+                    {msg.evidence_metadata.caveats.map((cav, cIdx) => (
+                      <div key={cIdx} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', color: '#fbbf24', fontSize: '0.74rem', lineHeight: '1.4' }}>
+                        <AlertTriangle size={13} style={{ flexShrink: 0, marginTop: '2px' }} />
+                        <span><strong>Data Caveat:</strong> {cav}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Authoritative Metric Cards Grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '8px' }}>
                   {msg.evidence.map((ev, eIdx) => (
-                    <div key={eIdx} style={{ background: 'rgba(255,255,255,0.03)', padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
-                      <div style={{ color: 'var(--text-dim)', fontSize: '0.72rem' }}>{ev.label}</div>
-                      <div style={{ color: 'var(--text-main)', fontWeight: '600', fontSize: '0.88rem' }}>{ev.value}</div>
-                      <div style={{ color: 'var(--accent-primary)', fontSize: '0.68rem', marginTop: '2px' }}>{ev.source}</div>
+                    <div key={eIdx} style={{
+                      background: 'rgba(255, 255, 255, 0.03)',
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-subtle)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between'
+                    }}>
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '4px' }}>
+                          <span style={{ color: 'var(--text-dim)', fontSize: '0.72rem', fontWeight: '500' }}>{ev.label}</span>
+                          <span style={{
+                            color: 'var(--accent-primary)',
+                            fontSize: '0.64rem',
+                            padding: '1px 5px',
+                            background: 'rgba(99, 102, 241, 0.12)',
+                            borderRadius: '4px',
+                            whiteSpace: 'nowrap'
+                          }}>
+                            {ev.source}
+                          </span>
+                        </div>
+                        {/* Authoritative figure rendered directly from structured backend fields */}
+                        <div style={{
+                          color: '#ffffff',
+                          fontWeight: '700',
+                          fontSize: '0.98rem',
+                          marginTop: '4px',
+                          letterSpacing: '0.2px'
+                        }}>
+                          {ev.value}
+                        </div>
+                      </div>
+
+                      <div style={{ marginTop: '6px' }}>
+                        {ev.formula && (
+                          <div style={{ color: 'var(--text-muted)', fontSize: '0.66rem', fontStyle: 'italic', marginBottom: '4px' }}>
+                            {ev.formula}
+                          </div>
+                        )}
+                        {ev.source_node_ids && ev.source_node_ids.length > 0 && (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', marginTop: '2px' }}>
+                            {ev.source_node_ids.slice(0, 3).map((nodeId, nIdx) => (
+                              <span key={nIdx} style={{
+                                fontSize: '0.62rem',
+                                color: '#94a3b8',
+                                background: 'rgba(0, 0, 0, 0.3)',
+                                border: '1px solid rgba(255, 255, 255, 0.08)',
+                                borderRadius: '4px',
+                                padding: '1px 5px',
+                                fontFamily: 'monospace'
+                              }}>
+                                {nodeId}
+                              </span>
+                            ))}
+                            {ev.source_node_ids.length > 3 && (
+                              <span style={{ fontSize: '0.62rem', color: '#94a3b8', padding: '1px 3px' }}>
+                                +{ev.source_node_ids.length - 3} more
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
+
+                {/* Calculation Methodology / Formula Footer */}
+                {msg.evidence_metadata?.methodology_formula && (
+                  <div style={{
+                    marginTop: '10px',
+                    paddingTop: '8px',
+                    borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    color: 'var(--text-muted)',
+                    fontSize: '0.70rem'
+                  }}>
+                    <Code2 size={12} color="var(--accent-secondary)" style={{ flexShrink: 0 }} />
+                    <span style={{ fontFamily: 'monospace' }}>
+                      <strong>Formula:</strong> {msg.evidence_metadata.methodology_formula}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
 

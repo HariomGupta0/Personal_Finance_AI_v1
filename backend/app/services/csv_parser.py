@@ -28,6 +28,8 @@ from typing import Optional
 
 import pandas as pd
 
+from backend.app.core.money import normalize_rupees
+
 # ---------------------------------------------------------------------------
 # Column name aliases
 # ---------------------------------------------------------------------------
@@ -40,6 +42,7 @@ DATE_COLS = [
 DESC_COLS = [
     "description", "narration", "particulars", "remarks", "details",
     "transaction details", "transaction narration", "transaction description",
+    "name", "merchant", "payee", "beneficiary", "party", "party name", "mode",
 ]
 
 DEBIT_COLS = [
@@ -57,11 +60,12 @@ AMOUNT_COLS = [
 ]
 
 TYPE_COLS = [
-    "transaction type", "type", "dr/cr", "cr/dr", "debit/credit",
+    "transaction type", "type", "dr/cr", "cr/dr", "debit/credit", "drcr", "crdr",
+    "dr_cr", "cr_dr", "txn type", "entry type", "type of transaction",
 ]
 
 REF_COLS = [
-    "reference", "ref no", "reference no", "reference number",
+    "ref", "reference", "ref no", "reference no", "reference number",
     "transaction id", "txn id", "utr", "chq/ref number", "cheque number",
     "instrument id", "narration ref", "utr number",
 ]
@@ -110,6 +114,7 @@ def _parse_amount(raw) -> Optional[float]:
     Parse an amount cell.
     Returns None if the cell is blank / None / truly unreadable.
     Never returns 0.0 for a missing value.
+    Uses Decimal and normalize_rupees; never uses float arithmetic.
     """
     if raw is None or (isinstance(raw, float) and pd.isna(raw)):
         return None
@@ -121,9 +126,18 @@ def _parse_amount(raw) -> Optional[float]:
     # Handle parenthesised negatives like (1234.56)
     if cleaned.startswith("(") and cleaned.endswith(")"):
         cleaned = "-" + cleaned[1:-1]
+    # Handle trailing minus like 1234.56- -> -1234.56
+    if cleaned.endswith("-") and not cleaned.startswith("-"):
+        cleaned = "-" + cleaned[:-1]
+    # Handle Dr / Cr suffix if present
+    if cleaned.upper().endswith("DR"):
+        cleaned = "-" + cleaned[:-2].strip()
+    elif cleaned.upper().endswith("CR"):
+        cleaned = cleaned[:-2].strip()
+
     try:
-        val = float(cleaned)
-    except ValueError:
+        val = normalize_rupees(cleaned)
+    except Exception:
         return None
     return val  # Keep sign as-is; direction inferred later
 
@@ -157,10 +171,30 @@ class ColumnMapResult:
     user and let them confirm before normalisation.
     """
 
-    def __init__(self, mapping: dict, ambiguous: bool, warnings: list[str]):
+    def __init__(
+        self,
+        mapping: dict,
+        ambiguous: bool,
+        warnings: list[str],
+        unrecognized_columns: list[str] | None = None,
+    ):
         self.mapping = mapping           # {role: actual_header_name}
         self.ambiguous = ambiguous
         self.warnings = warnings
+        self.unrecognized_columns = unrecognized_columns or []
+
+
+def _check_date_ambiguity(raw_date: str) -> bool:
+    """
+    Returns True if date string matches DD/MM/YYYY or MM/DD/YYYY
+    where both day and month numbers are between 1 and 12 and not equal.
+    """
+    m = re.match(r"^(\d{1,2})[/\-](\d{1,2})[/\-](\d{4})$", raw_date.strip())
+    if m:
+        p1, p2 = int(m.group(1)), int(m.group(2))
+        if 1 <= p1 <= 12 and 1 <= p2 <= 12 and p1 != p2:
+            return True
+    return False
 
 
 def detect_columns(df: pd.DataFrame) -> ColumnMapResult:
@@ -242,7 +276,26 @@ def detect_columns(df: pd.DataFrame) -> ColumnMapResult:
             + ", ".join(DESC_COLS[:4])
         )
 
-    return ColumnMapResult(mapping=mapping, ambiguous=ambiguous, warnings=warnings)
+    # Identify unrecognized columns (present in CSV but unmapped and not known balance/enrichment)
+    recognized_headers = {date_col, desc_col, ref_col, type_col, debit_col, credit_col, amount_col} - {None}
+    enrichment_cols = {"name", "mode"}
+    unrecognized = [
+        h for h in headers
+        if h not in recognized_headers
+        and _normalise_col(h) not in BALANCE_COLS
+        and _normalise_col(h) not in enrichment_cols
+    ]
+    if unrecognized:
+        warnings.append(
+            f"Unrecognized column(s) detected: {', '.join(unrecognized)}. These columns will not be mapped to transaction fields."
+        )
+
+    return ColumnMapResult(
+        mapping=mapping,
+        ambiguous=ambiguous,
+        warnings=warnings,
+        unrecognized_columns=unrecognized,
+    )
 
 
 def _infer_type_from_type_col(raw: str) -> Optional[str]:
@@ -250,7 +303,7 @@ def _infer_type_from_type_col(raw: str) -> Optional[str]:
     v = str(raw).strip().upper()
     if v in ("CR", "CREDIT", "INCOME", "DEP", "DEPOSIT", "IN"):
         return "INCOME"
-    if v in ("DR", "DEBIT", "EXPENSE", "WITHDRAWAL", "OUT", "WDL", "WD"):
+    if v in ("DR", "DB", "DEBIT", "EXPENSE", "WITHDRAWAL", "OUT", "WDL", "WD"):
         return "EXPENSE"
     if v in ("REFUND", "REV", "REVERSAL", "RETURN"):
         return "REFUND"
@@ -318,25 +371,55 @@ def parse_csv(
 
     rows: list[dict] = []
     errors: list[dict] = []
+    skipped: list[dict] = []
+    has_ambiguous_dates = False
+    ambiguous_sample: Optional[str] = None
 
     for idx, row in df.iterrows():
         raw_row = dict(row)
         error_reason = None
 
+        # Check for completely blank row
+        if all(str(v).strip() == "" for v in row.values):
+            skipped.append({
+                "row_index": int(idx) + 2,
+                "reason": "Empty row skipped",
+            })
+            continue
+
         # --- Date ---
         date_iso: Optional[str] = None
         if mapping.get("date"):
             raw_date = str(row.get(mapping["date"], "")).strip()
-            date_iso = _parse_date(raw_date)
-            if not date_iso:
-                date_iso = today_iso  # fallback but not an error
-
-        date_iso = date_iso or today_iso
+            if not raw_date:
+                error_reason = f"Row {idx + 2}: Date cell is blank in date column '{mapping['date']}'."
+            else:
+                date_iso = _parse_date(raw_date)
+                if not date_iso:
+                    error_reason = f"Row {idx + 2}: Invalid or unparseable date '{raw_date}'. Financial records require a valid date."
+                elif _check_date_ambiguity(raw_date):
+                    has_ambiguous_dates = True
+                    if not ambiguous_sample:
+                        ambiguous_sample = raw_date
+        else:
+            date_iso = today_iso
 
         # --- Description ---
         description = ""
         if mapping.get("description"):
             description = str(row.get(mapping["description"], "")).strip()
+
+        # If description is empty or generic, check if name/mode columns exist to enrich it
+        if not description or description.startswith("Imported transaction"):
+            name_val = str(row.get("name", "")).strip() if "name" in row else ""
+            mode_val = str(row.get("mode", "")).strip() if "mode" in row else ""
+            if name_val and mode_val:
+                description = f"{mode_val} - {name_val}"
+            elif name_val:
+                description = name_val
+            elif mode_val:
+                description = mode_val
+
         if not description:
             description = f"Imported transaction (row {idx + 2})"
 
@@ -358,38 +441,40 @@ def parse_csv(
             debit_val = _parse_amount(debit_raw) if debit_raw else None
             credit_val = _parse_amount(credit_raw) if credit_raw else None
 
-            if debit_val is not None and debit_val != 0 and credit_val is None:
+            # Check if cells were non-empty but couldn't be parsed
+            if str(debit_raw).strip() not in ("", "-", "—", "N/A", "n/a", "nil", "Nil") and debit_val is None:
+                error_reason = f"Row {idx + 2}: Invalid debit amount '{debit_raw}'. Numbers must be valid amounts."
+            elif str(credit_raw).strip() not in ("", "-", "—", "N/A", "n/a", "nil", "Nil") and credit_val is None:
+                error_reason = f"Row {idx + 2}: Invalid credit amount '{credit_raw}'. Numbers must be valid amounts."
+            elif debit_val is not None and debit_val != 0 and (credit_val is None or credit_val == 0):
                 amount = abs(debit_val)
                 tx_type = "EXPENSE"
-            elif credit_val is not None and credit_val != 0 and debit_val is None:
+            elif credit_val is not None and credit_val != 0 and (debit_val is None or debit_val == 0):
                 amount = abs(credit_val)
                 tx_type = "INCOME"
-            elif debit_val is not None and credit_val is not None:
-                # Both columns present — use whichever is non-zero
-                if debit_val != 0 and credit_val == 0:
-                    amount = abs(debit_val)
-                    tx_type = "EXPENSE"
-                elif credit_val != 0 and debit_val == 0:
-                    amount = abs(credit_val)
-                    tx_type = "INCOME"
-                else:
-                    error_reason = f"Row {idx + 2}: Both debit and credit values are non-zero ({debit_val}, {credit_val}). Please review."
+            elif debit_val is not None and credit_val is not None and debit_val != 0 and credit_val != 0:
+                error_reason = f"Row {idx + 2}: Both debit and credit values are non-zero ({debit_val}, {credit_val}). Please review."
             else:
                 error_reason = f"Row {idx + 2}: Missing amount — both debit and credit cells are blank."
 
         elif mode in ("signed", "debit_only"):
             raw_amt = row.get(mapping.get("amount_col") or mapping.get("debit", ""), "")
-            parsed = _parse_amount(raw_amt)
-            if parsed is None:
-                error_reason = f"Row {idx + 2}: Amount cell is blank or cannot be parsed ('{raw_amt}'). Skipping — a missing amount is never treated as zero."
+            if str(raw_amt).strip() == "":
+                error_reason = f"Row {idx + 2}: Amount cell is blank. Skipping — amounts are never guessed."
             else:
-                amount = abs(parsed)
-                if mode == "debit_only":
-                    tx_type = "EXPENSE"
-                elif parsed < 0:
-                    tx_type = "EXPENSE"
+                parsed = _parse_amount(raw_amt)
+                if parsed is None:
+                    error_reason = f"Row {idx + 2}: Amount cell is blank or cannot be parsed ('{raw_amt}'). Skipping — a missing amount is never treated as zero."
+                elif parsed == 0:
+                    error_reason = f"Row {idx + 2}: Amount is zero or missing after parsing."
                 else:
-                    tx_type = "INCOME"
+                    amount = abs(parsed)
+                    if mode == "debit_only":
+                        tx_type = "EXPENSE"
+                    elif parsed < 0:
+                        tx_type = "EXPENSE"
+                    else:
+                        tx_type = "INCOME"
 
         # Override type from explicit type column
         if mapping.get("type") and error_reason is None:
@@ -403,14 +488,15 @@ def parse_csv(
             tx_type = "INCOME"  # stored as INCOME; description signals refund
 
         if error_reason:
-            errors.append({"row_index": int(idx) + 2, "raw": raw_row, "error": error_reason})
+            errors.append({"row_index": int(idx) + 2, "raw": raw_row, "error": error_reason, "reason": error_reason})
             continue
 
-        if amount is None or amount == 0:
+        if amount is None or amount <= 0:
             errors.append({
                 "row_index": int(idx) + 2,
                 "raw": raw_row,
                 "error": f"Row {idx + 2}: Amount is zero or missing after parsing.",
+                "reason": f"Row {idx + 2}: Amount is zero or missing after parsing.",
             })
             continue
 
@@ -424,11 +510,22 @@ def parse_csv(
             "source_type": "csv",
         })
 
+    date_warnings = []
+    if has_ambiguous_dates and ambiguous_sample:
+        date_warnings.append(
+            f"Ambiguous date format detected (e.g. '{ambiguous_sample}'). Dates were parsed assuming DD/MM/YYYY. If your statement uses MM/DD/YYYY, please verify dates in the preview."
+        )
+
     return {
         "rows": rows,
         "errors": errors,
-        "warnings": col_map.warnings,
-        "ambiguous": col_map.ambiguous,
+        "rejected_rows": errors,
+        "skipped": skipped,
+        "skipped_rows": skipped,
+        "warnings": col_map.warnings + date_warnings,
+        "ambiguous": col_map.ambiguous or has_ambiguous_dates,
+        "date_ambiguity": has_ambiguous_dates,
+        "unrecognized_columns": col_map.unrecognized_columns,
         "mapping": mapping,
         "columns": list(df.columns),
     }

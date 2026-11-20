@@ -16,6 +16,9 @@ import re
 from datetime import date, datetime, timedelta
 from typing import Optional
 
+from backend.app.core.money import normalize_rupees, to_paise
+from backend.app.services.transfer_detector import detect_intra_batch_transfers, detect_retroactive_transfers
+
 # ---------------------------------------------------------------------------
 # Category inference (reuses same logic as transaction_extractor.py)
 # ---------------------------------------------------------------------------
@@ -44,17 +47,14 @@ INCOME_SIGNALS = {
 }
 
 
+from collections import Counter
+from backend.app.services.merchant_normalizer import normalize_narration
+from backend.app.services.fingerprint import compute_transaction_fingerprint
+
+
 def infer_category(description: str, tx_type: str) -> str:
-    desc_lower = (description or "").lower()
-    if tx_type == "INCOME":
-        for kw in INCOME_SIGNALS:
-            if kw in desc_lower:
-                return kw.capitalize()
-        return "Income"
-    for cat, keywords in CATEGORY_KEYWORDS.items():
-        if any(kw in desc_lower for kw in keywords):
-            return cat
-    return "General"
+    norm = normalize_narration(description, tx_type)
+    return norm.category
 
 
 # ---------------------------------------------------------------------------
@@ -70,7 +70,7 @@ def _validate_row(row: dict, idx: int) -> Optional[str]:
     if amount is None:
         return f"Row {idx}: Amount is missing."
     try:
-        amt = float(amount)
+        amt = normalize_rupees(amount)
     except (TypeError, ValueError):
         return f"Row {idx}: Amount '{amount}' is not a valid number."
     if amt <= 0:
@@ -91,50 +91,58 @@ def _validate_row(row: dict, idx: int) -> Optional[str]:
 
 
 # ---------------------------------------------------------------------------
-# Duplicate detection (read-only Neo4j query)
+# Duplicate detection (batched Cypher query)
 # ---------------------------------------------------------------------------
-
-_EXACT_REF_QUERY = """
-MATCH (u:User {id: $user_id})-[:HAS_ACCOUNT]->(:Account)-[:MADE_TRANSACTION]->(t:Transaction)
-WHERE t.source_ref IS NOT NULL AND t.source_ref = $source_ref
-RETURN t.id AS id, t.description AS description, t.amount AS amount, t.date AS date
-LIMIT 1
-"""
-
-_CANDIDATE_QUERY = """
-MATCH (u:User {id: $user_id})-[:HAS_ACCOUNT]->(:Account)-[:MADE_TRANSACTION]->(t:Transaction)
-WHERE t.amount = $amount
-  AND t.type = $tx_type
-  AND date(t.date) >= date($date_from)
-  AND date(t.date) <= date($date_to)
-RETURN t.id AS id, t.description AS description, t.amount AS amount, t.date AS date
-LIMIT 3
-"""
-
-# Also check income nodes
-_INCOME_CANDIDATE_QUERY = """
-MATCH (u:User {id: $user_id})-[:RECEIVED_INCOME]->(i:Income)
-WHERE i.amount = $amount
-  AND date(i.date) >= date($date_from)
-  AND date(i.date) <= date($date_to)
-RETURN i.id AS id, i.source AS description, i.amount AS amount, i.date AS date
-LIMIT 3
-"""
-
 
 def detect_duplicates(rows: list[dict], user_id: str, db) -> list[dict]:
     """
-    For each row, check whether a matching record already exists in Neo4j.
+    Check whether matching records already exist in Neo4j using a single
+    batched Cypher query instead of N individual queries.
 
-    Returns the rows list with an added 'duplicate_status' field:
-        'OK'                — no match found
-        'CONFIRMED_DUPLICATE' — exact source_ref match (already imported)
-        'POSSIBLE_DUPLICATE'  — candidate match by amount + date + type
-    And 'duplicate_matches' list of matching transaction summaries.
-
+    Returns the rows list with added 'duplicate_status' and 'duplicate_matches'.
     This function NEVER writes to the database.
     """
+    if not rows:
+        return []
+
+    # Use batch_check_duplicates if supported on db
+    if hasattr(db, "batch_check_duplicates"):
+        try:
+            matches_by_row = db.batch_check_duplicates(user_id, rows)
+            enriched = []
+            for i, r in enumerate(rows):
+                row = dict(r)
+                matches = matches_by_row.get(i, [])
+                if any(m.get("match_reason") in ("EXACT_FINGERPRINT", "EXACT_REF") for m in matches):
+                    status = "CONFIRMED_DUPLICATE"
+                elif matches:
+                    status = "POSSIBLE_DUPLICATE"
+                else:
+                    status = "OK"
+                row["duplicate_status"] = status
+                row["duplicate_matches"] = matches
+                enriched.append(row)
+            return enriched
+        except Exception:
+            pass
+
+    # Fallback to single-pass session check
     from neo4j.time import Date as Neo4jDate
+    _EXACT_REF_QUERY = """
+    MATCH (u:User {id: $user_id})-[:HAS_ACCOUNT]->(:Account)-[:MADE_TRANSACTION]->(t:Transaction)
+    WHERE t.source_ref IS NOT NULL AND t.source_ref = $source_ref
+    RETURN t.id AS id, t.description AS description, round(toFloat(t.amount_paise) / 100.0, 2) AS amount, t.date AS date
+    LIMIT 1
+    """
+    _CANDIDATE_QUERY = """
+    MATCH (u:User {id: $user_id})-[:HAS_ACCOUNT]->(:Account)-[:MADE_TRANSACTION]->(t:Transaction)
+    WHERE t.amount_paise = $amount_paise
+      AND t.type = $tx_type
+      AND date(t.date) >= date($date_from)
+      AND date(t.date) <= date($date_to)
+    RETURN t.id AS id, t.description AS description, round(toFloat(t.amount_paise) / 100.0, 2) AS amount, t.date AS date
+    LIMIT 3
+    """
 
     enriched = []
     for row in rows:
@@ -142,13 +150,15 @@ def detect_duplicates(rows: list[dict], user_id: str, db) -> list[dict]:
         source_ref = row.get("source_ref")
         tx_type = str(row.get("type", "EXPENSE")).upper()
         tx_date = row.get("date") or date.today().isoformat()
-        amount = float(row.get("amount", 0))
+        try:
+            amount = normalize_rupees(row.get("amount", 0))
+        except Exception:
+            amount = 0.0
         matches = []
         status = "OK"
 
         try:
             with db.driver.session(database=db.database) as session:
-                # 1. Exact reference match
                 if source_ref:
                     result = session.run(_EXACT_REF_QUERY, user_id=user_id, source_ref=source_ref)
                     rec = result.single()
@@ -159,32 +169,20 @@ def detect_duplicates(rows: list[dict], user_id: str, db) -> list[dict]:
                         matches.append(d)
                         status = "CONFIRMED_DUPLICATE"
 
-                # 2. Candidate match (skip if already confirmed duplicate)
                 if status == "OK":
                     dt = datetime.strptime(tx_date, "%Y-%m-%d").date()
                     date_from = (dt - timedelta(days=1)).isoformat()
                     date_to = (dt + timedelta(days=1)).isoformat()
-
-                    query = _INCOME_CANDIDATE_QUERY if tx_type == "INCOME" else _CANDIDATE_QUERY
-                    params = dict(
-                        user_id=user_id,
-                        amount=amount,
-                        tx_type=tx_type,
-                        date_from=date_from,
-                        date_to=date_to,
-                    )
-                    result = session.run(query, **params)
+                    amount_paise = to_paise(amount)
+                    result = session.run(_CANDIDATE_QUERY, user_id=user_id, amount_paise=amount_paise, tx_type=tx_type, date_from=date_from, date_to=date_to)
                     for rec in result:
                         d = dict(rec)
                         if isinstance(d.get("date"), Neo4jDate):
                             d["date"] = d["date"].iso_format()
                         matches.append(d)
-
                     if matches:
                         status = "POSSIBLE_DUPLICATE"
-
         except Exception:
-            # Dedup query failures are non-fatal — flag as needing review
             status = "OK"
 
         row["duplicate_status"] = status
@@ -203,9 +201,10 @@ def run_pipeline(
     user_id: str,
     db,
     skip_dedup: bool = False,
+    account_id: str = "A001",
 ) -> dict:
     """
-    Normalize → Validate → Detect Duplicates.
+    Normalize → Enrich (Merchant & Tiered Category) → Fingerprint → Validate → Detect Duplicates.
 
     Parameters
     ----------
@@ -213,6 +212,7 @@ def run_pipeline(
     user_id     : authenticated user's Neo4j id
     db          : Neo4jService instance
     skip_dedup  : set True in unit tests to avoid DB calls
+    account_id  : account ID for deterministic fingerprint generation
 
     Returns
     -------
@@ -225,29 +225,56 @@ def run_pipeline(
     invalid_rows: list[dict] = []
     warnings: list[str] = []
 
+    # Track in-file occurrences so duplicate identical transactions (e.g. ₹20 chai twice)
+    # produce unique deterministic fingerprints without colliding
+    occurrence_counter: Counter = Counter()
+
     for i, raw in enumerate(raw_rows):
-        # Normalise type to uppercase
-        tx_type = str(raw.get("type") or "EXPENSE").upper().strip()
+        row = dict(raw)
+        tx_type = str(row.get("type") or "EXPENSE").upper().strip()
         if tx_type == "REFUND":
             tx_type = "INCOME"
-        raw["type"] = tx_type
+        row["type"] = tx_type
 
-        # Infer category if not provided
-        if not raw.get("category"):
-            raw["category"] = infer_category(raw.get("description", ""), tx_type)
+        # Enrich description and category with Tiered Merchant Normalizer
+        desc = row.get("description", "")
+        norm = normalize_narration(desc, tx_type)
+        row["clean_merchant"] = norm.clean_merchant
+        row["channel"] = norm.channel
+        if not row.get("category"):
+            row["category"] = norm.category
+        row["category_source"] = norm.category_source
+        row["confidence"] = norm.confidence
 
         # Default date to today if missing
-        if not raw.get("date"):
-            raw["date"] = date.today().isoformat()
+        if not row.get("date"):
+            row["date"] = date.today().isoformat()
 
         # Validate
-        error = _validate_row(raw, i + 1)
+        error = _validate_row(row, i + 1)
         if error:
-            invalid_rows.append({"row": raw, "error": error})
+            invalid_rows.append({"row": row, "error": error})
         else:
-            valid_rows.append(raw)
+            # Deterministic fingerprint with occurrence tracking
+            amt = normalize_rupees(row.get("amount") or 0.0)
+            amt_paise = to_paise(amt)
+            tuple_key = (str(row.get("date")), amt_paise, tx_type, norm.clean_merchant.lower(), str(row.get("source_ref") or "").lower())
+            occ = occurrence_counter[tuple_key]
+            occurrence_counter[tuple_key] += 1
+            row["amount"] = amt
 
-    # Deduplication (DB call)
+            row["fingerprint"] = compute_transaction_fingerprint(
+                account_id=account_id,
+                date_str=str(row["date"]),
+                amount=amt,
+                tx_type=tx_type,
+                description=norm.clean_merchant,
+                source_ref=row.get("source_ref"),
+                occurrence_index=occ,
+            )
+            valid_rows.append(row)
+
+    # Deduplication (Single batch query)
     if not skip_dedup and valid_rows:
         try:
             valid_rows = detect_duplicates(valid_rows, user_id, db)
@@ -256,14 +283,70 @@ def run_pipeline(
             for row in valid_rows:
                 row.setdefault("duplicate_status", "OK")
                 row.setdefault("duplicate_matches", [])
-
     else:
         for row in valid_rows:
             row.setdefault("duplicate_status", "OK")
             row.setdefault("duplicate_matches", [])
 
+    # -----------------------------------------------------------------------
+    # Internal Transfer Candidate Detection (Intra-batch + Retroactive)
+    # -----------------------------------------------------------------------
+    transfer_candidates = []
+    user_accounts = []
+    if db and hasattr(db, "get_user_accounts") and user_id:
+        try:
+            user_accounts = db.get_user_accounts(user_id)
+        except Exception:
+            pass
+
+    # 1. Intra-batch candidate pairs
+    intra_candidates = detect_intra_batch_transfers(valid_rows, user_accounts)
+    matched_indices = set()
+    for cand in intra_candidates:
+        d_idx = cand["debit_index"]
+        c_idx = cand["credit_index"]
+        matched_indices.add(d_idx)
+        matched_indices.add(c_idx)
+
+        valid_rows[d_idx]["is_transfer_candidate"] = True
+        valid_rows[d_idx]["transfer_role"] = "DEBIT"
+        valid_rows[d_idx]["transfer_candidate_id"] = cand["candidate_id"]
+        valid_rows[d_idx]["transfer_confidence"] = cand["confidence"]
+
+        valid_rows[c_idx]["is_transfer_candidate"] = True
+        valid_rows[c_idx]["transfer_role"] = "CREDIT"
+        valid_rows[c_idx]["transfer_candidate_id"] = cand["candidate_id"]
+        valid_rows[c_idx]["transfer_confidence"] = cand["confidence"]
+        transfer_candidates.append(cand)
+
+    # 2. Retroactive candidate discovery for remaining unmatched rows
+    if db and not skip_dedup:
+        unmatched_rows = [(idx, r) for idx, r in enumerate(valid_rows) if idx not in matched_indices]
+        retro_candidates = detect_retroactive_transfers(unmatched_rows, user_id, db, user_accounts)
+        for rcand in retro_candidates:
+            b_idx = rcand["batch_row_index"]
+            valid_rows[b_idx]["is_transfer_candidate"] = True
+            valid_rows[b_idx]["paired_transaction_id"] = rcand["existing_transaction_id"]
+            valid_rows[b_idx]["transfer_candidate_id"] = rcand["candidate_id"]
+            valid_rows[b_idx]["transfer_confidence"] = rcand["confidence"]
+            valid_rows[b_idx]["is_retroactive"] = True
+            transfer_candidates.append(rcand)
+
+    accepted_rows = [r for r in valid_rows if r.get("duplicate_status") == "OK"]
+    duplicate_rows = [
+        r for r in valid_rows
+        if r.get("duplicate_status") in ("CONFIRMED_DUPLICATE", "POSSIBLE_DUPLICATE")
+    ]
+
     return {
         "valid_rows": valid_rows,
+        "accepted_rows": accepted_rows,
+        "duplicate_rows": duplicate_rows,
         "invalid_rows": invalid_rows,
         "warnings": warnings,
+        "accepted_count": len(accepted_rows),
+        "duplicate_count": len(duplicate_rows),
+        "invalid_count": len(invalid_rows),
+        "transfer_candidates": transfer_candidates,
+        "transfer_count": len(transfer_candidates),
     }

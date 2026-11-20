@@ -19,8 +19,16 @@ NEO4J_DATABASE = os.getenv("NEO4J_DATABASE", "finance-ai-antigravity")
 
 # LLM Configuration
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-LLM_MODEL = os.getenv("LLM_MODEL", "openai/gpt-oss-20b")
+LLM_MODEL = os.getenv("LLM_MODEL", "openai/gpt-oss-120b")
 VISION_MODEL = os.getenv("VISION_MODEL", "qwen/qwen3.8-27b")
+DEFAULT_PROMPT_VERSION = os.getenv("DEFAULT_PROMPT_VERSION", "v1.1")
+
+
+# Setu Account Aggregator Configuration
+SETU_CLIENT_ID = os.getenv("SETU_CLIENT_ID", "")
+SETU_CLIENT_SECRET = os.getenv("SETU_CLIENT_SECRET", "")
+SETU_PRODUCT_INSTANCE_ID = os.getenv("SETU_PRODUCT_INSTANCE_ID", "")
+SETU_BASE_URL = os.getenv("SETU_BASE_URL", "https://fiu-sandbox.setu.co")
 
 # Application authentication. These must be configured in the deployment
 # environment; no browser-supplied user identifier is trusted by the API.
@@ -30,3 +38,4 @@ APP_PASSWORD = os.getenv("APP_PASSWORD")
 SESSION_SECRET = os.getenv("SESSION_SECRET")
 SESSION_TTL_SECONDS = int(os.getenv("SESSION_TTL_SECONDS", "28800"))
 SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "false").lower() == "true"
+DEV_MODE = os.getenv("DEV_MODE", "false").lower() in ("true", "1", "yes", "dev")

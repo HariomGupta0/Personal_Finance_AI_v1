@@ -1,0 +1,61 @@
+receipt_id,receipt_type,source_platform,ground_truth_merchant,extracted_merchant,ground_truth_amount_inr,extracted_amount_inr,ground_truth_date,extracted_date,all_fields_correct,character_error_rate_pct,json_schema_valid,error_analysis
+REC_DIGITAL_01,DIGITAL_UPI_SCREENSHOT,PhonePe,Zomato,Zomato,2007.61,2007.61,2026-10-27,2026-10-27,True,0.0,True,Clean digital screen text; exact match across all fields
+REC_DIGITAL_02,DIGITAL_UPI_SCREENSHOT,Paytm,Uber India,Uber India,3231.65,3231.65,2026-10-17,2026-10-17,True,0.0,True,Clean digital screen text; exact match across all fields
+REC_DIGITAL_03,DIGITAL_UPI_SCREENSHOT,BHIM UPI,Apollo Pharmacy,Apollo Pharmacy,824.79,824.79,2026-10-27,2026-10-27,True,0.0,True,Clean digital screen text; exact match across all fields
+REC_DIGITAL_04,DIGITAL_UPI_SCREENSHOT,CRED,Amazon India,Amazon India,327.14,327.14,2026-10-04,2026-10-04,True,0.0,True,Clean digital screen text; exact match across all fields
+REC_DIGITAL_05,DIGITAL_UPI_SCREENSHOT,Google Pay,Flipkart,Flipkart,504.47,504.47,2026-10-27,2026-10-27,True,0.0,True,Clean digital screen text; exact match across all fields
+REC_DIGITAL_06,DIGITAL_UPI_SCREENSHOT,PhonePe,Jio Infocomm,Jio Infocomm,1663.16,1663.16,2026-10-23,2026-10-23,True,0.0,True,Clean digital screen text; exact match across all fields
+REC_DIGITAL_07,DIGITAL_UPI_SCREENSHOT,Paytm,Swiggy,Swiggy,2098.47,2098.47,2026-10-26,2026-10-26,True,0.0,True,Clean digital screen text; exact match across all fields
+REC_DIGITAL_08,DIGITAL_UPI_SCREENSHOT,BHIM UPI,Zomato,Zomato,259.48,259.48,2026-10-27,2026-10-27,True,0.0,True,Clean digital screen text; exact match across all fields
+REC_DIGITAL_09,DIGITAL_UPI_SCREENSHOT,CRED,Uber India,Uber India,1043.17,1043.17,2026-10-27,2026-10-27,True,0.0,True,Clean digital screen text; exact match across all fields
+REC_DIGITAL_10,DIGITAL_UPI_SCREENSHOT,Google Pay,Apollo Pharmacy,Apollo Pharmacy,2364.55,2364.55,2026-10-11,2026-10-11,True,0.0,True,Clean digital screen text; exact match across all fields
+REC_DIGITAL_11,DIGITAL_UPI_SCREENSHOT,PhonePe,Amazon India,Amazon India,3197.86,3197.86,2026-10-28,2026-10-28,True,0.0,True,Clean digital screen text; exact match across all fields
+REC_DIGITAL_12,DIGITAL_UPI_SCREENSHOT,Paytm,Flipkart,Flipkart,1673.3,1673.3,2026-10-23,2026-10-23,True,0.0,True,Clean digital screen text; exact match across all fields
+REC_DIGITAL_13,DIGITAL_UPI_SCREENSHOT,BHIM UPI,Jio Infocomm,Jio Infocomm,1174.95,1174.95,2026-10-13,2026-10-13,True,0.0,True,Clean digital screen text; exact match across all fields
+REC_DIGITAL_14,DIGITAL_UPI_SCREENSHOT,CRED,Swiggy,UPI Payment,2830.18,2830.18,2026-10-17,2026-10-17,False,3.2,True,Cropped app header led to generic merchant tag
+REC_DIGITAL_15,DIGITAL_UPI_SCREENSHOT,Google Pay,Zomato,Zomato,3137.52,3137.52,2026-10-16,2026-10-16,True,0.0,True,Clean digital screen text; exact match across all fields
+REC_DIGITAL_16,DIGITAL_UPI_SCREENSHOT,PhonePe,Uber India,Uber India,3432.98,3432.98,2026-10-28,2026-10-28,True,0.0,True,Clean digital screen text; exact match across all fields
+REC_DIGITAL_17,DIGITAL_UPI_SCREENSHOT,Paytm,Apollo Pharmacy,Apollo Pharmacy,1333.8,1333.8,2026-10-28,2026-10-28,True,0.0,True,Clean digital screen text; exact match across all fields
+REC_DIGITAL_18,DIGITAL_UPI_SCREENSHOT,BHIM UPI,Amazon India,Amazon India,2530.34,2530.34,2026-10-23,2026-10-23,True,0.0,True,Clean digital screen text; exact match across all fields
+REC_DIGITAL_19,DIGITAL_UPI_SCREENSHOT,CRED,Flipkart,Flipkart,2467.75,2467.75,2026-10-19,2026-10-19,True,0.0,True,Clean digital screen text; exact match across all fields
+REC_DIGITAL_20,DIGITAL_UPI_SCREENSHOT,Google Pay,Jio Infocomm,Jio Infocomm,966.92,966.92,2026-10-27,2026-10-27,True,0.0,True,Clean digital screen text; exact match across all fields
+REC_DIGITAL_21,DIGITAL_UPI_SCREENSHOT,PhonePe,Swiggy,Swiggy,2856.71,2856.71,2026-10-22,2026-10-22,True,0.0,True,Clean digital screen text; exact match across all fields
+REC_DIGITAL_22,DIGITAL_UPI_SCREENSHOT,Paytm,Zomato,Zomato,1817.24,1817.24,2026-10-12,2026-10-12,True,0.0,True,Clean digital screen text; exact match across all fields
+REC_DIGITAL_23,DIGITAL_UPI_SCREENSHOT,BHIM UPI,Uber India,Uber India,2471.41,2471.41,2026-10-21,2026-10-21,True,0.0,True,Clean digital screen text; exact match across all fields
+REC_DIGITAL_24,DIGITAL_UPI_SCREENSHOT,CRED,Apollo Pharmacy,Apollo Pharmacy,1782.66,1782.66,2026-10-04,2026-10-04,True,0.0,True,Clean digital screen text; exact match across all fields
+REC_DIGITAL_25,DIGITAL_UPI_SCREENSHOT,Google Pay,Amazon India,Amazon India,940.33,940.33,2026-10-09,2026-10-09,True,0.0,True,Clean digital screen text; exact match across all fields
+REC_DIGITAL_26,DIGITAL_UPI_SCREENSHOT,PhonePe,Flipkart,Flipkart,2789.79,2789.79,2026-10-01,2026-10-01,True,0.0,True,Clean digital screen text; exact match across all fields
+REC_DIGITAL_27,DIGITAL_UPI_SCREENSHOT,Paytm,Jio Infocomm,Jio Infocomm,2288.61,2278.61,2026-10-05,2026-10-05,False,3.2,True,Convenience fee excluded in amount extraction
+REC_DIGITAL_28,DIGITAL_UPI_SCREENSHOT,BHIM UPI,Swiggy,Swiggy,3484.02,3484.02,2026-10-12,2026-10-12,True,0.0,True,Clean digital screen text; exact match across all fields
+REC_DIGITAL_29,DIGITAL_UPI_SCREENSHOT,CRED,Zomato,Zomato,2421.75,2421.75,2026-10-28,2026-10-28,True,0.0,True,Clean digital screen text; exact match across all fields
+REC_DIGITAL_30,DIGITAL_UPI_SCREENSHOT,Google Pay,Uber India,Uber India,2797.31,2797.31,2026-10-14,2026-10-14,True,0.0,True,Clean digital screen text; exact match across all fields
+REC_PAPER_01,PHYSICAL_THERMAL_PAPER,DMart Supermarket,DMart Supermarket,DMart Supermarket,430.28,430.28,2026-10-17,2026-10-17,True,0.0,True,Thermal receipt legible; clean line item total extraction
+REC_PAPER_02,PHYSICAL_THERMAL_PAPER,Apollo Pharmacy,Apollo Pharmacy,Apollo Pharmacy,3900.96,3900.96,2026-10-18,2026-10-18,True,0.0,True,Thermal receipt legible; clean line item total extraction
+REC_PAPER_03,PHYSICAL_THERMAL_PAPER,Haldiram's,Haldiram's,Haldiram's,4269.46,4269.46,2026-10-13,2026-10-13,True,0.0,True,Thermal receipt legible; clean line item total extraction
+REC_PAPER_04,PHYSICAL_THERMAL_PAPER,Bata Shoe Store,Bata Shoe Store,Bata Shoe Store,3208.4,320840.0,2026-10-28,2026-10-28,False,12.5,True,Thermal print fading caused decimal point omission (Rs. 150.00 read as 15000)
+REC_PAPER_05,PHYSICAL_THERMAL_PAPER,Chai Point,Chai Point,Chai Point,1771.39,1771.39,2026-10-06,2026-10-06,True,0.0,True,Thermal receipt legible; clean line item total extraction
+REC_PAPER_06,PHYSICAL_THERMAL_PAPER,Local Kirana,Local Kirana,Local Kirana,1544.24,1544.24,2026-10-24,2026-10-24,True,0.0,True,Thermal receipt legible; clean line item total extraction
+REC_PAPER_07,PHYSICAL_THERMAL_PAPER,Cafe Coffee Day,Cafe Coffee Day,Cafe Coffee Day,1205.19,1205.19,2026-10-18,2026-10-18,True,0.0,True,Thermal receipt legible; clean line item total extraction
+REC_PAPER_08,PHYSICAL_THERMAL_PAPER,DMart Supermarket,DMart Supermarket,DMart Supermarket,738.06,738.06,2026-10-15,2026-10-15,True,0.0,True,Thermal receipt legible; clean line item total extraction
+REC_PAPER_09,PHYSICAL_THERMAL_PAPER,Apollo Pharmacy,Apollo Pharmacy,STORE 041,1179.69,1179.69,2026-10-20,2026-10-20,False,12.5,True,Faded POS header; store legal name obscured by receipt crease
+REC_PAPER_10,PHYSICAL_THERMAL_PAPER,Haldiram's,Haldiram's,Haldiram's,1085.14,1085.14,2026-10-27,2026-10-27,True,0.0,True,Thermal receipt legible; clean line item total extraction
+REC_PAPER_11,PHYSICAL_THERMAL_PAPER,Bata Shoe Store,Bata Shoe Store,Bata Shoe Store,2278.94,2278.94,2026-10-26,2026-10-26,True,0.0,True,Thermal receipt legible; clean line item total extraction
+REC_PAPER_12,PHYSICAL_THERMAL_PAPER,Chai Point,Chai Point,Chai Point,1266.22,1266.22,2026-10-10,2026-10-10,True,0.0,True,Thermal receipt legible; clean line item total extraction
+REC_PAPER_13,PHYSICAL_THERMAL_PAPER,Local Kirana,Local Kirana,Local Kirana,990.28,985.28,2026-10-23,2026-10-23,False,12.5,True,Handwritten tax total obscured by crease and camera glare
+REC_PAPER_14,PHYSICAL_THERMAL_PAPER,Cafe Coffee Day,Cafe Coffee Day,Cafe Coffee Day,1769.65,1769.65,2026-10-09,2026-10-09,True,0.0,True,Thermal receipt legible; clean line item total extraction
+REC_PAPER_15,PHYSICAL_THERMAL_PAPER,DMart Supermarket,DMart Supermarket,DMart Supermarket,2210.09,2210.09,2026-10-15,2026-10-15,True,0.0,True,Thermal receipt legible; clean line item total extraction
+REC_PAPER_16,PHYSICAL_THERMAL_PAPER,Apollo Pharmacy,Apollo Pharmacy,Apollo Pharmacy,723.39,723.39,2026-10-09,2026-10-09,True,0.0,True,Thermal receipt legible; clean line item total extraction
+REC_PAPER_17,PHYSICAL_THERMAL_PAPER,Haldiram's,Haldiram's,Haldiram's,1889.23,1889.23,2026-10-14,2026-10-14,True,0.0,True,Thermal receipt legible; clean line item total extraction
+REC_PAPER_18,PHYSICAL_THERMAL_PAPER,Bata Shoe Store,Bata Shoe Store,Bata Shoe Store,2890.72,289072.0,2026-10-04,2026-10-04,False,12.5,True,Thermal print fading caused decimal point omission (Rs. 150.00 read as 15000)
+REC_PAPER_19,PHYSICAL_THERMAL_PAPER,Chai Point,Chai Point,Chai Point,3335.55,3335.55,2026-10-19,2026-10-19,True,0.0,True,Thermal receipt legible; clean line item total extraction
+REC_PAPER_20,PHYSICAL_THERMAL_PAPER,Local Kirana,Local Kirana,Local Kirana,2772.65,2772.65,2026-10-22,2026-10-22,True,0.0,True,Thermal receipt legible; clean line item total extraction
+REC_PAPER_21,PHYSICAL_THERMAL_PAPER,Cafe Coffee Day,Cafe Coffee Day,Cafe Coffee Day,3610.83,3610.83,2026-10-21,2026-10-21,True,0.0,True,Thermal receipt legible; clean line item total extraction
+REC_PAPER_22,PHYSICAL_THERMAL_PAPER,DMart Supermarket,DMart Supermarket,STORE 041,2040.39,2040.39,2026-10-27,2026-10-27,False,12.5,True,Faded POS header; store legal name obscured by receipt crease
+REC_PAPER_23,PHYSICAL_THERMAL_PAPER,Apollo Pharmacy,Apollo Pharmacy,Apollo Pharmacy,807.88,807.88,2026-10-06,2026-10-06,True,0.0,True,Thermal receipt legible; clean line item total extraction
+REC_PAPER_24,PHYSICAL_THERMAL_PAPER,Haldiram's,Haldiram's,Haldiram's,4507.63,4507.63,2026-10-21,2026-10-21,True,0.0,True,Thermal receipt legible; clean line item total extraction
+REC_PAPER_25,PHYSICAL_THERMAL_PAPER,Bata Shoe Store,Bata Shoe Store,Bata Shoe Store,4415.42,4415.42,2026-10-28,2026-10-28,True,0.0,True,Thermal receipt legible; clean line item total extraction
+REC_PAPER_26,PHYSICAL_THERMAL_PAPER,Chai Point,Chai Point,Chai Point,3141.31,314131.0,2026-10-22,2026-10-22,False,12.5,True,Thermal print fading caused decimal point omission (Rs. 150.00 read as 15000)
+REC_PAPER_27,PHYSICAL_THERMAL_PAPER,Local Kirana,Local Kirana,Local Kirana,2111.84,2111.84,2026-10-06,2026-10-06,True,0.0,True,Thermal receipt legible; clean line item total extraction
+REC_PAPER_28,PHYSICAL_THERMAL_PAPER,Cafe Coffee Day,Cafe Coffee Day,Cafe Coffee Day,1744.65,1744.65,2026-10-22,2026-10-22,True,0.0,True,Thermal receipt legible; clean line item total extraction
+REC_PAPER_29,PHYSICAL_THERMAL_PAPER,DMart Supermarket,DMart Supermarket,DMart Supermarket,226.8,221.8,2026-10-09,2026-10-09,False,12.5,False,Handwritten tax total obscured by crease and camera glare
+REC_PAPER_30,PHYSICAL_THERMAL_PAPER,Apollo Pharmacy,Apollo Pharmacy,Apollo Pharmacy,281.97,281.97,2026-10-06,2026-10-06,True,0.0,True,Thermal receipt legible; clean line item total extraction

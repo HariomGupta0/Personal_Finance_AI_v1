@@ -1,6 +1,6 @@
 # 🚀 Quickstart & Complete Execution Guide
 
-This document contains step-by-step instructions to set up, seed, run, and evaluate the **Personal Finance AI Assistant** (GraphRAG + Neo4j + FastAPI + React).
+This document contains step-by-step instructions to set up, seed, run, and evaluate the **Personal Finance AI Assistant** (GraphRAG + Neo4j + FastAPI + React + Setu Account Aggregator).
 
 ---
 
@@ -10,28 +10,29 @@ This document contains step-by-step instructions to set up, seed, run, and evalu
 * **Neo4j Database**: Desktop or Server running locally on `neo4j://127.0.0.1:7687` (Database name: `finance-ai-antigravity`).
 * **Python**: 3.10+ with virtual environment (`.venv`).
 * **Node.js**: v18+ for the React frontend.
-* **Groq API Key**: Provided in `.env` (`GROQ_API_KEY`) for NLU & Vision processing.
+* **Environment Variables (`.env`)**:
+  * `GROQ_API_KEY`: For NLU, Vision, and LLM reasoning.
+  * `SETU_CLIENT_ID`, `SETU_CLIENT_SECRET`, `SETU_PRODUCT_INSTANCE_ID`: For Live Sandbox Account Aggregator.
 
 ---
 
 ### 2. Installation (First Time Setup)
 
-#### Step A: Install Backend Dependencies
+#### Step A: Backend Setup
 Open Terminal / PowerShell in project root:
 ```powershell
 # Activate virtual environment (Windows PowerShell)
 .\.venv\Scripts\Activate.ps1
 
-# Install required Python packages
+# Install backend dependencies
 python -m pip install -r requirements.txt
 ```
-
-*(Alternative single-line command without activation)*:
+*(Direct one-liner without activating):*
 ```powershell
 & ".\.venv\Scripts\python.exe" -m pip install -r requirements.txt
 ```
 
-#### Step B: Install Frontend Dependencies
+#### Step B: Frontend Setup
 ```powershell
 cd frontend
 npm install
@@ -40,38 +41,43 @@ cd ..
 
 ---
 
-## ⚡ Step-by-Step Execution Guide
+## ⚡ Step-by-Step Execution Guide (Manual Startup)
 
 ### STEP 1: Ensure Neo4j is Running
-Open **Neo4j Desktop** or start your Neo4j service, ensuring it is listening at `neo4j://127.0.0.1:7687`.
+Open **Neo4j Desktop** or start your Neo4j service.
+Verify it is active on `neo4j://127.0.0.1:7687` with credentials matching your `.env`.
 
 ---
 
-### STEP 2: Seed / Reset Baseline Financial Database
-Populate Neo4j with clean demo financial data (accounts, income, loans, EMIs, expenses, emergency goals):
+### STEP 2: Seed / Reset Database to a Clean Slate
+Whenever you want to reset the database to a fresh, clean demo state:
 
 ```powershell
 .\.venv\Scripts\Activate.ps1
 python -m backend.scripts.seed_db
 ```
-*(One-liner:)*
+*(Direct one-liner:)*
 ```powershell
 & ".\.venv\Scripts\python.exe" -m backend.scripts.seed_db
 ```
+*Creates user `Rahul` with baseline accounts, salary, rent, loans, and categories ready for presentation.*
 
 ---
 
-### STEP 3: Launch the Full-Stack Web Application
+### STEP 3: Launch Full-Stack Application
 
-#### Terminal 1 — Start FastAPI REST Backend (Port 8000):
+Open two separate PowerShell terminal windows:
+
+#### Terminal 1 — Start FastAPI Backend (Port 8000):
 ```powershell
+$env:PYTHONPATH=".;.venv\Lib\site-packages"
 .\.venv\Scripts\Activate.ps1
-python -m uvicorn backend.main:app --reload --port 8000
+python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 * 🟢 **Backend Health Endpoint:** [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
 * 📚 **Interactive Swagger API Docs:** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 
-#### Terminal 2 — Start React Frontend Dashboard (Port 3000):
+#### Terminal 2 — Start React Frontend (Port 3000):
 ```powershell
 cd frontend
 npm run dev
@@ -80,76 +86,92 @@ npm run dev
 
 ---
 
-## 🔑 Application Credentials & Access
+## 🔑 Login Credentials
 
 * **URL:** [http://localhost:3000](http://localhost:3000)
-* **Demo User:** `Rahul`
-* **Demo Password:** `demo1234`
+* **Default Demo User:** `Rahul`
+* **Default Password:** `demo1234`
 
 ---
 
-## 📷 How to Use Receipt / Screenshot Image Extraction
+## 🏦 Bank Connection & Statement Upload Demonstration
 
-1. Open the UI Dashboard at [http://localhost:3000](http://localhost:3000) and log in.
-2. Navigate to **Import Transactions** in the sidebar.
-3. Switch tab from **CSV Bank Statement** to **Receipt / Screenshot**.
-4. Drag & drop or upload any transaction image (JPEG, PNG, WebP) such as a UPI receipt or invoice.
-5. The backend uses Groq Vision (`qwen/qwen3.8-27b`) to parse the date, merchant, amount (in ₹), payment status, and category.
-6. Review the extracted fields in the interactive form and click **Confirm Import** to update your financial graph in real time.
+### Method 1: Instant Connect via Setu Account Aggregator (Live Sandbox)
+1. In the top navigation or banner, click **Connect Bank**.
+2. Stay on the **Instant Connect (Setu AA)** tab.
+3. Select your bank (e.g. **HDFC Bank** or **State Bank of India**).
+4. Enter any 10-digit mobile number (e.g., `9876543210`).
+5. Click **Verify & Request Consent** — the app fetches a live OAuth 2.0 token from Setu and initializes consent with Setu Sandbox.
+6. Enter Sandbox Test OTP: **`123456`**.
+7. Click **Authorize & Sync Data** — transactions are decrypted, normalized, deduplicated via SHA-256, and linked into the Neo4j Knowledge Graph.
 
 ---
 
-## 🧪 Running Automated Tests & Evaluation Benchmarks
+### Method 2: Smart Statement Upload (PDF with Password Decryption)
+1. Click **Connect Bank** and switch to the **Statement Upload (PDF / CSV)** tab.
+2. Drag and drop any statement from the [`demo_statements/pdfs/`](demo_statements/pdfs/) folder.
+3. If using an encrypted statement, enter the corresponding PAN password from the table below:
 
-#### Run Full Test Suite (4 Suites: Environment + Graph CRUD + API + Research Benchmark):
+#### Demo Statement Profiles & Passwords Reference:
+All generated files are stored in [`demo_statements/`](demo_statements/):
+
+| Profile Name | Bank & Theme | Lifestyle Persona | PDF Password (PAN) | Sample Statement File |
+| :--- | :--- | :--- | :---: | :--- |
+| **Rahul Sharma** | **HDFC Bank** (Navy) | Tech Lead: ₹95k salary, Zerodha SIP, Rent, Swiggy, Uber | `RAHUL1234S` | `1_rahul_sharma_hdfc_password_protected.pdf` |
+| **Priya Nair** | **ICICI Bank** (Maroon) | Homemaker: Family budget, BigBasket, DMart, School fees | `PRIYA1234N` | `2_priya_nair_icici_password_protected.pdf` |
+| **Arjun Mehta** | **SBI** (Blue/Green) | Student / Intern: ₹18k stipend, micro UPI spends, Canteen | `ARJUN1234M` | `3_arjun_mehta_state_password_protected.pdf` |
+| **Sunita Devi** | **Axis Bank** (Burgundy)| Freelancer: Irregular cashflow, fabric vendors, BlueDart | `SUNIT1234D` | `4_sunita_devi_axis_password_protected.pdf` |
+| **Ramesh Iyer** | **SBI** (Classic Blue) | Pensioner: ₹38k pension, Apollo Pharmacy, PathLabs, TNEB | `RAMES1234I` | `5_ramesh_iyer_state_password_protected.pdf` |
+
+*(Unencrypted versions for all profiles are also available in `demo_statements/pdfs/` for instant 1-click loading without a password).*
+
+4. Click **Parse Statement** — view the live table preview with Date, Clean Payee, Category badge, and ₹ Amount.
+5. Click **Confirm & Save to Graph** — transactions immediately update all dashboard charts and AI insights.
+
+---
+
+### Method 3: Receipt / Screenshot Image OCR Extraction
+1. Navigate to **Import Transactions** in the navigation bar.
+2. Select **Receipt / Screenshot**.
+3. Upload any receipt or UPI screenshot image (JPEG, PNG).
+4. Groq Vision (`qwen/qwen3.8-27b`) extracts date, merchant, ₹ amount, and category.
+5. Review in the side-by-side editing workbench and click **Confirm Import**.
+
+---
+
+## 🛠️ Utility Scripts
+
+### Regenerate All 20 Demo Statements (PDFs + CSVs):
 ```powershell
-.\.venv\Scripts\Activate.ps1
-python run_tests.py
+& ".\.venv\Scripts\python.exe" backend/scripts/generate_demo_statements.py
 ```
 
-#### Run 10-Scenario Research Evaluation Benchmark Only:
+### Run Automated Unit Tests:
 ```powershell
-.\.venv\Scripts\Activate.ps1
-python backend/tests/test_evaluation_benchmark.py
+& ".\.venv\Scripts\python.exe" -m pytest backend/tests/unit/test_setu_and_onboarding.py
 ```
 
-#### Run Interactive Console CLI Assistant:
+### Run 10-Scenario Research Evaluation Benchmark:
 ```powershell
-.\.venv\Scripts\Activate.ps1
-python run_cli.py
+& ".\.venv\Scripts\python.exe" backend/tests/test_evaluation_benchmark.py
 ```
 
 ---
 
-## 🎓 Viva Defense Notes: Architecture & Key Questions
+## 🎓 Viva Defense: Key Architecture & Questions
 
-### Q1: "On what model did you train your chatbot?"
-> **Answer:**
-> *"We did **not train or fine-tune** the foundation LLM. In personal finance, LLMs hallucinate arithmetic and cannot maintain real-time dynamic balances.
-> Instead, we used a **Decoupled GraphRAG Architecture**:
-> 1. **Neo4j Knowledge Graph** holds verified relational facts (Accounts, EMIs, Expenses).
-> 2. A **Deterministic Python Engine** acts as the single source of truth for all mathematical calculations (100% precision).
-> 3. An open-weights LLM (served via **Groq**) is used strictly for **intent recognition and natural language explanation**, grounded entirely in verified evidence cards with strict ₹ currency preservation."*
+### Q1: "How does bank statement parsing and categorization work?"
+> *"We use a **hybrid deterministic-first architecture**:
+> 1. **In-Memory Decryption:** Password-protected PDFs are decrypted in an in-memory byte stream via `pypdf` without saving unprotected files to disk.
+> 2. **Merchant Normalization:** We strip payment routing noise (e.g. `UPI/DR/123/SWIGGY/okhdfc`) into clean canonical payees (`Swiggy`).
+> 3. **4-Tier Categorization:** Evaluates direction, high-confidence known merchant dictionaries, and keyword rules with deterministic confidence scoring.
+> 4. **Transfer Detection:** Intra-batch and retroactive algorithms identify self-transfers to prevent double-counting expenses before writing to Neo4j."*
 
----
+### Q2: "Why GraphRAG (Neo4j) instead of standard Vector RAG or SQL?"
+> *"Financial health is fundamentally multi-hop and relational. Vector RAG stores unstructured text chunks and hallucinates math. Relational SQL struggles with dynamic multi-hop queries across accounts, loans, and categories.
+> Neo4j models transactions as an interconnected knowledge graph:
+> `(User)-[:HAS_ACCOUNT]->(Account)-[:MADE_TRANSACTION]->(Transaction)-[:IN_CATEGORY]->(Category)`.
+> Our deterministic Python engine computes 100% accurate financial metrics, while the LLM acts purely as an explainer grounded in verified graph evidence cards."*
 
-### Q2: "What is your GraphRAG structure?"
-> **Answer:**
-> *"Our GraphRAG pipeline operates in 5 deterministic stages:
-> 1. **NLU & Intent Extraction:** Classifies intent (`PURCHASE_SAFETY`, `SAVINGS_ANALYSIS`, etc.) and extracts entities/amounts.
-> 2. **Targeted Subgraph Retrieval:** Runs targeted Cypher queries in Neo4j to retrieve only the relevant interconnected nodes (e.g. Account balance + Pending EMIs + 3-month expense history).
-> 3. **Deterministic Math Reasoning:** Computes runway, risk level, or safe-to-spend balance in Python.
-> 4. **Verifiable Evidence Construction:** Tags every number with its source database node (e.g. `Account.balance`, `EMI.amount`).
-> 5. **Grounded LLM Generation:** Prompt constraints enforce 0 arithmetic by the LLM, strict preservation of `₹`, and structured 4-part explanations."*
-
----
-
-### Q3: "Why GraphRAG instead of standard Vector RAG?"
-> **Answer:**
-> *"Conventional Vector RAG stores flat text chunks and fails on multi-hop relational dependencies (e.g. connecting liquid balance to upcoming loan EMIs and emergency buffers). GraphRAG natively traverses these multi-hop relationships in Neo4j and updates instantly when new transactions occur without needing vector re-indexing."*
-
----
-
-### Q4: "How does receipt image extraction work?"
-> **Answer:**
-> *"Image upload POST requests to `/api/import/image` encode raw image bytes into base64 and pass them to Groq's multimodal vision model (`qwen/qwen3.8-27b`). Structured JSON extraction parses merchant, date, amount, direction, and status. It is then validated by Python heuristics, deduplicated against Neo4j, and presented to the user for review before graph mutation."*
+### Q3: "How is Account Aggregator (AA) integrated?"
+> *"We implement the RBI Account Aggregator protocol via Setu's v2 REST APIs using OAuth 2.0 Bearer authentication. When a user authorizes consent via OTP, encrypted financial data is retrieved from Financial Information Providers (FIPs) and ingested directly into the user's graph twin."*

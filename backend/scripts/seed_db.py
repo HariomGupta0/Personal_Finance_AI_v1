@@ -1,6 +1,7 @@
 from datetime import datetime
 from neo4j import GraphDatabase
-from backend.config import NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD, NEO4J_DATABASE
+from backend.config import NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD, NEO4J_DATABASE, APP_PASSWORD
+from backend.app.database.neo4j_service import hash_password
 
 def seed_database():
     print(f"Connecting to Neo4j URI: {NEO4J_URI} on database: {NEO4J_DATABASE}")
@@ -8,6 +9,7 @@ def seed_database():
     
     current_ym = datetime.now().strftime('%Y-%m')
     next_year = datetime.now().year + 1
+    pwd_hash, salt = hash_password(APP_PASSWORD or "demo1234")
 
     seed_cypher = """
     // Clean up existing data in this isolated database
@@ -16,14 +18,22 @@ def seed_database():
 
     create_graph_cypher = f"""
     // Create User
-    CREATE (u:User {{id: 'U001', name: 'Rahul'}})
+    CREATE (u:User {{
+        id: 'U001',
+        name: 'Rahul',
+        username: 'rahul',
+        password_hash: '{pwd_hash}',
+        salt: '{salt}',
+        onboarding_completed: true
+    }})
 
     // Create Account
     CREATE (a:Account {{
         id: 'A001',
         bank: 'Demo Bank',
         account_type: 'Savings',
-        balance: 45000
+        balance: 45000,
+        balance_paise: 4500000
     }})
     CREATE (u)-[:HAS_ACCOUNT]->(a)
 
@@ -38,6 +48,7 @@ def seed_database():
         id: 'T001',
         description: 'Monthly Rent',
         amount: 12000,
+        amount_paise: 1200000,
         type: 'EXPENSE',
         date: date('{current_ym}-05')
     }})
@@ -45,6 +56,7 @@ def seed_database():
         id: 'T002',
         description: 'Grocery Shopping',
         amount: 4000,
+        amount_paise: 400000,
         type: 'EXPENSE',
         date: date('{current_ym}-07')
     }})
@@ -52,6 +64,7 @@ def seed_database():
         id: 'T003',
         description: 'Bus/Auto Travel',
         amount: 2000,
+        amount_paise: 200000,
         type: 'EXPENSE',
         date: date('{current_ym}-08')
     }})
@@ -59,6 +72,7 @@ def seed_database():
         id: 'T004',
         description: 'Electricity Bill',
         amount: 3000,
+        amount_paise: 300000,
         type: 'EXPENSE',
         date: date('{current_ym}-09')
     }})
@@ -81,6 +95,7 @@ def seed_database():
         id: 'I001',
         source: 'Salary',
         amount: 60000,
+        amount_paise: 6000000,
         date: date('{current_ym}-01')
     }})
     CREATE (u)-[:RECEIVED_INCOME]->(i)
@@ -90,11 +105,14 @@ def seed_database():
         id: 'L001',
         name: 'Personal Loan',
         principal: 200000,
-        outstanding: 150000
+        principal_paise: 20000000,
+        outstanding: 150000,
+        outstanding_paise: 15000000
     }})
     CREATE (e:EMI {{
         id: 'E001',
         amount: 10000,
+        amount_paise: 1000000,
         due_date: date('{current_ym}-10'),
         status: 'PENDING'
     }})
@@ -106,7 +124,9 @@ def seed_database():
         id: 'G001',
         name: 'Emergency Fund',
         target_amount: 100000,
+        target_amount_paise: 10000000,
         current_amount: 30000,
+        current_amount_paise: 3000000,
         target_date: date('{next_year}-03-01')
     }})
     CREATE (u)-[:HAS_GOAL]->(g)

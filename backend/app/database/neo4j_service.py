@@ -2,10 +2,15 @@ import uuid
 import hashlib
 import hmac
 import secrets
-from datetime import date
+import logging
+from collections import Counter
+from datetime import date, datetime, timedelta
 from neo4j import GraphDatabase
 from neo4j.time import Date
 from backend.config import NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD, NEO4J_DATABASE
+from backend.app.core.money import to_paise
+
+logger = logging.getLogger(__name__)
 
 def hash_password(password: str, salt: str = None) -> tuple[str, str]:
     if not salt:
@@ -42,18 +47,27 @@ def convert_dates(data):
 
 class Neo4jService:
 
-    def __init__(self, database=None):
+    def __init__(self, database=None, driver=None):
         self.database = database or NEO4J_DATABASE
-        self.driver = GraphDatabase.driver(
+        self.driver = driver or GraphDatabase.driver(
             NEO4J_URI,
             auth=(NEO4J_USERNAME, NEO4J_PASSWORD)
         )
+        try:
+            self.init_schema_constraints(strict=False)
+            self.assert_money_migrated()
+        except RuntimeError:
+            raise
+        except Exception as exc:
+            logger.warning("Neo4j schema constraints initialization skipped or failed during startup: %s", exc)
 
     # ---------------------------------------------------------
     # Context Retrieval Methods
     # ---------------------------------------------------------
 
-    def get_financial_context(self, user_id="U001"):
+    def get_financial_context(self, user_id: str):
+        if not user_id or not isinstance(user_id, str):
+            raise ValueError("user_id must be a non-empty string")
         query = """
         MATCH (u:User {id: $user_id})
 
@@ -66,16 +80,17 @@ class Neo4jService:
                 id: a.id,
                 bank: a.bank,
                 type: a.account_type,
-                balance: a.balance
+                balance: round(toFloat(a.balance_paise) / 100.0, 2)
             }) AS accounts,
 
             collect(DISTINCT {
                 id: t.id,
                 description: t.description,
-                amount: t.amount,
+                amount: round(toFloat(t.amount_paise) / 100.0, 2),
                 type: t.type,
                 date: t.date,
-                category: c.name
+                category: c.name,
+                is_transfer: coalesce(t.is_transfer, false)
             }) AS transactions
         }
 
@@ -85,7 +100,7 @@ class Neo4jService:
             RETURN collect(DISTINCT {
                 id: i.id,
                 source: i.source,
-                amount: i.amount,
+                amount: round(toFloat(i.amount_paise) / 100.0, 2),
                 date: i.date
             }) AS incomes
         }
@@ -96,9 +111,9 @@ class Neo4jService:
             RETURN collect(DISTINCT {
                 loan_id: l.id,
                 loan: l.name,
-                outstanding: l.outstanding,
+                outstanding: round(toFloat(l.outstanding_paise) / 100.0, 2),
                 emi_id: e.id,
-                emi: e.amount,
+                emi: round(toFloat(e.amount_paise) / 100.0, 2),
                 due_date: e.due_date,
                 status: e.status
             }) AS loans
@@ -110,8 +125,8 @@ class Neo4jService:
             RETURN collect(DISTINCT {
                 id: g.id,
                 name: g.name,
-                target: g.target_amount,
-                current: g.current_amount,
+                target: round(toFloat(g.target_amount_paise) / 100.0, 2),
+                current: round(toFloat(g.current_amount_paise) / 100.0, 2),
                 target_date: g.target_date
             }) AS goals
         }
@@ -136,7 +151,64 @@ class Neo4jService:
 
             return None
 
-    def get_purchase_context(self, user_id="U001"):
+    def get_period_transactions(
+        self,
+        user_id: str,
+        start_date: str,
+        end_date: str,
+        category: str | None = None,
+        merchant: str | None = None,
+    ) -> list[dict]:
+        """
+        Retrieves eligible expense transactions for an explicit date period using parameterized Cypher.
+        Guarantees strict user isolation and consistent expense and transfer filtering.
+        """
+        if not user_id or not isinstance(user_id, str):
+            raise ValueError("user_id must be a non-empty string")
+
+        query = """
+        MATCH (u:User {id: $user_id})-[:HAS_ACCOUNT]->(a:Account)-[:MADE_TRANSACTION]->(t:Transaction)
+        OPTIONAL MATCH (t)-[:BELONGS_TO]->(c:Category)
+        WHERE t.date >= $start_date AND t.date <= $end_date
+          AND t.type = 'EXPENSE'
+          AND t.amount_paise > 0
+          AND NOT (toLower(coalesce(t.description, '')) CONTAINS 'transfer' 
+                   OR toLower(coalesce(c.name, '')) = 'transfer')
+          AND ($category IS NULL OR toLower(coalesce(c.name, '')) = toLower($category))
+        RETURN collect(DISTINCT {
+            id: t.id,
+            description: t.description,
+            amount: round(toFloat(t.amount_paise) / 100.0, 2),
+            type: t.type,
+            date: t.date,
+            category: c.name,
+            bank: a.bank
+        }) AS transactions
+        """
+        with self.driver.session(database=self.database) as session:
+            result = session.run(
+                query,
+                user_id=user_id,
+                start_date=str(start_date),
+                end_date=str(end_date),
+                category=category,
+            )
+            record = result.single()
+            if record and record["transactions"]:
+                txs = record["transactions"]
+                if merchant:
+                    m_lower = merchant.lower().strip()
+                    txs = [
+                        t for t in txs
+                        if m_lower in str(t.get("description", "")).lower()
+                        or m_lower in str(t.get("merchant", "")).lower()
+                    ]
+                return convert_dates(txs)
+            return []
+
+    def get_purchase_context(self, user_id: str):
+        if not user_id or not isinstance(user_id, str):
+            raise ValueError("user_id must be a non-empty string")
         query = """
         MATCH (u:User {id: $user_id})
 
@@ -151,19 +223,19 @@ class Neo4jService:
 
             collect(DISTINCT {
                 account: a.id,
-                balance: a.balance
+                balance: round(toFloat(a.balance_paise) / 100.0, 2)
             }) AS accounts,
 
             collect(DISTINCT {
                 loan: l.name,
-                emi: e.amount,
+                emi: round(toFloat(e.amount_paise) / 100.0, 2),
                 due_date: e.due_date,
                 status: e.status
             }) AS loans,
 
             collect(DISTINCT {
                 transaction: t.description,
-                amount: t.amount,
+                amount: round(toFloat(t.amount_paise) / 100.0, 2),
                 type: t.type,
                 category: c.name,
                 date: t.date
@@ -171,8 +243,8 @@ class Neo4jService:
 
             collect(DISTINCT {
                 goal: g.name,
-                target: g.target_amount,
-                current: g.current_amount
+                target: round(toFloat(g.target_amount_paise) / 100.0, 2),
+                current: round(toFloat(g.current_amount_paise) / 100.0, 2)
             }) AS goals
         """
 
@@ -191,7 +263,9 @@ class Neo4jService:
 
             return None
 
-    def get_savings_context(self, user_id="U001"):
+    def get_savings_context(self, user_id: str):
+        if not user_id or not isinstance(user_id, str):
+            raise ValueError("user_id must be a non-empty string")
         query = """
         MATCH (u:User {id: $user_id})
 
@@ -203,15 +277,16 @@ class Neo4jService:
 
             collect(DISTINCT {
                 source: i.source,
-                amount: i.amount,
+                amount: round(toFloat(i.amount_paise) / 100.0, 2),
                 date: i.date
             }) AS incomes,
 
             collect(DISTINCT {
                 transaction: t.description,
-                amount: t.amount,
+                amount: round(toFloat(t.amount_paise) / 100.0, 2),
                 type: t.type,
-                date: t.date
+                date: t.date,
+                is_transfer: coalesce(t.is_transfer, false)
             }) AS transactions
         """
 
@@ -228,7 +303,9 @@ class Neo4jService:
 
             return None
         
-    def get_emergency_fund_context(self, user_id="U001"):
+    def get_emergency_fund_context(self, user_id: str):
+        if not user_id or not isinstance(user_id, str):
+            raise ValueError("user_id must be a non-empty string")
         query = """
         MATCH (u:User {id: $user_id})
 
@@ -240,15 +317,16 @@ class Neo4jService:
 
             collect(DISTINCT {
                 transaction: t.description,
-                amount: t.amount,
+                amount: round(toFloat(t.amount_paise) / 100.0, 2),
                 type: t.type,
-                date: t.date
+                date: t.date,
+                is_transfer: coalesce(t.is_transfer, false)
             }) AS transactions,
 
             collect(DISTINCT {
                 goal: g.name,
-                target: g.target_amount,
-                current: g.current_amount,
+                target: round(toFloat(g.target_amount_paise) / 100.0, 2),
+                current: round(toFloat(g.current_amount_paise) / 100.0, 2),
                 target_date: g.target_date
             }) AS goals
         """
@@ -266,7 +344,9 @@ class Neo4jService:
 
             return None
 
-    def get_summary_context(self, user_id="U001"):
+    def get_summary_context(self, user_id: str):
+        if not user_id or not isinstance(user_id, str):
+            raise ValueError("user_id must be a non-empty string")
         query = """
         MATCH (u:User {id: $user_id})
 
@@ -280,26 +360,27 @@ class Neo4jService:
 
             collect(DISTINCT {
                 source: i.source,
-                amount: i.amount,
+                amount: round(toFloat(i.amount_paise) / 100.0, 2),
                 date: i.date
             }) AS incomes,
 
             collect(DISTINCT {
                 account: a.id,
-                balance: a.balance
+                balance: round(toFloat(a.balance_paise) / 100.0, 2)
             }) AS accounts,
 
             collect(DISTINCT {
                 transaction: t.description,
-                amount: t.amount,
+                amount: round(toFloat(t.amount_paise) / 100.0, 2),
                 type: t.type,
-                date: t.date
+                date: t.date,
+                is_transfer: coalesce(t.is_transfer, false)
             }) AS transactions,
 
             collect(DISTINCT {
                 goal: g.name,
-                target: g.target_amount,
-                current: g.current_amount,
+                target: round(toFloat(g.target_amount_paise) / 100.0, 2),
+                current: round(toFloat(g.current_amount_paise) / 100.0, 2),
                 target_date: g.target_date
             }) AS goals
         """
@@ -320,25 +401,377 @@ class Neo4jService:
             return None
 
     # ---------------------------------------------------------
+    # Grounded Subgraph Retrieval (Phase 2 Target Fact Queries)
+    # ---------------------------------------------------------
+
+    def retrieve_grounded_subgraph(self, user_id: str, intent: str, entities: dict | None = None) -> dict:
+        """
+        Grounded Graph Retrieval:
+        Retrieves ONLY the authorized, relevant nodes, edges, and source identifiers
+        needed to answer the specific financial intent, without broad database dumping.
+        """
+        if not user_id or not isinstance(user_id, str):
+            raise ValueError("user_id must be a non-empty string")
+
+        entities = entities or {}
+        reporting_date = entities.get("reporting_date")
+        date_from = None
+        date_to = None
+
+        if reporting_date:
+            from datetime import date
+            if isinstance(reporting_date, str):
+                try:
+                    reporting_date = date.fromisoformat(reporting_date)
+                except Exception:
+                    reporting_date = None
+            if isinstance(reporting_date, date):
+                import calendar
+                last_day = calendar.monthrange(reporting_date.year, reporting_date.month)[1]
+                date_from = date(reporting_date.year, reporting_date.month, 1).isoformat()
+                date_to = date(reporting_date.year, reporting_date.month, last_day).isoformat()
+
+        target_category = entities.get("category")
+        source_identifiers: list[str] = []
+        graph_paths: list[str] = []
+        grounded_data: dict = {
+            "accounts": [],
+            "transactions": [],
+            "loans": [],
+            "incomes": [],
+            "goals": [],
+        }
+
+        # 1. CATEGORY_EXPENSE: Retrieve all period transactions to compute true relative proportion
+        if intent == "CATEGORY_EXPENSE":
+            query = """
+            MATCH (u:User {id: $user_id})-[:HAS_ACCOUNT]->(a:Account)-[:MADE_TRANSACTION]->(t:Transaction)-[:BELONGS_TO]->(c:Category)
+            WHERE ($date_from IS NULL OR date(t.date) >= date($date_from))
+              AND ($date_to IS NULL OR date(t.date) <= date($date_to))
+              AND coalesce(t.is_transfer, false) = false
+            RETURN collect(DISTINCT {
+                id: a.id,
+                bank: a.bank,
+                balance: round(toFloat(a.balance_paise) / 100.0, 2)
+            }) AS accounts,
+            collect(DISTINCT {
+                id: t.id,
+                description: t.description,
+                amount: round(toFloat(t.amount_paise) / 100.0, 2),
+                type: t.type,
+                date: t.date,
+                category: c.name,
+                category_id: c.id,
+                account_id: a.id,
+                is_transfer: coalesce(t.is_transfer, false)
+            }) AS transactions,
+            collect(DISTINCT {
+                id: c.id,
+                name: c.name
+            }) AS categories
+            """
+            with self.driver.session(database=self.database) as session:
+                rec = session.run(
+                    query,
+                    user_id=user_id,
+                    date_from=date_from,
+                    date_to=date_to,
+                ).single()
+                if rec:
+                    accounts = convert_dates(rec["accounts"])
+                    transactions = convert_dates([t for t in rec["transactions"] if t.get("id")])
+                    categories = convert_dates(rec["categories"])
+                    grounded_data["accounts"] = accounts
+                    grounded_data["transactions"] = transactions
+
+                    for a in accounts:
+                        source_identifiers.append(f"Account:{a['id']}")
+                        graph_paths.append(f"(User:{user_id})-[:HAS_ACCOUNT]->(Account:{a['id']})")
+                    for c in categories:
+                        if not target_category or (c.get("name") and c["name"].lower() == target_category.lower()):
+                            source_identifiers.append(f"Category:{c.get('name') or c.get('id')}")
+                    for t in transactions:
+                        if not target_category or (t.get("category") and t["category"].lower() == target_category.lower()):
+                            source_identifiers.append(f"Transaction:{t['id']}")
+                            graph_paths.append(f"(Account:{t.get('account_id')})-[:MADE_TRANSACTION]->(Transaction:{t['id']})-[:BELONGS_TO]->(Category:{t.get('category')})")
+
+        # 2. PURCHASE_SAFETY: Accounts (balance) + Pending EMIs + Recent Expenses
+        elif intent == "PURCHASE_SAFETY":
+            from datetime import date, timedelta
+            ninety_days_ago = (date.today() - timedelta(days=90)).isoformat()
+
+            query = """
+            MATCH (u:User {id: $user_id})
+
+            OPTIONAL MATCH (u)-[:HAS_ACCOUNT]->(a:Account)
+            OPTIONAL MATCH (u)-[:HAS_LOAN]->(l:Loan)-[:HAS_EMI]->(e:EMI)
+            WHERE e.status = 'PENDING'
+
+            OPTIONAL MATCH (u)-[:HAS_ACCOUNT]->(:Account)-[:MADE_TRANSACTION]->(t:Transaction {type: 'EXPENSE'})
+            WHERE date(t.date) >= date($ninety_days_ago)
+              AND coalesce(t.is_transfer, false) = false
+            OPTIONAL MATCH (t)-[:BELONGS_TO]->(c:Category)
+
+            RETURN
+                collect(DISTINCT {id: a.id, bank: a.bank, balance: round(toFloat(a.balance_paise) / 100.0, 2)}) AS accounts,
+                collect(DISTINCT {loan_id: l.id, loan: l.name, emi_id: e.id, emi: round(toFloat(e.amount_paise) / 100.0, 2), due_date: e.due_date, status: e.status}) AS loans,
+                collect(DISTINCT {id: t.id, amount: round(toFloat(t.amount_paise) / 100.0, 2), type: t.type, date: t.date, category: c.name, is_transfer: coalesce(t.is_transfer, false)}) AS transactions
+            """
+            with self.driver.session(database=self.database) as session:
+                rec = session.run(query, user_id=user_id, ninety_days_ago=ninety_days_ago).single()
+                if rec:
+                    accounts = convert_dates([a for a in rec["accounts"] if a.get("id")])
+                    loans = convert_dates([l for l in rec["loans"] if l.get("loan")])
+                    transactions = convert_dates([t for t in rec["transactions"] if t.get("id")])
+                    grounded_data["accounts"] = accounts
+                    grounded_data["loans"] = loans
+                    grounded_data["transactions"] = transactions
+
+                    for a in accounts:
+                        source_identifiers.append(f"Account:{a['id']}")
+                        graph_paths.append(f"(User:{user_id})-[:HAS_ACCOUNT]->(Account:{a['id']})")
+                    for l in loans:
+                        source_identifiers.append(f"Loan:{l.get('loan_id')}")
+                        if l.get("emi_id"):
+                            source_identifiers.append(f"EMI:{l.get('emi_id')}")
+                            graph_paths.append(f"(User:{user_id})-[:HAS_LOAN]->(Loan:{l.get('loan_id')})-[:HAS_EMI]->(EMI:{l.get('emi_id')})")
+
+        # 3. DEBT_ANALYSIS: Loans + EMIs + Incomes (for DTI ratio)
+        elif intent == "DEBT_ANALYSIS":
+            query = """
+            MATCH (u:User {id: $user_id})
+            OPTIONAL MATCH (u)-[:HAS_LOAN]->(l:Loan)-[:HAS_EMI]->(e:EMI)
+            OPTIONAL MATCH (u)-[:RECEIVED_INCOME]->(i:Income)
+            RETURN
+                collect(DISTINCT {
+                    loan_id: l.id,
+                    loan: l.name,
+                    outstanding: round(toFloat(l.outstanding_paise) / 100.0, 2),
+                    emi_id: e.id,
+                    emi: round(toFloat(e.amount_paise) / 100.0, 2),
+                    due_date: e.due_date,
+                    status: e.status
+                }) AS loans,
+                collect(DISTINCT {
+                    id: i.id,
+                    source: i.source,
+                    amount: round(toFloat(i.amount_paise) / 100.0, 2),
+                    date: i.date
+                }) AS incomes
+            """
+            with self.driver.session(database=self.database) as session:
+                rec = session.run(query, user_id=user_id).single()
+                if rec:
+                    loans = convert_dates([l for l in rec["loans"] if l.get("loan")])
+                    incomes = convert_dates([i for i in rec["incomes"] if i.get("id") or i.get("source")])
+                    grounded_data["loans"] = loans
+                    grounded_data["incomes"] = incomes
+
+                    for l in loans:
+                        source_identifiers.append(f"Loan:{l.get('loan_id')}")
+                        if l.get("emi_id"):
+                            source_identifiers.append(f"EMI:{l.get('emi_id')}")
+                            graph_paths.append(f"(User:{user_id})-[:HAS_LOAN]->(Loan:{l.get('loan_id')})-[:HAS_EMI]->(EMI:{l.get('emi_id')})")
+                    for i in incomes:
+                        source_identifiers.append(f"Income:{i.get('id') or i.get('source')}")
+                        graph_paths.append(f"(User:{user_id})-[:RECEIVED_INCOME]->(Income:{i.get('source')})")
+
+        # 4. SAVINGS_ANALYSIS: Incomes & Expenses for target period
+        elif intent == "SAVINGS_ANALYSIS":
+            query = """
+            MATCH (u:User {id: $user_id})
+            OPTIONAL MATCH (u)-[:RECEIVED_INCOME]->(i:Income)
+            WHERE ($date_from IS NULL OR date(i.date) >= date($date_from))
+              AND ($date_to IS NULL OR date(i.date) <= date($date_to))
+              AND coalesce(i.is_transfer, false) = false
+
+            OPTIONAL MATCH (u)-[:HAS_ACCOUNT]->(a:Account)-[:MADE_TRANSACTION]->(t:Transaction)
+            WHERE ($date_from IS NULL OR date(t.date) >= date($date_from))
+              AND ($date_to IS NULL OR date(t.date) <= date($date_to))
+              AND coalesce(t.is_transfer, false) = false
+            OPTIONAL MATCH (t)-[:BELONGS_TO]->(c:Category)
+
+            RETURN
+                collect(DISTINCT {
+                    id: i.id,
+                    source: i.source,
+                    amount: round(toFloat(i.amount_paise) / 100.0, 2),
+                    date: i.date
+                }) AS incomes,
+                collect(DISTINCT {
+                    id: t.id,
+                    description: t.description,
+                    amount: round(toFloat(t.amount_paise) / 100.0, 2),
+                    type: t.type,
+                    date: t.date,
+                    category: c.name,
+                    is_transfer: coalesce(t.is_transfer, false)
+                }) AS transactions
+            """
+            with self.driver.session(database=self.database) as session:
+                rec = session.run(query, user_id=user_id, date_from=date_from, date_to=date_to).single()
+                if rec:
+                    incomes = convert_dates([i for i in rec["incomes"] if i.get("id") or i.get("source")])
+                    transactions = convert_dates([t for t in rec["transactions"] if t.get("id")])
+                    grounded_data["incomes"] = incomes
+                    grounded_data["transactions"] = transactions
+
+                    for i in incomes:
+                        source_identifiers.append(f"Income:{i.get('id') or i.get('source')}")
+                    for t in transactions:
+                        source_identifiers.append(f"Transaction:{t['id']}")
+
+        # 5. MERCHANT_EXPENSE: Historical & Period matching for requested merchant
+        elif intent == "MERCHANT_EXPENSE":
+            merchant = entities.get("merchant") or ""
+            query = """
+            MATCH (u:User {id: $user_id})-[:HAS_ACCOUNT]->(a:Account)-[:MADE_TRANSACTION]->(t:Transaction)
+            WHERE t.type = 'EXPENSE'
+              AND coalesce(t.is_transfer, false) = false
+              AND (toLower(t.description) CONTAINS toLower($merchant)
+                   OR (t.merchant IS NOT NULL AND toLower(t.merchant) CONTAINS toLower($merchant)))
+            OPTIONAL MATCH (t)-[:BELONGS_TO]->(c:Category)
+            RETURN
+              count(t) AS total_historical,
+              collect(DISTINCT {id: a.id, bank: a.bank, balance: round(toFloat(a.balance_paise) / 100.0, 2)}) AS accounts,
+              collect({
+                  id: t.id,
+                  description: t.description,
+                  amount: round(toFloat(t.amount_paise) / 100.0, 2),
+                  type: t.type,
+                  date: t.date,
+                  merchant: t.merchant,
+                  category: c.name,
+                  account_id: a.id,
+                  bank: a.bank
+              }) AS transactions
+            """
+            with self.driver.session(database=self.database) as session:
+                rec = session.run(query, user_id=user_id, merchant=merchant).single()
+                if rec:
+                    accounts = convert_dates([a for a in rec["accounts"] if a.get("id")])
+                    all_matching_txs = convert_dates([t for t in rec["transactions"] if t.get("id")])
+                    historical_count = rec["total_historical"]
+
+                    if date_from and date_to:
+                        period_txs = [
+                            t for t in all_matching_txs
+                            if t.get("date") and date_from <= str(t["date"])[:10] <= date_to
+                        ]
+                    else:
+                        period_txs = all_matching_txs
+
+                    grounded_data["accounts"] = accounts
+                    grounded_data["transactions"] = period_txs
+                    grounded_data["historical_match_count"] = historical_count
+
+                    for a in accounts:
+                        source_identifiers.append(f"Account:{a['id']}")
+                        graph_paths.append(f"(User:{user_id})-[:HAS_ACCOUNT]->(Account:{a['id']})")
+                    for t in period_txs:
+                        source_identifiers.append(f"Transaction:{t['id']}")
+                        graph_paths.append(f"(Account:{t.get('account_id')})-[:MADE_TRANSACTION]->(Transaction:{t['id']})")
+
+        # 6. TOP_TRANSACTIONS: Filtered expenses ordered by amount
+        elif intent == "TOP_TRANSACTIONS":
+            amount_min = entities.get("amount_min")
+            amount_max = entities.get("amount_max")
+            amount_min_paise = to_paise(amount_min) if amount_min is not None else None
+            amount_max_paise = to_paise(amount_max) if amount_max is not None else None
+            query = """
+            MATCH (u:User {id: $user_id})-[:HAS_ACCOUNT]->(a:Account)-[:MADE_TRANSACTION]->(t:Transaction)
+            WHERE t.type = 'EXPENSE'
+              AND coalesce(t.is_transfer, false) = false
+              AND ($date_from IS NULL OR date(t.date) >= date($date_from))
+              AND ($date_to IS NULL OR date(t.date) <= date($date_to))
+              AND ($amount_min_paise IS NULL OR t.amount_paise >= $amount_min_paise)
+              AND ($amount_max_paise IS NULL OR t.amount_paise <= $amount_max_paise)
+            OPTIONAL MATCH (t)-[:BELONGS_TO]->(c:Category)
+            RETURN
+              collect(DISTINCT {id: a.id, bank: a.bank, balance: round(toFloat(a.balance_paise) / 100.0, 2)}) AS accounts,
+              collect({
+                  id: t.id,
+                  description: t.description,
+                  amount: round(toFloat(t.amount_paise) / 100.0, 2),
+                  type: t.type,
+                  date: t.date,
+                  merchant: t.merchant,
+                  category: c.name,
+                  account_id: a.id,
+                  bank: a.bank
+              }) AS transactions
+            """
+            with self.driver.session(database=self.database) as session:
+                rec = session.run(
+                    query,
+                    user_id=user_id,
+                    date_from=date_from,
+                    date_to=date_to,
+                    amount_min_paise=amount_min_paise,
+                    amount_max_paise=amount_max_paise,
+                ).single()
+                if rec:
+                    accounts = convert_dates([a for a in rec["accounts"] if a.get("id")])
+                    transactions = convert_dates([t for t in rec["transactions"] if t.get("id")])
+                    grounded_data["accounts"] = accounts
+                    grounded_data["transactions"] = transactions
+
+                    for a in accounts:
+                        source_identifiers.append(f"Account:{a['id']}")
+                        graph_paths.append(f"(User:{user_id})-[:HAS_ACCOUNT]->(Account:{a['id']})")
+                    for t in transactions:
+                        source_identifiers.append(f"Transaction:{t['id']}")
+                        graph_paths.append(f"(Account:{t.get('account_id')})-[:MADE_TRANSACTION]->(Transaction:{t['id']})")
+
+        # 7. General Fallback (Expenses Breakdown, Health, Summary)
+        else:
+            ctx = self.get_financial_context(user_id)
+            if ctx:
+                grounded_data = ctx
+                for a in ctx.get("accounts", []):
+                    if a.get("id"):
+                        source_identifiers.append(f"Account:{a['id']}")
+                for l in ctx.get("loans", []):
+                    if l.get("loan_id"):
+                        source_identifiers.append(f"Loan:{l['loan_id']}")
+                for i in ctx.get("incomes", []):
+                    if i.get("id") or i.get("source"):
+                        source_identifiers.append(f"Income:{i.get('id') or i.get('source')}")
+
+        return {
+            "user_id": user_id,
+            "intent": intent,
+            "grounded_entities": grounded_data,
+            "source_identifiers": sorted(list(set(source_identifiers))),
+            "graph_paths": sorted(list(set(graph_paths))),
+            "context": grounded_data,
+        }
+
+    # ---------------------------------------------------------
     # Helper & Inquiry Methods
     # ---------------------------------------------------------
 
-    def get_user_accounts(self, user_id="U001"):
+    def get_user_accounts(self, user_id: str):
+        if not user_id or not isinstance(user_id, str):
+            raise ValueError("user_id must be a non-empty string")
         query = """
         MATCH (u:User {id: $user_id})-[:HAS_ACCOUNT]->(a:Account)
-        RETURN a.id AS id, a.bank AS bank, a.account_type AS account_type, a.balance AS balance
+        RETURN a.id AS id, a.bank AS bank, a.account_type AS account_type, round(toFloat(a.balance_paise) / 100.0, 2) AS balance
         """
         with self.driver.session(database=self.database) as session:
             result = session.run(query, user_id=user_id)
             return [dict(record) for record in result]
 
-    def get_all_transactions(self, user_id="U001", limit=100):
+    def get_all_transactions(self, user_id: str, limit=100):
+        if not user_id or not isinstance(user_id, str):
+            raise ValueError("user_id must be a non-empty string")
         limit = max(1, min(1000, int(limit)))
         query = """
         MATCH (u:User {id: $user_id})-[:HAS_ACCOUNT]->(a:Account)-[:MADE_TRANSACTION]->(t:Transaction)
         OPTIONAL MATCH (t)-[:BELONGS_TO]->(c:Category)
-        RETURN t.id AS id, t.description AS description, t.amount AS amount,
-               t.type AS type, t.date AS date, c.name AS category, a.id AS account_id, a.bank AS bank
+        RETURN t.id AS id, t.description AS description, round(toFloat(t.amount_paise) / 100.0, 2) AS amount,
+               t.type AS type, t.date AS date, c.name AS category, a.id AS account_id, a.bank AS bank,
+               coalesce(t.is_transfer, false) AS is_transfer
         ORDER BY t.date DESC
         LIMIT $limit
         """
@@ -360,7 +793,9 @@ class Neo4jService:
     # Dynamic Knowledge Graph CRUD Operations (Phase 1)
     # ---------------------------------------------------------
 
-    def add_transaction(self, user_id="U001", account_id=None, amount=0, description="", category_name="General", transaction_type="EXPENSE", date_str=None):
+    def add_transaction(self, user_id: str, account_id=None, amount=0, description="", category_name="General", transaction_type="EXPENSE", date_str=None, fingerprint=None):
+        if not user_id or not isinstance(user_id, str):
+            raise ValueError("user_id must be a non-empty string")
         if amount <= 0:
             raise ValueError(f"Transaction amount must be positive. Received: {amount}")
 
@@ -377,6 +812,19 @@ class Neo4jService:
         transaction_id = f"T_{uuid.uuid4().hex[:8].upper()}"
         category_id = f"C_{uuid.uuid4().hex[:6].upper()}"
 
+        amount_paise = to_paise(amount)
+
+        if not fingerprint:
+            from backend.app.services.fingerprint import compute_transaction_fingerprint
+            fingerprint = compute_transaction_fingerprint(
+                account_id=account_id,
+                date_str=date_str,
+                amount=amount,
+                tx_type=transaction_type,
+                description=description,
+                occurrence_index=int(datetime.utcnow().timestamp() * 1000) % 1000000,
+            )
+
         query = """
         MATCH (u:User {id: $user_id})-[:HAS_ACCOUNT]->(a:Account {id: $account_id})
         MERGE (c:Category {name: $category_name})
@@ -384,8 +832,10 @@ class Neo4jService:
 
         CREATE (t:Transaction {
             id: $transaction_id,
+            fingerprint: $fingerprint,
             description: $description,
-            amount: $amount,
+            amount_paise: $amount_paise,
+            amount: toFloat($amount_paise) / 100.0,
             type: $transaction_type,
             date: date($date_str)
         })
@@ -393,16 +843,21 @@ class Neo4jService:
         CREATE (a)-[:MADE_TRANSACTION]->(t)
         CREATE (t)-[:BELONGS_TO]->(c)
 
-        SET a.balance = a.balance + (CASE WHEN $transaction_type = 'INCOME' THEN $amount ELSE -$amount END)
+        WITH a, t, c,
+             (CASE WHEN $transaction_type = 'INCOME' THEN $amount_paise ELSE -$amount_paise END) AS delta_paise
+        WITH a, t, c, (a.balance_paise + delta_paise) AS new_bal_paise
+        SET a.balance_paise = new_bal_paise,
+            a.balance = toFloat(new_bal_paise) / 100.0
 
         RETURN t.id AS transaction_id,
+               t.fingerprint AS fingerprint,
                t.description AS description,
-               t.amount AS amount,
+               round(toFloat(t.amount_paise) / 100.0, 2) AS amount,
                t.type AS type,
                t.date AS date,
                c.name AS category,
                a.id AS account_id,
-               a.balance AS new_balance
+               round(toFloat(a.balance_paise) / 100.0, 2) AS new_balance
         """
 
         with self.driver.session(database=self.database) as session:
@@ -413,7 +868,9 @@ class Neo4jService:
                 category_name=category_name,
                 category_id=category_id,
                 transaction_id=transaction_id,
+                fingerprint=fingerprint,
                 description=description,
+                amount_paise=amount_paise,
                 amount=amount,
                 transaction_type=transaction_type,
                 date_str=date_str
@@ -428,32 +885,40 @@ class Neo4jService:
         find_query = """
         MATCH (u:User {id: $user_id})-[:HAS_ACCOUNT]->(a:Account)-[:MADE_TRANSACTION]->(t:Transaction {id: $transaction_id})
         OPTIONAL MATCH (t)-[r:BELONGS_TO]->(c:Category)
-        RETURN t.amount AS old_amount, t.type AS type, a.id AS account_id, c.name AS old_category
+        RETURN t.amount_paise AS old_amount_paise, t.amount AS old_amount, t.type AS type, a.id AS account_id, c.name AS old_category
         """
         with self.driver.session(database=self.database) as session:
             res = session.run(find_query, user_id=user_id, transaction_id=transaction_id).single()
             if not res:
                 raise ValueError(f"Transaction with id '{transaction_id}' not found")
-            old_amount = res["old_amount"]
+            old_amount_paise = res["old_amount_paise"]
+            if old_amount_paise is None and res.get("old_amount") is not None:
+                old_amount_paise = to_paise(res["old_amount"])
             tx_type = res["type"]
             account_id = res["account_id"]
 
-        amount_diff = 0
+        amount_diff_paise = 0
+        amount_paise = None
         if amount is not None:
             if amount <= 0:
                 raise ValueError(f"Updated amount must be positive. Received: {amount}")
-            amount_diff = amount - old_amount
+            amount_paise = to_paise(amount)
+            amount_diff_paise = amount_paise - old_amount_paise
 
         category_id = f"C_{uuid.uuid4().hex[:6].upper()}"
 
         update_query = """
         MATCH (u:User {id: $user_id})-[:HAS_ACCOUNT]->(a:Account {id: $account_id})-[:MADE_TRANSACTION]->(t:Transaction {id: $transaction_id})
         
-        SET t.amount = CASE WHEN $amount IS NOT NULL THEN $amount ELSE t.amount END,
+        SET t.amount_paise = CASE WHEN $amount_paise IS NOT NULL THEN $amount_paise ELSE t.amount_paise END,
+            t.amount = CASE WHEN $amount_paise IS NOT NULL THEN toFloat($amount_paise) / 100.0 ELSE t.amount END,
             t.description = CASE WHEN $description IS NOT NULL THEN $description ELSE t.description END,
             t.date = CASE WHEN $date_str IS NOT NULL THEN date($date_str) ELSE t.date END
 
-        SET a.balance = a.balance - (CASE WHEN $tx_type = 'EXPENSE' THEN $amount_diff ELSE -$amount_diff END)
+        WITH t, a, (CASE WHEN $tx_type = 'EXPENSE' THEN $amount_diff_paise ELSE -$amount_diff_paise END) AS delta_paise
+        WITH t, a, (a.balance_paise - delta_paise) AS new_bal_paise
+        SET a.balance_paise = new_bal_paise,
+            a.balance = toFloat(new_bal_paise) / 100.0
 
         WITH t, a
         CALL (t) {
@@ -465,18 +930,22 @@ class Neo4jService:
             MERGE (new_c:Category {name: $category_name})
               ON CREATE SET new_c.id = $category_id
             MERGE (t)-[:BELONGS_TO]->(new_c)
-            RETURN new_c.name AS final_category
+            RETURN true AS _cat_updated
+            UNION
+            WITH t
+            WHERE $category_name IS NULL
+            RETURN false AS _cat_updated
         }
 
         OPTIONAL MATCH (t)-[:BELONGS_TO]->(c_current:Category)
         RETURN t.id AS transaction_id,
                t.description AS description,
-               t.amount AS amount,
+               round(toFloat(t.amount_paise) / 100.0, 2) AS amount,
                t.type AS type,
                t.date AS date,
                c_current.name AS category,
                a.id AS account_id,
-               a.balance AS new_balance
+               round(toFloat(a.balance_paise) / 100.0, 2) AS new_balance
         """
 
         category_clean = category_name.strip().title() if category_name else None
@@ -487,8 +956,9 @@ class Neo4jService:
                 transaction_id=transaction_id,
                 user_id=user_id,
                 account_id=account_id,
+                amount_paise=amount_paise,
                 amount=amount,
-                amount_diff=amount_diff,
+                amount_diff_paise=amount_diff_paise,
                 tx_type=tx_type,
                 description=description,
                 date_str=date_str,
@@ -501,10 +971,13 @@ class Neo4jService:
     def delete_transaction(self, user_id, transaction_id):
         query = """
         MATCH (u:User {id: $user_id})-[:HAS_ACCOUNT]->(a:Account)-[:MADE_TRANSACTION]->(t:Transaction {id: $transaction_id})
-        WITH a, t, t.amount AS amount, t.type AS type
-        SET a.balance = a.balance + (CASE WHEN type = 'EXPENSE' THEN amount ELSE -amount END)
+        WITH a, t, t.amount_paise AS amount_paise, t.type AS type
+        WITH a, t, (CASE WHEN type = 'EXPENSE' THEN amount_paise ELSE -amount_paise END) AS delta_paise
+        WITH a, t, (a.balance_paise + delta_paise) AS new_bal_paise
+        SET a.balance_paise = new_bal_paise,
+            a.balance = toFloat(new_bal_paise) / 100.0
         DETACH DELETE t
-        RETURN a.id AS account_id, a.balance AS restored_balance
+        RETURN a.id AS account_id, round(toFloat(a.balance_paise) / 100.0, 2) AS restored_balance
         """
         with self.driver.session(database=self.database) as session:
             result = session.run(query, user_id=user_id, transaction_id=transaction_id)
@@ -513,32 +986,43 @@ class Neo4jService:
                 raise ValueError(f"Transaction with id '{transaction_id}' not found")
             return dict(record)
 
-    def add_income(self, user_id="U001", source="Salary", amount=0, date_str=None, account_id=None):
+    def add_income(self, user_id: str, source="Salary", amount=0, date_str=None, account_id=None):
+        if not user_id or not isinstance(user_id, str):
+            raise ValueError("user_id must be a non-empty string")
         if amount <= 0:
             raise ValueError(f"Income amount must be positive. Received: {amount}")
 
         if not date_str:
             date_str = date.today().isoformat()
 
+        if not account_id:
+            accounts = self.get_user_accounts(user_id)
+            if accounts:
+                account_id = accounts[0]["id"]
+
         income_id = f"I_{uuid.uuid4().hex[:8].upper()}"
+        amount_paise = to_paise(amount)
 
         query = """
         MATCH (u:User {id: $user_id})
         CREATE (i:Income {
             id: $income_id,
             source: $source,
-            amount: $amount,
+            amount_paise: $amount_paise,
+            amount: toFloat($amount_paise) / 100.0,
             date: date($date_str)
         })
         CREATE (u)-[:RECEIVED_INCOME]->(i)
 
         WITH u, i
         OPTIONAL MATCH (u)-[:HAS_ACCOUNT]->(a:Account {id: $account_id})
+        WITH u, i, a, (CASE WHEN a IS NOT NULL THEN a.balance_paise + $amount_paise ELSE null END) AS new_bal_paise
         FOREACH (_ IN CASE WHEN a IS NOT NULL THEN [1] ELSE [] END |
-            SET a.balance = a.balance + $amount
+            SET a.balance_paise = new_bal_paise,
+                a.balance = toFloat(new_bal_paise) / 100.0
         )
 
-        RETURN i.id AS income_id, i.source AS source, i.amount AS amount, i.date AS date
+        RETURN i.id AS income_id, i.source AS source, round(toFloat(i.amount_paise) / 100.0, 2) AS amount, i.date AS date
         """
         with self.driver.session(database=self.database) as session:
             result = session.run(
@@ -546,6 +1030,7 @@ class Neo4jService:
                 user_id=user_id,
                 income_id=income_id,
                 source=source,
+                amount_paise=amount_paise,
                 amount=amount,
                 date_str=date_str,
                 account_id=account_id
@@ -553,19 +1038,31 @@ class Neo4jService:
             record = result.single()
             return convert_dates(dict(record))
 
-    def add_or_update_goal(self, user_id="U001", name="Emergency Fund", target_amount=100000, current_amount=None, target_date=None):
+    def add_or_update_goal(self, user_id: str, name="Emergency Fund", target_amount=100000, current_amount=None, target_date=None):
+        if not user_id or not isinstance(user_id, str):
+            raise ValueError("user_id must be a non-empty string")
         goal_id = f"G_{uuid.uuid4().hex[:8].upper()}"
+        target_amount_paise = to_paise(target_amount)
+        current_amount_paise = to_paise(current_amount) if current_amount is not None else None
+
         query = """
         MATCH (u:User {id: $user_id})
         MERGE (u)-[:HAS_GOAL]->(g:Goal {name: $name})
           ON CREATE SET g.id = $goal_id,
-                        g.target_amount = $target_amount,
-                        g.current_amount = coalesce($current_amount, 0),
+                        g.target_amount_paise = $target_amount_paise,
+                        g.target_amount = toFloat($target_amount_paise) / 100.0,
+                        g.current_amount_paise = coalesce($current_amount_paise, 0),
+                        g.current_amount = toFloat(coalesce($current_amount_paise, 0)) / 100.0,
                         g.target_date = CASE WHEN $target_date IS NOT NULL THEN date($target_date) ELSE date('2027-01-01') END
-          ON MATCH SET g.target_amount = $target_amount,
-                       g.current_amount = CASE WHEN $current_amount IS NOT NULL THEN $current_amount ELSE g.current_amount END,
+          ON MATCH SET g.target_amount_paise = $target_amount_paise,
+                       g.target_amount = toFloat($target_amount_paise) / 100.0,
+                       g.current_amount_paise = CASE WHEN $current_amount_paise IS NOT NULL THEN $current_amount_paise ELSE g.current_amount_paise END,
+                       g.current_amount = CASE WHEN $current_amount_paise IS NOT NULL THEN toFloat($current_amount_paise) / 100.0 ELSE g.current_amount END,
                        g.target_date = CASE WHEN $target_date IS NOT NULL THEN date($target_date) ELSE g.target_date END
-        RETURN g.id AS id, g.name AS name, g.target_amount AS target_amount, g.current_amount AS current_amount, g.target_date AS target_date
+        RETURN g.id AS id, g.name AS name,
+               round(toFloat(g.target_amount_paise) / 100.0, 2) AS target_amount,
+               round(toFloat(g.current_amount_paise) / 100.0, 2) AS current_amount,
+               g.target_date AS target_date
         """
         with self.driver.session(database=self.database) as session:
             result = session.run(
@@ -573,25 +1070,50 @@ class Neo4jService:
                 user_id=user_id,
                 goal_id=goal_id,
                 name=name,
+                target_amount_paise=target_amount_paise,
                 target_amount=target_amount,
+                current_amount_paise=current_amount_paise,
                 current_amount=current_amount,
                 target_date=target_date
             )
             record = result.single()
             return convert_dates(dict(record))
 
-    def add_loan(self, user_id="U001", name="Personal Loan", principal=0, outstanding=0):
+    def delete_goal(self, user_id: str, name="Emergency Fund"):
+        if not user_id or not isinstance(user_id, str):
+            raise ValueError("user_id must be a non-empty string")
+        query = """
+        MATCH (u:User {id: $user_id})-[r:HAS_GOAL]->(g:Goal)
+        WHERE toLower(g.name) = toLower($name)
+        DELETE r, g
+        RETURN count(g) AS deleted_count
+        """
+        with self.driver.session(database=self.database) as session:
+            result = session.run(query, user_id=user_id, name=name)
+            record = result.single()
+            return {"deleted": record["deleted_count"] > 0 if record else False}
+
+    def add_loan(self, user_id: str, name="Personal Loan", principal=0, outstanding=0):
+        if not user_id or not isinstance(user_id, str):
+            raise ValueError("user_id must be a non-empty string")
         loan_id = f"L_{uuid.uuid4().hex[:8].upper()}"
+        principal_paise = to_paise(principal)
+        outstanding_paise = to_paise(outstanding)
+
         query = """
         MATCH (u:User {id: $user_id})
         CREATE (l:Loan {
             id: $loan_id,
             name: $name,
-            principal: $principal,
-            outstanding: $outstanding
+            principal_paise: $principal_paise,
+            principal: toFloat($principal_paise) / 100.0,
+            outstanding_paise: $outstanding_paise,
+            outstanding: toFloat($outstanding_paise) / 100.0
         })
         CREATE (u)-[:HAS_LOAN]->(l)
-        RETURN l.id AS id, l.name AS name, l.principal AS principal, l.outstanding AS outstanding
+        RETURN l.id AS id, l.name AS name,
+               round(toFloat(l.principal_paise) / 100.0, 2) AS principal,
+               round(toFloat(l.outstanding_paise) / 100.0, 2) AS outstanding
         """
         with self.driver.session(database=self.database) as session:
             result = session.run(
@@ -599,65 +1121,94 @@ class Neo4jService:
                 user_id=user_id,
                 loan_id=loan_id,
                 name=name,
+                principal_paise=principal_paise,
                 principal=principal,
+                outstanding_paise=outstanding_paise,
                 outstanding=outstanding
             )
             record = result.single()
             return dict(record)
 
-    def add_emi(self, loan_id, amount=0, due_date=None, status="PENDING"):
+    def add_emi(self, loan_id, amount=0, due_date=None, status="PENDING", user_id=None):
         emi_id = f"E_{uuid.uuid4().hex[:8].upper()}"
         if not due_date:
             due_date = date.today().isoformat()
 
+        amount_paise = to_paise(amount)
+
         query = """
         MATCH (l:Loan {id: $loan_id})
+        WHERE $user_id IS NULL OR EXISTS {
+            MATCH (:User {id: $user_id})-[:HAS_LOAN]->(l)
+        }
         CREATE (e:EMI {
             id: $emi_id,
-            amount: $amount,
+            amount_paise: $amount_paise,
+            amount: toFloat($amount_paise) / 100.0,
             due_date: date($due_date),
             status: $status
         })
         CREATE (l)-[:HAS_EMI]->(e)
-        RETURN e.id AS id, e.amount AS amount, e.due_date AS due_date, e.status AS status
+        RETURN e.id AS id, round(toFloat(e.amount_paise) / 100.0, 2) AS amount, e.due_date AS due_date, e.status AS status
         """
         with self.driver.session(database=self.database) as session:
             result = session.run(
                 query,
                 loan_id=loan_id,
                 emi_id=emi_id,
+                amount_paise=amount_paise,
                 amount=amount,
                 due_date=due_date,
-                status=status
+                status=status,
+                user_id=user_id,
             )
             record = result.single()
+            if not record:
+                raise ValueError(f"Loan '{loan_id}' not found or unauthorized for user")
             return convert_dates(dict(record))
 
-    def update_emi_status(self, emi_id, status="PAID", account_id=None):
+    def update_emi_status(self, emi_id, status="PAID", account_id=None, user_id=None):
         query = """
         MATCH (e:EMI {id: $emi_id})
+        WHERE $user_id IS NULL OR EXISTS {
+            MATCH (:User {id: $user_id})-[:HAS_LOAN]->(:Loan)-[:HAS_EMI]->(e)
+        }
         SET e.status = $status
         WITH e
         OPTIONAL MATCH (a:Account {id: $account_id})
+        WHERE $user_id IS NULL OR EXISTS {
+            MATCH (:User {id: $user_id})-[:HAS_ACCOUNT]->(a)
+        }
+        WITH e, a, (CASE WHEN a IS NOT NULL THEN a.balance_paise - e.amount_paise ELSE null END) AS new_bal_paise
         FOREACH (_ IN CASE WHEN a IS NOT NULL AND $status = 'PAID' THEN [1] ELSE [] END |
-            SET a.balance = a.balance - e.amount
+            SET a.balance_paise = new_bal_paise,
+                a.balance = toFloat(new_bal_paise) / 100.0
         )
-        RETURN e.id AS id, e.amount AS amount, e.status AS status
+        RETURN e.id AS id, round(toFloat(e.amount_paise) / 100.0, 2) AS amount, e.status AS status
         """
         with self.driver.session(database=self.database) as session:
-            result = session.run(query, emi_id=emi_id, status=status, account_id=account_id)
+            result = session.run(query, emi_id=emi_id, status=status, account_id=account_id, user_id=user_id)
             record = result.single()
+            if not record:
+                raise ValueError(f"EMI '{emi_id}' not found or unauthorized for user")
             return dict(record)
 
-    def update_account_balance(self, account_id, new_balance):
+    def update_account_balance(self, account_id, new_balance, user_id=None):
+        new_balance_paise = to_paise(new_balance)
         query = """
         MATCH (a:Account {id: $account_id})
-        SET a.balance = $new_balance
-        RETURN a.id AS id, a.bank AS bank, a.balance AS balance
+        WHERE $user_id IS NULL OR EXISTS {
+            MATCH (:User {id: $user_id})-[:HAS_ACCOUNT]->(a)
+        }
+        SET a.balance_paise = $new_balance_paise,
+            a.balance = toFloat($new_balance_paise) / 100.0
+        RETURN a.id AS id, a.bank AS bank, round(toFloat(a.balance_paise) / 100.0, 2) AS balance
         """
         with self.driver.session(database=self.database) as session:
-            result = session.run(query, account_id=account_id, new_balance=new_balance)
+            result = session.run(query, account_id=account_id, new_balance_paise=new_balance_paise, new_balance=new_balance, user_id=user_id)
             record = result.single()
+            if not record:
+                raise ValueError(f"Account '{account_id}' not found or unauthorized for user")
             return dict(record)
 
     def create_user(self, username, password, name=None, initial_balance=0.0, bank_name="Primary Bank"):
@@ -673,6 +1224,7 @@ class Neo4jService:
             if existing:
                 raise ValueError("Username already exists")
 
+            initial_balance_paise = to_paise(initial_balance)
             create_query = """
             CREATE (u:User {
                 id: $user_id,
@@ -686,7 +1238,8 @@ class Neo4jService:
                 id: $account_id,
                 bank: $bank_name,
                 account_type: 'Savings',
-                balance: $initial_balance
+                balance_paise: $initial_balance_paise,
+                balance: toFloat($initial_balance_paise) / 100.0
             })
             CREATE (u)-[:HAS_ACCOUNT]->(a)
 
@@ -698,7 +1251,7 @@ class Neo4jService:
             MERGE (c6:Category {name: 'Healthcare'}) ON CREATE SET c6.id = 'C006'
             MERGE (c7:Category {name: 'Entertainment'}) ON CREATE SET c7.id = 'C007'
 
-            RETURN u.id AS user_id, u.username AS username, u.name AS name, a.id AS account_id, a.balance AS balance
+            RETURN u.id AS user_id, u.username AS username, u.name AS name, a.id AS account_id, round(toFloat(a.balance_paise) / 100.0, 2) AS balance
             """
             result = session.run(
                 create_query,
@@ -709,6 +1262,7 @@ class Neo4jService:
                 salt=salt,
                 account_id=account_id,
                 bank_name=bank_name,
+                initial_balance_paise=initial_balance_paise,
                 initial_balance=float(initial_balance)
             )
             record = result.single()
@@ -719,7 +1273,10 @@ class Neo4jService:
         query = """
         MATCH (u:User)
         WHERE toLower(u.username) = $username OR toLower(u.name) = $username
-        RETURN u.id AS user_id, u.username AS username, u.name AS name, u.password_hash AS password_hash, u.salt AS salt
+        OPTIONAL MATCH (u)-[:HAS_ACCOUNT]->(a:Account)
+        WITH u, (coalesce(u.onboarding_completed, false) OR count(a) > 0) AS is_complete
+        RETURN u.id AS user_id, u.username AS username, u.name AS name, u.password_hash AS password_hash, u.salt AS salt,
+               is_complete AS onboarding_completed
         """
         with self.driver.session(database=self.database) as session:
             result = session.run(query, username=clean_username)
@@ -732,7 +1289,8 @@ class Neo4jService:
                     return {
                         "user_id": user["user_id"],
                         "username": user.get("username") or user["name"],
-                        "name": user["name"]
+                        "name": user["name"],
+                        "onboarding_completed": bool(user.get("onboarding_completed", False))
                     }
                 return None
             return None
@@ -740,14 +1298,741 @@ class Neo4jService:
     def get_user_by_id(self, user_id):
         query = """
         MATCH (u:User {id: $user_id})
-        RETURN u.id AS user_id, u.username AS username, u.name AS name
+        OPTIONAL MATCH (u)-[:HAS_ACCOUNT]->(a:Account)
+        WITH u, (coalesce(u.onboarding_completed, false) OR count(a) > 0) AS is_complete
+        RETURN u.id AS user_id, u.username AS username, u.name AS name,
+               is_complete AS onboarding_completed
         """
         with self.driver.session(database=self.database) as session:
             result = session.run(query, user_id=user_id)
             record = result.single()
             if record:
-                return dict(record)
+                res = dict(record)
+                res["onboarding_completed"] = bool(res.get("onboarding_completed", False))
+                return res
             return None
+
+    def bootstrap_user_financials(self, user_id: str, bank_name: str, liquid_balance: float, monthly_income: float, monthly_emi: float = 0.0, loan_type: str = "Personal Loan"):
+        if not user_id:
+            raise ValueError("user_id must be non-empty")
+        
+        balance_paise = to_paise(liquid_balance)
+        income_paise = to_paise(monthly_income)
+        emi_paise = to_paise(monthly_emi)
+        
+        query = """
+        MATCH (u:User {id: $user_id})
+        SET u.onboarding_completed = true,
+            u.updated_at = datetime()
+
+        // 1. Primary Account
+        MERGE (u)-[:HAS_ACCOUNT]->(a:Account {id: $user_id + '_ACC_PRIMARY'})
+        ON CREATE SET
+            a.bank = $bank_name,
+            a.account_type = 'Savings',
+            a.balance_paise = $balance_paise,
+            a.balance = round(toFloat($balance_paise) / 100.0, 2),
+            a.opened_date = date(),
+            a.status = 'ACTIVE'
+        ON MATCH SET
+            a.bank = $bank_name,
+            a.balance_paise = $balance_paise,
+            a.balance = round(toFloat($balance_paise) / 100.0, 2)
+
+        // 2. Monthly Income
+        MERGE (u)-[:RECEIVED_INCOME]->(inc:Income {id: $user_id + '_INC_PRIMARY'})
+        ON CREATE SET
+            inc.source = 'Primary Income',
+            inc.amount_paise = $income_paise,
+            inc.amount = round(toFloat($income_paise) / 100.0, 2),
+            inc.frequency = 'MONTHLY',
+            inc.date = date()
+        ON MATCH SET
+            inc.amount_paise = $income_paise,
+            inc.amount = round(toFloat($income_paise) / 100.0, 2)
+
+        // 3. Optional Loan / EMI
+        FOREACH (_ IN CASE WHEN $emi_paise > 0 THEN [1] ELSE [] END |
+            MERGE (u)-[:HAS_LOAN]->(l:Loan {id: $user_id + '_LOAN_PRIMARY'})
+            ON CREATE SET
+                l.type = $loan_type,
+                l.monthly_emi_paise = $emi_paise,
+                l.monthly_emi = round(toFloat($emi_paise) / 100.0, 2),
+                l.status = 'ACTIVE',
+                l.start_date = date()
+            ON MATCH SET
+                l.type = $loan_type,
+                l.monthly_emi_paise = $emi_paise,
+                l.monthly_emi = round(toFloat($emi_paise) / 100.0, 2)
+        )
+
+        RETURN u.id AS user_id, u.onboarding_completed AS onboarding_completed, a.id AS account_id, a.balance_paise AS balance_paise
+        """
+        with self.driver.session(database=self.database) as session:
+            result = session.run(
+                query,
+                user_id=user_id,
+                bank_name=bank_name or "HDFC Bank",
+                balance_paise=balance_paise,
+                income_paise=income_paise,
+                emi_paise=emi_paise,
+                loan_type=loan_type or "Personal Loan"
+            )
+            record = result.single()
+            return dict(record) if record else None
+
+    def assert_money_migrated(self) -> None:
+        """
+        Fail-fast validation to guarantee all graph nodes with legacy money properties
+        have the corresponding *_paise property.
+        Raises RuntimeError telling the operator to run scripts/migrate_money_to_paise.py.
+        """
+        check_specs = [
+            ("Account", "balance", "balance_paise"),
+            ("Transaction", "amount", "amount_paise"),
+            ("Income", "amount", "amount_paise"),
+            ("Loan", "principal", "principal_paise"),
+            ("Loan", "outstanding", "outstanding_paise"),
+            ("EMI", "amount", "amount_paise"),
+            ("Goal", "target_amount", "target_amount_paise"),
+            ("Goal", "current_amount", "current_amount_paise"),
+        ]
+        unmigrated = {}
+        with self.driver.session(database=self.database) as session:
+            for label, legacy_prop, target_prop in check_specs:
+                q = f"""
+                MATCH (n:{label})
+                WHERE n.{legacy_prop} IS NOT NULL AND n.{target_prop} IS NULL
+                RETURN count(n) AS cnt
+                """
+                res = session.run(q).single()
+                cnt = res["cnt"] if res else 0
+                if cnt > 0:
+                    unmigrated[f"{label}.{legacy_prop} -> {target_prop}"] = cnt
+
+        if unmigrated:
+            details = ", ".join(f"{k}: {v} nodes" for k, v in unmigrated.items())
+            raise RuntimeError(
+                f"Fail-fast check failed: unmigrated money properties found in database ({details}). "
+                "Please run: python -m backend.scripts.migrate_money_to_paise --apply"
+            )
+
+    def init_schema_constraints(self, strict: bool = False) -> dict[str, str]:
+        """
+        Idempotently ensure unique constraints and performance indexes exist.
+
+        Parameters
+        ----------
+        strict : bool, default False
+            If True, re-raises any unexpected Neo4j execution error so callers
+            (such as migration scripts or test suites) fail fast.
+            If False, logs detailed errors and returns a status dictionary.
+
+        Returns
+        -------
+        dict[str, str]
+            Map of query string to outcome status ('CREATED_OR_EXISTS' or 'FAILED: <reason>').
+        """
+        queries = [
+            "CREATE CONSTRAINT txn_fp IF NOT EXISTS FOR (t:Transaction) REQUIRE t.fingerprint IS UNIQUE",
+            "CREATE CONSTRAINT txn_id_unique IF NOT EXISTS FOR (t:Transaction) REQUIRE t.id IS UNIQUE",
+            "CREATE CONSTRAINT merchant_norm IF NOT EXISTS FOR (m:Merchant) REQUIRE m.normalized IS UNIQUE",
+            "CREATE CONSTRAINT user_id_unique IF NOT EXISTS FOR (u:User) REQUIRE u.id IS UNIQUE",
+            "CREATE CONSTRAINT user_username_unique IF NOT EXISTS FOR (u:User) REQUIRE u.username IS UNIQUE",
+            "CREATE CONSTRAINT account_id_unique IF NOT EXISTS FOR (a:Account) REQUIRE a.id IS UNIQUE",
+            "CREATE INDEX txn_date_idx IF NOT EXISTS FOR (t:Transaction) ON (t.date)",
+            "CREATE INDEX txn_amount_idx IF NOT EXISTS FOR (t:Transaction) ON (t.amount)",
+        ]
+        results: dict[str, str] = {}
+        with self.driver.session(database=self.database) as session:
+            try:
+                session.run("CREATE INDEX txn_amount_paise_idx IF NOT EXISTS FOR (t:Transaction) ON (t.amount_paise)")
+            except Exception as exc:
+                logger.debug("txn_amount_paise_idx verification: %s", exc)
+            for q in queries:
+                try:
+                    session.run(q)
+                    results[q] = "CREATED_OR_EXISTS"
+                    logger.debug("Schema constraint/index verified: %s", q)
+                except Exception as exc:
+                    err_msg = str(exc)
+                    results[q] = f"FAILED: {err_msg}"
+                    logger.error("Failed to apply schema constraint/index '%s': %s", q, err_msg)
+                    if strict:
+                        raise
+        return results
+
+    def batch_check_duplicates(self, user_id: str, candidate_rows: list[dict]) -> dict[int, list[dict]]:
+        """
+        Batch-check candidate rows against existing transactions in Neo4j.
+        Runs ONE single Cypher query with UNWIND instead of N queries in a loop.
+        """
+        if not candidate_rows:
+            return {}
+
+        query = """
+        UNWIND $candidates AS c
+        MATCH (u:User {id: $user_id})-[:HAS_ACCOUNT]->(:Account)-[:MADE_TRANSACTION]->(t:Transaction)
+        WHERE (t.fingerprint IS NOT NULL AND t.fingerprint = c.fingerprint)
+           OR (c.source_ref IS NOT NULL AND t.source_ref = c.source_ref)
+           OR (
+                c.amount_paise > 0
+                AND t.amount_paise = c.amount_paise
+                AND t.type = c.type
+                AND date(t.date) >= date(c.date_from)
+                AND date(t.date) <= date(c.date_to)
+           )
+        RETURN c.row_index AS row_index,
+               t.id AS id,
+               t.description AS description,
+               round(toFloat(t.amount_paise) / 100.0, 2) AS amount,
+               t.date AS date,
+               t.source_ref AS source_ref,
+               (CASE WHEN t.fingerprint IS NOT NULL AND t.fingerprint = c.fingerprint THEN 'EXACT_FINGERPRINT'
+                     WHEN c.source_ref IS NOT NULL AND t.source_ref = c.source_ref THEN 'EXACT_REF'
+                     ELSE 'HEURISTIC' END) AS match_reason
+        """
+        candidates = []
+        for i, r in enumerate(candidate_rows):
+            d_str = r.get("date") or date.today().isoformat()
+            try:
+                d_obj = datetime.strptime(d_str, "%Y-%m-%d").date()
+                d_from = (d_obj - timedelta(days=2)).isoformat()
+                d_to = (d_obj + timedelta(days=2)).isoformat()
+            except Exception:
+                d_from, d_to = d_str, d_str
+
+            amt = float(r.get("amount") or 0.0)
+            amt_paise = to_paise(amt)
+            candidates.append({
+                "row_index": i,
+                "fingerprint": r.get("fingerprint"),
+                "source_ref": r.get("source_ref"),
+                "amount": amt,
+                "amount_paise": amt_paise,
+                "type": (r.get("type") or "EXPENSE").upper(),
+                "date_from": d_from,
+                "date_to": d_to,
+            })
+
+        matches_by_row: dict[int, list[dict]] = {}
+        with self.driver.session(database=self.database) as session:
+            result = session.run(query, user_id=user_id, candidates=candidates)
+            for rec in result:
+                idx = rec["row_index"]
+                d = dict(rec)
+                if isinstance(d.get("date"), Date):
+                    d["date"] = d["date"].iso_format()
+                matches_by_row.setdefault(idx, []).append(d)
+
+        return matches_by_row
+
+    def batch_add_transactions(
+        self,
+        user_id: str,
+        account_id: str | None = None,
+        rows: list[dict] | None = None,
+        import_id: str | None = None,
+    ) -> dict:
+        if not user_id or not isinstance(user_id, str):
+            raise ValueError("user_id must be a non-empty string")
+        """
+        Idempotent bulk transaction ingestion via Cypher UNWIND and managed transactions.
+        
+        Guarantees:
+        1. Repeated imports of the same batch or transaction will NEVER create duplicates
+           or double-apply balance changes.
+        2. In-batch duplicate rows (same fingerprint) are deduplicated so balance is updated
+           only once per unique transaction.
+        3. Only genuinely newly created transactions contribute to net_balance_delta and
+           account balance updates.
+        4. Atomic execution: all graph writes and balance updates commit together in a single
+           managed write transaction, preventing partial state corruption.
+        5. Concurrency safety: acquires an exclusive write lock on the target account node
+           to serialize concurrent balance updates.
+        6. Missing fingerprints are computed deterministically rather than generating random UUIDs.
+        """
+        if not rows:
+            return {
+                "import_id": import_id or f"IMP_{uuid.uuid4().hex[:8].upper()}",
+                "total": 0,
+                "inserted": 0,
+                "skipped": 0,
+                "net_balance_delta": 0.0,
+                "new_balance": 0.0,
+            }
+
+        if not account_id:
+            accounts = self.get_user_accounts(user_id)
+            if not accounts:
+                raise ValueError(f"No account found for user {user_id}")
+            account_id = accounts[0]["id"]
+
+        import_id = import_id or f"IMP_{uuid.uuid4().hex[:8].upper()}"
+
+        from backend.app.services.fingerprint import compute_transaction_fingerprint
+        from backend.app.services.merchant_normalizer import normalize_narration
+
+        occurrence_counter: Counter = Counter()
+        seen_fingerprints: set[str] = set()
+        prepared = []
+
+        for r in rows:
+            tx_type = (r.get("type") or "EXPENSE").upper()
+            amt = round(float(r["amount"]), 2)
+            desc = r.get("description") or "Imported transaction"
+            date_str = str(r["date"])
+            source_ref = r.get("source_ref")
+
+            merchant_raw = r.get("clean_merchant")
+            if not merchant_raw:
+                try:
+                    norm = normalize_narration(desc, tx_type)
+                    merchant_raw = norm.clean_merchant
+                except Exception:
+                    merchant_raw = desc or "Unknown"
+            merchant_norm = merchant_raw.strip().lower()
+
+            fp = r.get("fingerprint")
+            if not fp:
+                tuple_key = (date_str, amt, tx_type, merchant_raw.lower(), str(source_ref or "").lower())
+                occ = occurrence_counter[tuple_key]
+                occurrence_counter[tuple_key] += 1
+                fp = compute_transaction_fingerprint(
+                    account_id=account_id,
+                    date_str=date_str,
+                    amount=amt,
+                    tx_type=tx_type,
+                    description=merchant_raw,
+                    source_ref=source_ref,
+                    occurrence_index=occ,
+                )
+
+            # Deduplicate rows with identical fingerprints within the batch
+            if fp in seen_fingerprints:
+                continue
+            seen_fingerprints.add(fp)
+
+            amt_paise = to_paise(amt)
+            prepared.append({
+                "id": r.get("id") or f"T_{uuid.uuid4().hex[:8].upper()}",
+                "fingerprint": fp,
+                "date": date_str,
+                "amount_paise": amt_paise,
+                "amount": amt,
+                "type": tx_type,
+                "description": desc,
+                "category": (r.get("category") or "General").strip().title(),
+                "category_id": f"C_{uuid.uuid4().hex[:6].upper()}",
+                "category_source": r.get("category_source") or "default",
+                "merchant_raw": merchant_raw,
+                "merchant_norm": merchant_norm,
+                "source_ref": source_ref,
+                "source_type": r.get("source_type") or "csv",
+                "is_transfer": bool(r.get("is_transfer", False)),
+            })
+
+        query = """
+        MATCH (u:User {id: $user_id})-[:HAS_ACCOUNT]->(a:Account {id: $account_id})
+
+        // Acquire exclusive write lock on account node to serialize concurrent imports for this account
+        SET a._lock = true
+        REMOVE a._lock
+
+        MERGE (imp:ImportBatch {id: $import_id})
+          ON CREATE SET imp.created_at = datetime(), imp.row_count = size($rows)
+
+        UNWIND $rows AS r
+        MERGE (c:Category {name: r.category})
+          ON CREATE SET c.id = r.category_id
+
+        MERGE (m:Merchant {normalized: r.merchant_norm})
+          ON CREATE SET m.name = r.merchant_raw
+
+        MERGE (t:Transaction {fingerprint: r.fingerprint})
+          ON CREATE SET
+            t.id = r.id,
+            t.amount_paise = r.amount_paise,
+            t.amount = toFloat(r.amount_paise) / 100.0,
+            t.date = date(r.date),
+            t.type = r.type,
+            t.description = r.description,
+            t.category_source = r.category_source,
+            t.source_ref = r.source_ref,
+            t.source_type = r.source_type,
+            t.is_transfer = r.is_transfer,
+            t.import_id = $import_id,
+            t.created_at = datetime(),
+            t._batch_id = $import_id
+          ON MATCH SET
+            t._batch_id = null,
+            t.is_transfer = CASE WHEN r.is_transfer THEN true ELSE t.is_transfer END
+
+        MERGE (a)-[:MADE_TRANSACTION]->(t)
+        MERGE (t)-[:BELONGS_TO]->(c)
+        MERGE (t)-[:AT]->(m)
+        MERGE (imp)-[:INCLUDES]->(t)
+
+        WITH a, collect(DISTINCT t) AS all_distinct_txns
+        WITH a, [t IN all_distinct_txns WHERE t._batch_id = $import_id] AS new_txns
+        FOREACH (t IN new_txns | REMOVE t._batch_id)
+
+        WITH a, size(new_txns) AS inserted_count,
+             reduce(s = 0, nt IN new_txns | s + (CASE WHEN nt.type = 'INCOME' THEN nt.amount_paise ELSE -nt.amount_paise END)) AS net_delta_paise
+        WITH a, inserted_count, net_delta_paise, (a.balance_paise + net_delta_paise) AS new_bal_paise
+
+        SET a.balance_paise = new_bal_paise,
+            a.balance = toFloat(new_bal_paise) / 100.0
+        RETURN inserted_count,
+               round(toFloat(net_delta_paise) / 100.0, 2) AS net_delta,
+               round(toFloat(a.balance_paise) / 100.0, 2) AS new_balance
+        """
+
+        def _execute_write_tx(tx):
+            res = tx.run(
+                query,
+                user_id=user_id,
+                account_id=account_id,
+                import_id=import_id,
+                rows=prepared,
+            )
+            rec = res.single()
+            if not rec:
+                raise ValueError(
+                    f"Account '{account_id}' for user '{user_id}' was not found; import aborted."
+                )
+            return rec
+
+        with self.driver.session(database=self.database) as session:
+            if hasattr(session, "execute_write"):
+                record = session.execute_write(_execute_write_tx)
+            else:
+                record = _execute_write_tx(session)
+
+            inserted = record["inserted_count"] if record else len(prepared)
+            net_delta = record["net_delta"] if record else 0.0
+            new_balance = record["new_balance"] if record else 0.0
+
+        total_rows = len(rows)
+        skipped = total_rows - inserted
+
+        return {
+            "import_id": import_id,
+            "total": total_rows,
+            "inserted": inserted,
+            "skipped": skipped,
+            "net_balance_delta": round(float(net_delta), 2),
+            "new_balance": round(float(new_balance), 2),
+        }
 
     def close(self):
         self.driver.close()
+
+
+    def find_unlinked_transfer_candidates(
+        self,
+        user_id: str,
+        account_id: str,
+        opposite_type: str,
+        amount_paise: int,
+        date_from: str,
+        date_to: str,
+    ) -> list[dict]:
+        """
+        Query existing unlinked transactions for retroactive transfer candidate detection.
+        Excludes transactions that already have is_transfer=true or an [:INTERNAL_TRANSFER] edge.
+        """
+        if not user_id or not isinstance(user_id, str):
+            raise ValueError("user_id must be a non-empty string")
+        query = """
+        MATCH (u:User {id: $user_id})-[:HAS_ACCOUNT]->(a:Account)-[:MADE_TRANSACTION]->(t:Transaction)
+        WHERE ($account_id = '' OR a.id <> $account_id)
+          AND t.amount_paise = $amount_paise
+          AND t.type = $opposite_type
+          AND date(t.date) >= date($date_from)
+          AND date(t.date) <= date($date_to)
+          AND coalesce(t.is_transfer, false) = false
+          AND NOT (t)-[:INTERNAL_TRANSFER]-()
+        RETURN t.id AS id, t.description AS description, t.amount_paise AS amount_paise,
+               round(toFloat(t.amount_paise) / 100.0, 2) AS amount,
+               t.type AS type, t.date AS date, a.id AS account_id, a.bank AS bank
+        LIMIT 5
+        """
+        with self.driver.session(database=self.database) as session:
+            result = session.run(
+                query,
+                user_id=user_id,
+                account_id=account_id or "",
+                opposite_type=opposite_type,
+                amount_paise=amount_paise,
+                date_from=str(date_from),
+                date_to=str(date_to),
+            )
+            return [dict(rec) for rec in result]
+
+    def link_internal_transfers(self, user_id: str, pairs: list[dict]) -> int:
+        """
+        Strictly enforce 1-to-1 internal transfer linking between user accounts.
+        
+        Guarantees:
+        1. Both transactions must belong to the authenticated user on DIFFERENT accounts.
+        2. Node-level write locking prevents race conditions on concurrent requests.
+        3. Strict 1-to-1 constraint: neither transaction can be linked to any other transaction.
+        4. Idempotency: repeating the exact same pairing succeeds safely without duplicating edges.
+        5. Existing confirmed pairings are never silently overwritten.
+        """
+        if not user_id or not pairs:
+            return 0
+
+        query = """
+        UNWIND $pairs AS p
+        MATCH (u:User {id: $user_id})-[:HAS_ACCOUNT]->(a1:Account)-[:MADE_TRANSACTION]->(t1:Transaction)
+        WHERE (p.tx1_id IS NOT NULL AND t1.id = p.tx1_id) OR (p.tx1_fp IS NOT NULL AND t1.fingerprint = p.tx1_fp)
+
+        MATCH (u)-[:HAS_ACCOUNT]->(a2:Account)-[:MADE_TRANSACTION]->(t2:Transaction)
+        WHERE ((p.tx2_id IS NOT NULL AND t2.id = p.tx2_id) OR (p.tx2_fp IS NOT NULL AND t2.fingerprint = p.tx2_fp))
+          AND t1 <> t2 AND a1 <> a2
+
+        // Concurrency Control: Acquire exclusive write lock on both Transaction nodes
+        SET t1._lock = true, t2._lock = true
+        REMOVE t1._lock, t2._lock
+
+        // Strict 1-to-1 and idempotency checks
+        WITH t1, t2, p,
+             EXISTS((t1)-[:INTERNAL_TRANSFER]-(t2)) AS already_paired_together,
+             EXISTS((t1)-[:INTERNAL_TRANSFER]-()) AS t1_already_linked,
+             EXISTS((t2)-[:INTERNAL_TRANSFER]-()) AS t2_already_linked
+
+        // Only proceed if already linked to each other (idempotent) OR neither is linked to any other transaction
+        WHERE already_paired_together OR (NOT t1_already_linked AND NOT t2_already_linked)
+
+        SET t1.is_transfer = true, t2.is_transfer = true
+        MERGE (t1)-[r:INTERNAL_TRANSFER]->(t2)
+        ON CREATE SET r.created_at = datetime(), r.confidence = p.confidence, r.amount_paise = t1.amount_paise
+        RETURN count(r) AS linked_count
+        """
+
+        def _execute_link_tx(tx):
+            res = tx.run(query, user_id=user_id, pairs=pairs)
+            rec = res.single()
+            return rec["linked_count"] if rec else 0
+
+        with self.driver.session(database=self.database) as session:
+            if hasattr(session, "execute_write"):
+                return session.execute_write(_execute_link_tx)
+            return _execute_link_tx(session)
+
+    def batch_add_multi_account_transactions(
+        self,
+        user_id: str,
+        rows_by_acc: dict[str, list],
+        import_id: str | None = None,
+        transfer_pairs: list[dict] | None = None,
+    ) -> dict:
+        """
+        Atomic multi-account batch ingestion within a single managed write transaction.
+        If any account insertion or transfer linking fails, the entire batch is rolled back.
+        """
+        if not user_id or not isinstance(user_id, str):
+            raise ValueError("user_id must be a non-empty string")
+        if not rows_by_acc:
+            return {
+                "import_id": import_id or f"IMP_{uuid.uuid4().hex[:8].upper()}",
+                "inserted": 0,
+                "skipped": 0,
+                "net_balance_delta": 0.0,
+                "transfers_linked": 0,
+            }
+
+        import uuid
+        import_id = import_id or f"IMP_{uuid.uuid4().hex[:8].upper()}"
+
+        account_insert_query = """
+        MATCH (u:User {id: $user_id})-[:HAS_ACCOUNT]->(a:Account {id: $account_id})
+
+        SET a._lock = true
+        REMOVE a._lock
+
+        MERGE (imp:ImportBatch {id: $import_id})
+          ON CREATE SET imp.created_at = datetime(), imp.row_count = size($rows)
+
+        UNWIND $rows AS r
+        MERGE (c:Category {name: r.category})
+          ON CREATE SET c.id = r.category_id
+
+        MERGE (m:Merchant {normalized: r.merchant_norm})
+          ON CREATE SET m.name = r.merchant_raw
+
+        MERGE (t:Transaction {fingerprint: r.fingerprint})
+          ON CREATE SET
+            t.id = r.id,
+            t.amount_paise = r.amount_paise,
+            t.amount = toFloat(r.amount_paise) / 100.0,
+            t.date = date(r.date),
+            t.type = r.type,
+            t.description = r.description,
+            t.category_source = r.category_source,
+            t.source_ref = r.source_ref,
+            t.source_type = r.source_type,
+            t.is_transfer = r.is_transfer,
+            t.import_id = $import_id,
+            t.created_at = datetime(),
+            t._batch_id = $import_id
+          ON MATCH SET
+            t._batch_id = null,
+            t.is_transfer = CASE WHEN r.is_transfer THEN true ELSE t.is_transfer END
+
+        MERGE (a)-[:MADE_TRANSACTION]->(t)
+        MERGE (t)-[:BELONGS_TO]->(c)
+        MERGE (t)-[:AT]->(m)
+        MERGE (imp)-[:INCLUDES]->(t)
+
+        WITH a, collect(DISTINCT t) AS all_distinct_txns
+        WITH a, [t IN all_distinct_txns WHERE t._batch_id = $import_id] AS new_txns
+        FOREACH (t IN new_txns | REMOVE t._batch_id)
+
+        WITH a, size(new_txns) AS inserted_count,
+             reduce(s = 0, nt IN new_txns | s + (CASE WHEN nt.type = 'INCOME' THEN nt.amount_paise ELSE -nt.amount_paise END)) AS net_delta_paise
+        WITH a, inserted_count, net_delta_paise, (a.balance_paise + net_delta_paise) AS new_bal_paise
+
+        SET a.balance_paise = new_bal_paise,
+            a.balance = toFloat(new_bal_paise) / 100.0
+        RETURN inserted_count,
+               round(toFloat(net_delta_paise) / 100.0, 2) AS net_delta,
+               round(toFloat(a.balance_paise) / 100.0, 2) AS new_balance
+        """
+
+        transfer_link_query = """
+        UNWIND $pairs AS p
+        MATCH (u:User {id: $user_id})-[:HAS_ACCOUNT]->(a1:Account)-[:MADE_TRANSACTION]->(t1:Transaction)
+        WHERE (p.tx1_id IS NOT NULL AND t1.id = p.tx1_id) OR (p.tx1_fp IS NOT NULL AND t1.fingerprint = p.tx1_fp)
+
+        MATCH (u)-[:HAS_ACCOUNT]->(a2:Account)-[:MADE_TRANSACTION]->(t2:Transaction)
+        WHERE ((p.tx2_id IS NOT NULL AND t2.id = p.tx2_id) OR (p.tx2_fp IS NOT NULL AND t2.fingerprint = p.tx2_fp))
+          AND t1 <> t2 AND a1 <> a2
+
+        SET t1._lock = true, t2._lock = true
+        REMOVE t1._lock, t2._lock
+
+        WITH t1, t2, p,
+             EXISTS((t1)-[:INTERNAL_TRANSFER]-(t2)) AS already_paired_together,
+             EXISTS((t1)-[:INTERNAL_TRANSFER]-()) AS t1_already_linked,
+             EXISTS((t2)-[:INTERNAL_TRANSFER]-()) AS t2_already_linked
+
+        WHERE already_paired_together OR (NOT t1_already_linked AND NOT t2_already_linked)
+
+        SET t1.is_transfer = true, t2.is_transfer = true
+        MERGE (t1)-[r:INTERNAL_TRANSFER]->(t2)
+        ON CREATE SET r.created_at = datetime(), r.confidence = p.confidence, r.amount_paise = t1.amount_paise
+        RETURN count(r) AS linked_count
+        """
+
+        from backend.app.core.money import to_paise
+        from backend.app.services.merchant_normalizer import normalize_narration
+
+        # Prepare rows per account
+        prepared_by_acc: dict[str, list] = {}
+        total_rows = 0
+
+        for acc_id, rows in rows_by_acc.items():
+            prepared_rows = []
+            seen_fps = set()
+            for r in rows:
+                fp = r.get("fingerprint")
+                if fp in seen_fps:
+                    continue
+                seen_fps.add(fp)
+
+                amt = round(float(r["amount"]), 2)
+                amt_paise = to_paise(amt)
+                tx_type = (r.get("type") or "EXPENSE").upper()
+                desc = r.get("description") or "Imported transaction"
+                merchant_raw = r.get("clean_merchant")
+                if not merchant_raw:
+                    try:
+                        norm = normalize_narration(desc, tx_type)
+                        merchant_raw = norm.clean_merchant
+                    except Exception:
+                        merchant_raw = desc or "Unknown"
+
+                prepared_rows.append({
+                    "id": r.get("id") or f"T_{uuid.uuid4().hex[:8].upper()}",
+                    "fingerprint": fp,
+                    "date": str(r["date"]),
+                    "amount_paise": amt_paise,
+                    "amount": amt,
+                    "type": tx_type,
+                    "description": desc,
+                    "category": (r.get("category") or "General").strip().title(),
+                    "category_id": f"C_{uuid.uuid4().hex[:6].upper()}",
+                    "category_source": r.get("category_source") or "default",
+                    "merchant_raw": merchant_raw,
+                    "merchant_norm": merchant_raw.strip().lower(),
+                    "source_ref": r.get("source_ref"),
+                    "source_type": r.get("source_type") or "csv",
+                    "is_transfer": bool(r.get("is_transfer", False)),
+                })
+            prepared_by_acc[acc_id] = prepared_rows
+            total_rows += len(rows)
+
+        def _execute_multi_account_tx(tx):
+            total_inserted = 0
+            net_delta_total = 0.0
+
+            for acc_id, prep_rows in prepared_by_acc.items():
+                res = tx.run(
+                    account_insert_query,
+                    user_id=user_id,
+                    account_id=acc_id,
+                    import_id=import_id,
+                    rows=prep_rows,
+                )
+                rec = res.single()
+                if not rec:
+                    raise ValueError(f"Account '{acc_id}' for user '{user_id}' was not found; import aborted.")
+                total_inserted += rec["inserted_count"]
+                net_delta_total += rec["net_delta"]
+
+            linked_count = 0
+            if transfer_pairs:
+                link_res = tx.run(transfer_link_query, user_id=user_id, pairs=transfer_pairs)
+                link_rec = link_res.single()
+                linked_count = link_rec["linked_count"] if link_rec else 0
+
+            return {
+                "import_id": import_id,
+                "total": total_rows,
+                "inserted": total_inserted,
+                "skipped": total_rows - total_inserted,
+                "net_balance_delta": round(float(net_delta_total), 2),
+                "transfers_linked": linked_count,
+            }
+
+        with self.driver.session(database=self.database) as session:
+            if hasattr(session, "execute_write"):
+                return session.execute_write(_execute_multi_account_tx)
+            return _execute_multi_account_tx(session)
+
+_shared_service_instance: Neo4jService | None = None
+
+
+def get_neo4j_service(database: str | None = None) -> Neo4jService:
+    """
+    Lazy-initialized singleton Neo4jService instance for dependency injection.
+    Eliminates redundant connection handshakes and enables mocking.
+    """
+    global _shared_service_instance
+    if _shared_service_instance is None:
+        _shared_service_instance = Neo4jService(database=database)
+    return _shared_service_instance
+
+
+def close_neo4j_service():
+    """Cleanly close the shared Neo4j driver connection."""
+    global _shared_service_instance
+    if _shared_service_instance is not None:
+        try:
+            _shared_service_instance.close()
+        except Exception:
+            pass
+        _shared_service_instance = None

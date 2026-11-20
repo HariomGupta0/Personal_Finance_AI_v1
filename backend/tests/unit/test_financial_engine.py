@@ -364,3 +364,130 @@ class TestCalculateComprehensiveHealth:
         ctx = {**ZERO_INCOME_CONTEXT, "accounts": [{"balance": 0}]}
         r = calculate_comprehensive_health(ctx)
         assert r["grade"] in ("C", "D")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Edge Cases & Audit Tests: Negative, Zero, Missing, and Boundary Inputs
+# ─────────────────────────────────────────────────────────────────────────────
+class TestFinancialEngineAuditEdgeCases:
+    def test_health_score_clamped_on_extreme_negative_savings(self):
+        # Income = 5,000, Expenses = 100,000 → Savings rate = -1900%
+        ctx = {
+            **MOCK_CONTEXT,
+            "incomes": [{"amount": 5000, "source": "Salary", "date": f"{_YM}-01"}],
+            "transactions": [{"type": "EXPENSE", "amount": 100000, "date": f"{_YM}-05"}],
+        }
+        r = calculate_comprehensive_health(ctx)
+        # Score must be non-negative and properly clamped between 0 and 100
+        assert 0.0 <= r["health_score"] <= 100.0
+        assert r["grade"] in ("C", "D")
+
+    def test_health_score_clamped_on_negative_account_balance(self):
+        # Overdrawn account: balance = -25,000
+        ctx = {
+            **MOCK_CONTEXT,
+            "accounts": [{"balance": -25000}],
+        }
+        r = calculate_comprehensive_health(ctx)
+        assert 0.0 <= r["health_score"] <= 100.0
+
+    def test_health_score_zero_income_with_active_emi_is_penalized(self):
+        # Zero income with ₹15,000 active monthly EMI must not receive full debt points
+        ctx = {
+            **ZERO_INCOME_CONTEXT,
+            "loans": [{"outstanding": 200000, "emi": 15000, "status": "PENDING", "due_date": f"{_YM}-10"}],
+        }
+        r = calculate_comprehensive_health(ctx)
+        assert r["dti_ratio"] == 0.0
+        assert r["grade"] in ("C", "D")
+
+    def test_debt_burden_zero_income_with_active_emi_is_critical_risk(self):
+        ctx = {
+            **ZERO_INCOME_CONTEXT,
+            "loans": [{"outstanding": 100000, "emi": 5000, "status": "PENDING", "due_date": f"{_YM}-10"}],
+        }
+        r = calculate_debt_burden(ctx)
+        assert r["risk_level"] == "CRITICAL"
+        assert r["has_income"] is False
+        assert r["monthly_emi"] == 5000
+
+    def test_debt_burden_zero_income_zero_debt_is_low_risk(self):
+        ctx = {
+            **ZERO_INCOME_CONTEXT,
+            "loans": [],
+        }
+        r = calculate_debt_burden(ctx)
+        assert r["risk_level"] == "LOW"
+        assert r["has_income"] is False
+        assert r["is_sufficient_data"] is False
+
+    def test_emergency_runway_zero_expenses_flags_insufficient_data(self):
+        r = calculate_emergency_runway(ZERO_EXPENSE_CONTEXT)
+        assert r["is_sufficient_data"] is False
+        assert r["data_note"] is not None
+        assert "Zero recorded expenses" in r["data_note"]
+
+    def test_pending_emi_deduplication_in_purchase_safety(self):
+        # Simulate duplicate join rows for the same EMI from multiple accounts
+        duplicate_loans = [
+            {"id": "L001", "emi": 10000, "status": "PENDING", "due_date": f"{_YM}-10"},
+            {"id": "L001", "emi": 10000, "status": "PENDING", "due_date": f"{_YM}-10"},  # Duplicate
+        ]
+        ctx = {**MOCK_CONTEXT, "loans": duplicate_loans}
+        r = check_purchase_safety(ctx, purchase_amount=5000)
+        # Should count 10000 once, NOT 20000
+        assert r["evidence"]["pending_emi"] == 10000.0
+
+    def test_purchase_safety_negative_purchase_amount_clamped(self):
+        # A negative purchase amount must be clamped to 0 and not inflate balance
+        r = check_purchase_safety(MOCK_CONTEXT, purchase_amount=-5000)
+        assert r["evidence"]["purchase_amount"] == 0.0
+        expected = r["evidence"]["current_balance"] - r["evidence"]["pending_emi"]
+        assert r["evidence"]["balance_after_purchase"] == pytest.approx(expected, abs=0.01)
+
+    def test_purchase_safety_zero_expenses_adds_warning_note(self):
+        r = check_purchase_safety(ZERO_EXPENSE_CONTEXT, purchase_amount=5000)
+        assert "Zero monthly expenses recorded" in r["reason"]
+        assert r["is_sufficient_data"] is False
+
+    def test_all_functions_handle_empty_context_safely(self):
+        empty_ctx = {}
+        # None of these should raise KeyError or unhandled exceptions
+        sr = calculate_savings_rate(empty_ctx)
+        assert sr["total_income"] == 0.0
+        assert sr["savings_rate"] == 0.0
+
+        ef = calculate_emergency_fund(empty_ctx)
+        assert ef["recommended_fund"] == 0.0
+
+        er = calculate_emergency_runway(empty_ctx)
+        assert er["runway_months"] == 0.0
+        assert er["status"] == "CRITICAL"
+
+        db = calculate_debt_burden(empty_ctx)
+        assert db["monthly_emi"] == 0.0
+
+        ch = calculate_comprehensive_health(empty_ctx)
+        assert 0.0 <= ch["health_score"] <= 100.0
+
+        ps = check_purchase_safety(empty_ctx, purchase_amount=1000)
+        assert ps["decision"] == "NOT_SAFE"
+        assert ps["risk_level"] == "VERY_HIGH"
+
+        cat = calculate_category_expenses(empty_ctx)
+        assert cat["total_expenses"] == 0.0
+
+    def test_reporting_period_transparency_across_all_metrics(self):
+        r_sr = calculate_savings_rate(MOCK_CONTEXT)
+        r_ef = calculate_emergency_fund(MOCK_CONTEXT)
+        r_er = calculate_emergency_runway(MOCK_CONTEXT)
+        r_db = calculate_debt_burden(MOCK_CONTEXT)
+        r_ch = calculate_comprehensive_health(MOCK_CONTEXT)
+        r_ps = check_purchase_safety(MOCK_CONTEXT, 1000)
+        r_cat = calculate_category_expenses(MOCK_CONTEXT)
+
+        for res in (r_sr, r_ef, r_er, r_db, r_ch, r_ps, r_cat):
+            assert "reporting_period" in res
+            assert len(res["reporting_period"]) == 7  # 'YYYY-MM'
+            assert res["reporting_period"].count("-") == 1
+

@@ -1,0 +1,61 @@
+scenario_id,source_account,dest_account,amount_inr,debit_date,credit_date,day_delta,debit_narration,credit_narration,ground_truth_is_transfer,predicted_is_transfer,classification_outcome,root_cause_analysis
+TR_TP_01,ACC_HDFC_01,ACC_SBI_02,25000.0,2026-10-09,2026-10-11,2,UPI/TRF/HDFC TO SBI/470005,UPI/REV/TRANSFER FROM HDFC/367054,True,True,TP,Matched 1-to-1 within +-48hr delta window with opposite polarity
+TR_TP_02,ACC_HDFC_01,ACC_SBI_02,15000.0,2026-10-07,2026-10-08,1,UPI/TRF/HDFC TO SBI/490046,UPI/REV/TRANSFER FROM HDFC/407890,True,True,TP,Matched 1-to-1 within +-48hr delta window with opposite polarity
+TR_TP_03,ACC_HDFC_01,ACC_SBI_02,10000.0,2026-10-10,2026-10-10,0,UPI/TRF/HDFC TO SBI/264356,UPI/REV/TRANSFER FROM HDFC/832090,True,True,TP,Matched 1-to-1 within +-48hr delta window with opposite polarity
+TR_TP_04,ACC_HDFC_01,ACC_SBI_02,5000.0,2026-10-24,2026-10-25,1,UPI/TRF/HDFC TO SBI/746092,UPI/REV/TRANSFER FROM HDFC/841840,True,True,TP,Matched 1-to-1 within +-48hr delta window with opposite polarity
+TR_TP_05,ACC_HDFC_01,ACC_SBI_02,15000.0,2026-10-03,2026-10-03,0,UPI/TRF/HDFC TO SBI/896699,UPI/REV/TRANSFER FROM HDFC/411998,True,True,TP,Matched 1-to-1 within +-48hr delta window with opposite polarity
+TR_TP_06,ACC_HDFC_01,ACC_SBI_02,50000.0,2026-10-11,2026-10-13,2,UPI/TRF/HDFC TO SBI/863002,UPI/REV/TRANSFER FROM HDFC/873452,True,True,TP,Matched 1-to-1 within +-48hr delta window with opposite polarity
+TR_TP_07,ACC_HDFC_01,ACC_SBI_02,25000.0,2026-10-25,2026-10-25,0,UPI/TRF/HDFC TO SBI/544188,UPI/REV/TRANSFER FROM HDFC/757335,True,True,TP,Matched 1-to-1 within +-48hr delta window with opposite polarity
+TR_TP_08,ACC_HDFC_01,ACC_SBI_02,5000.0,2026-10-01,2026-10-03,2,UPI/TRF/HDFC TO SBI/327060,UPI/REV/TRANSFER FROM HDFC/563939,True,True,TP,Matched 1-to-1 within +-48hr delta window with opposite polarity
+TR_TP_09,ACC_HDFC_01,ACC_SBI_02,20000.0,2026-10-04,2026-10-06,2,UPI/TRF/HDFC TO SBI/281174,UPI/REV/TRANSFER FROM HDFC/841758,True,True,TP,Matched 1-to-1 within +-48hr delta window with opposite polarity
+TR_TP_10,ACC_HDFC_01,ACC_SBI_02,15000.0,2026-10-21,2026-10-22,1,UPI/TRF/HDFC TO SBI/112609,UPI/REV/TRANSFER FROM HDFC/674194,True,True,TP,Matched 1-to-1 within +-48hr delta window with opposite polarity
+TR_TP_11,ACC_HDFC_01,ACC_SBI_02,25000.0,2026-10-13,2026-10-15,2,UPI/TRF/HDFC TO SBI/991773,UPI/REV/TRANSFER FROM HDFC/425462,True,True,TP,Matched 1-to-1 within +-48hr delta window with opposite polarity
+TR_TP_12,ACC_HDFC_01,ACC_SBI_02,20000.0,2026-10-22,2026-10-24,2,UPI/TRF/HDFC TO SBI/793444,UPI/REV/TRANSFER FROM HDFC/750465,True,True,TP,Matched 1-to-1 within +-48hr delta window with opposite polarity
+TR_TP_13,ACC_HDFC_01,ACC_SBI_02,10000.0,2026-10-09,2026-10-09,0,UPI/TRF/HDFC TO SBI/879920,UPI/REV/TRANSFER FROM HDFC/662770,True,True,TP,Matched 1-to-1 within +-48hr delta window with opposite polarity
+TR_TP_14,ACC_HDFC_01,ACC_SBI_02,5000.0,2026-10-23,2026-10-23,0,UPI/TRF/HDFC TO SBI/292501,UPI/REV/TRANSFER FROM HDFC/313038,True,True,TP,Matched 1-to-1 within +-48hr delta window with opposite polarity
+TR_TP_15,ACC_HDFC_01,ACC_SBI_02,20000.0,2026-10-16,2026-10-17,1,UPI/TRF/HDFC TO SBI/219448,UPI/REV/TRANSFER FROM HDFC/921847,True,True,TP,Matched 1-to-1 within +-48hr delta window with opposite polarity
+TR_TP_16,ACC_HDFC_01,ACC_SBI_02,2000.0,2026-10-07,2026-10-08,1,UPI/TRF/HDFC TO SBI/605281,UPI/REV/TRANSFER FROM HDFC/991484,True,True,TP,Matched 1-to-1 within +-48hr delta window with opposite polarity
+TR_TP_17,ACC_HDFC_01,ACC_SBI_02,25000.0,2026-10-09,2026-10-11,2,UPI/TRF/HDFC TO SBI/773964,UPI/REV/TRANSFER FROM HDFC/263064,True,True,TP,Matched 1-to-1 within +-48hr delta window with opposite polarity
+TR_TP_18,ACC_HDFC_01,ACC_SBI_02,7500.0,2026-10-25,2026-10-25,0,UPI/TRF/HDFC TO SBI/732113,UPI/REV/TRANSFER FROM HDFC/247210,True,True,TP,Matched 1-to-1 within +-48hr delta window with opposite polarity
+TR_TP_19,ACC_HDFC_01,ACC_SBI_02,50000.0,2026-10-10,2026-10-11,1,UPI/TRF/HDFC TO SBI/505017,UPI/REV/TRANSFER FROM HDFC/600150,True,True,TP,Matched 1-to-1 within +-48hr delta window with opposite polarity
+TR_TP_20,ACC_HDFC_01,ACC_SBI_02,50000.0,2026-10-22,2026-10-22,0,UPI/TRF/HDFC TO SBI/578666,UPI/REV/TRANSFER FROM HDFC/124572,True,True,TP,Matched 1-to-1 within +-48hr delta window with opposite polarity
+TR_TP_21,ACC_HDFC_01,ACC_SBI_02,25000.0,2026-10-14,2026-10-15,1,UPI/TRF/HDFC TO SBI/376122,UPI/REV/TRANSFER FROM HDFC/408927,True,True,TP,Matched 1-to-1 within +-48hr delta window with opposite polarity
+TR_TP_22,ACC_HDFC_01,ACC_SBI_02,10000.0,2026-10-15,2026-10-15,0,UPI/TRF/HDFC TO SBI/485605,UPI/REV/TRANSFER FROM HDFC/751894,True,True,TP,Matched 1-to-1 within +-48hr delta window with opposite polarity
+TR_TP_23,ACC_HDFC_01,ACC_SBI_02,10000.0,2026-10-13,2026-10-14,1,UPI/TRF/HDFC TO SBI/308457,UPI/REV/TRANSFER FROM HDFC/418411,True,True,TP,Matched 1-to-1 within +-48hr delta window with opposite polarity
+TR_TP_24,ACC_HDFC_01,ACC_SBI_02,20000.0,2026-10-20,2026-10-22,2,UPI/TRF/HDFC TO SBI/983839,UPI/REV/TRANSFER FROM HDFC/901230,True,True,TP,Matched 1-to-1 within +-48hr delta window with opposite polarity
+TR_TP_25,ACC_HDFC_01,ACC_SBI_02,7500.0,2026-10-01,2026-10-02,1,UPI/TRF/HDFC TO SBI/134084,UPI/REV/TRANSFER FROM HDFC/203471,True,True,TP,Matched 1-to-1 within +-48hr delta window with opposite polarity
+TR_TP_26,ACC_HDFC_01,ACC_SBI_02,5000.0,2026-10-07,2026-10-09,2,UPI/TRF/HDFC TO SBI/207792,UPI/REV/TRANSFER FROM HDFC/588061,True,True,TP,Matched 1-to-1 within +-48hr delta window with opposite polarity
+TR_TP_27,ACC_HDFC_01,ACC_SBI_02,20000.0,2026-10-06,2026-10-08,2,UPI/TRF/HDFC TO SBI/322881,UPI/REV/TRANSFER FROM HDFC/915838,True,True,TP,Matched 1-to-1 within +-48hr delta window with opposite polarity
+TR_TP_28,ACC_HDFC_01,ACC_SBI_02,2000.0,2026-10-13,2026-10-14,1,UPI/TRF/HDFC TO SBI/191458,UPI/REV/TRANSFER FROM HDFC/897163,True,True,TP,Matched 1-to-1 within +-48hr delta window with opposite polarity
+TR_TP_29,ACC_HDFC_01,ACC_SBI_02,20000.0,2026-10-04,2026-10-06,2,UPI/TRF/HDFC TO SBI/991199,UPI/REV/TRANSFER FROM HDFC/731856,True,True,TP,Matched 1-to-1 within +-48hr delta window with opposite polarity
+TR_TP_30,ACC_HDFC_01,ACC_SBI_02,2000.0,2026-10-20,2026-10-21,1,UPI/TRF/HDFC TO SBI/991748,UPI/REV/TRANSFER FROM HDFC/535350,True,True,TP,Matched 1-to-1 within +-48hr delta window with opposite polarity
+TR_TP_31,ACC_HDFC_01,ACC_SBI_02,7500.0,2026-10-24,2026-10-24,0,UPI/TRF/HDFC TO SBI/733618,UPI/REV/TRANSFER FROM HDFC/671668,True,True,TP,Matched 1-to-1 within +-48hr delta window with opposite polarity
+TR_TP_32,ACC_HDFC_01,ACC_SBI_02,50000.0,2026-10-23,2026-10-23,0,UPI/TRF/HDFC TO SBI/932179,UPI/REV/TRANSFER FROM HDFC/752743,True,True,TP,Matched 1-to-1 within +-48hr delta window with opposite polarity
+TR_FN_01,ACC_HDFC_01,ACC_ICICI_03,12000.0,2026-10-16,2026-10-19,3,NEFT-ICICI-SELF-FUND-TRANSFER-1,NEFT-CR-FROM-HDFC-SAVINGS-1,True,False,FN,Friday evening NEFT transfer cleared on Tuesday morning (72h lag > 48h limit)
+TR_FN_02,ACC_HDFC_01,ACC_ICICI_03,24000.0,2026-10-16,2026-10-20,4,NEFT-ICICI-SELF-FUND-TRANSFER-2,NEFT-CR-FROM-HDFC-SAVINGS-2,True,False,FN,Bank holiday weekend inter-bank RTGS delayed settlement (96h lag > 48h limit)
+TR_FN_03,ACC_HDFC_01,ACC_ICICI_03,36000.0,2026-10-16,2026-10-19,3,NEFT-ICICI-SELF-FUND-TRANSFER-3,NEFT-CR-FROM-HDFC-SAVINGS-3,True,False,FN,IMPS technical hold cleared after 68 hours on bank manual reconciliation
+TR_TN_01,ACC_HDFC_01,EXTERNAL_ENTITY,10000.0,2026-10-13,-,0,UPI/SWIGGY/swiggy@icici,-,False,False,TN,Excluded: Commercial food delivery merchant
+TR_TN_02,ACC_HDFC_01,EXTERNAL_ENTITY,10000.0,2026-10-04,-,0,ACH-TATA POWER-ELECTRICITY,-,False,False,TN,Excluded: Registered utility utility billing biller
+TR_TN_03,ACC_HDFC_01,EXTERNAL_ENTITY,10000.0,2026-10-10,-,0,POS 4123 DMART GROCERY,-,False,False,TN,Excluded: Commercial retail merchant pattern
+TR_TN_04,ACC_HDFC_01,EXTERNAL_ENTITY,3500.0,2026-10-21,-,0,POS 4123 DMART GROCERY,-,False,False,TN,Excluded: Commercial retail merchant pattern
+TR_TN_05,ACC_HDFC_01,EXTERNAL_ENTITY,5000.0,2026-10-19,-,0,POS 4123 DMART GROCERY,-,False,False,TN,Excluded: Commercial retail merchant pattern
+TR_TN_06,ACC_HDFC_01,EXTERNAL_ENTITY,2000.0,2026-10-22,-,0,ATM CASH WDL HDFC BANK,-,False,False,TN,Excluded: Cash withdrawal from ATM
+TR_TN_07,ACC_HDFC_01,EXTERNAL_ENTITY,1500.0,2026-10-23,-,0,ACH-TATA POWER-ELECTRICITY,-,False,False,TN,Excluded: Registered utility utility billing biller
+TR_TN_08,ACC_HDFC_01,EXTERNAL_ENTITY,2000.0,2026-10-15,-,0,POS 4123 DMART GROCERY,-,False,False,TN,Excluded: Commercial retail merchant pattern
+TR_TN_09,ACC_HDFC_01,EXTERNAL_ENTITY,5000.0,2026-10-27,-,0,UPI/SWIGGY/swiggy@icici,-,False,False,TN,Excluded: Commercial food delivery merchant
+TR_TN_10,ACC_HDFC_01,EXTERNAL_ENTITY,2000.0,2026-10-19,-,0,ACH-TATA POWER-ELECTRICITY,-,False,False,TN,Excluded: Registered utility utility billing biller
+TR_TN_11,ACC_HDFC_01,EXTERNAL_ENTITY,5000.0,2026-10-07,-,0,ACH-TATA POWER-ELECTRICITY,-,False,False,TN,Excluded: Registered utility utility billing biller
+TR_TN_12,ACC_HDFC_01,EXTERNAL_ENTITY,3500.0,2026-10-09,-,0,UPI/SWIGGY/swiggy@icici,-,False,False,TN,Excluded: Commercial food delivery merchant
+TR_TN_13,ACC_HDFC_01,EXTERNAL_ENTITY,1500.0,2026-10-06,-,0,ACH-TATA POWER-ELECTRICITY,-,False,False,TN,Excluded: Registered utility utility billing biller
+TR_TN_14,ACC_HDFC_01,EXTERNAL_ENTITY,1500.0,2026-10-17,-,0,ACH-TATA POWER-ELECTRICITY,-,False,False,TN,Excluded: Registered utility utility billing biller
+TR_TN_15,ACC_HDFC_01,EXTERNAL_ENTITY,3500.0,2026-10-18,-,0,UPI/SWIGGY/swiggy@icici,-,False,False,TN,Excluded: Commercial food delivery merchant
+TR_TN_16,ACC_HDFC_01,EXTERNAL_ENTITY,5000.0,2026-10-08,-,0,ATM CASH WDL HDFC BANK,-,False,False,TN,Excluded: Cash withdrawal from ATM
+TR_TN_17,ACC_HDFC_01,EXTERNAL_ENTITY,10000.0,2026-10-05,-,0,UPI/SWIGGY/swiggy@icici,-,False,False,TN,Excluded: Commercial food delivery merchant
+TR_TN_18,ACC_HDFC_01,EXTERNAL_ENTITY,1500.0,2026-10-05,-,0,ACH-TATA POWER-ELECTRICITY,-,False,False,TN,Excluded: Registered utility utility billing biller
+TR_TN_19,ACC_HDFC_01,EXTERNAL_ENTITY,5000.0,2026-10-09,-,0,POS 4123 DMART GROCERY,-,False,False,TN,Excluded: Commercial retail merchant pattern
+TR_TN_20,ACC_HDFC_01,EXTERNAL_ENTITY,10000.0,2026-10-13,-,0,POS 4123 DMART GROCERY,-,False,False,TN,Excluded: Commercial retail merchant pattern
+TR_TN_21,ACC_HDFC_01,EXTERNAL_ENTITY,2000.0,2026-10-03,-,0,UPI/SWIGGY/swiggy@icici,-,False,False,TN,Excluded: Commercial food delivery merchant
+TR_TN_22,ACC_HDFC_01,EXTERNAL_ENTITY,10000.0,2026-10-19,-,0,POS 4123 DMART GROCERY,-,False,False,TN,Excluded: Commercial retail merchant pattern
+TR_TN_23,ACC_HDFC_01,EXTERNAL_ENTITY,3500.0,2026-10-10,-,0,UPI/SWIGGY/swiggy@icici,-,False,False,TN,Excluded: Commercial food delivery merchant
+TR_FP_01,ACC_HDFC_01,ACC_SBI_02,1500.0,2026-10-14,2026-10-15,1,UPI/9811122233/Roommate dinner share,UPI/9844455566/Colleague cab reimbursement,False,True,FP,User paid friend Rs. 1500; coincidentally received Rs. 1500 from colleague within 24h
+TR_FP_02,ACC_SBI_02,ACC_ICICI_03,5000.0,2026-10-21,2026-10-21,0,UPI/Landlord deposit adjustment,IMPS/Freelance design client payout,False,True,FP,Simultaneous debit of Rs. 5000 and freelance credit of Rs. 5000 on same day

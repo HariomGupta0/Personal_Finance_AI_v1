@@ -1,0 +1,144 @@
+{
+  "question": "How long can I survive on my savings?",
+  "intent": "SAVINGS_ANALYSIS",
+  "model": "openai/gpt-oss-120b",
+  "timestamp": "2026-11-01T04:08:23.865059+00:00",
+  "math_result": {
+    "total_income": 60000.0,
+    "total_expenses": 21000.0,
+    "savings": 39000.0,
+    "savings_rate": 65.0,
+    "has_income": true,
+    "is_sufficient_data": true,
+    "reporting_period": "2026-11"
+  },
+  "evidence_string": "{\n  \"_graph_paths\": [],\n  \"_grounded_facts\": [\n    {\n      \"label\": \"Total Monthly Income\",\n      \"node_ids\": [\n        \"Income:I001\",\n        \"Income:Salary\"\n      ],\n      \"source\": \"Income.amount\",\n      \"value\": \"₹60,000\"\n    },\n    {\n      \"label\": \"Total Monthly Expenses\",\n      \"node_ids\": [\n        \"Transaction:T001\",\n        \"Transaction:T002\",\n        \"Transaction:T003\",\n        \"Transaction:T004\"\n      ],\n      \"source\": \"Transaction.amount\",\n      \"value\": \"₹21,000\"\n    },\n    {\n      \"label\": \"Net Monthly Savings\",\n      \"node_ids\": [\n        \"Income:I001\",\n        \"Income:Salary\",\n        \"Transaction:T001\",\n        \"Transaction:T002\",\n        \"Transaction:T003\",\n        \"Transaction:T004\"\n      ],\n      \"source\": \"Deterministic Math\",\n      \"value\": \"₹39,000\"\n    },\n    {\n      \"label\": \"Savings Rate\",\n      \"node_ids\": [\n        \"Income:I001\",\n        \"Income:Salary\",\n        \"Transaction:T001\",\n        \"Transaction:T002\",\n        \"Transaction:T003\",\n        \"Transaction:T004\"\n      ],\n      \"source\": \"Savings Formula\",\n      \"value\": \"65.0%\"\n    }\n  ],\n  \"_source_identifiers\": [\n    \"Income:I001\",\n    \"Transaction:T001\",\n    \"Transaction:T002\",\n    \"Transaction:T003\",\n    \"Transaction:T004\"\n  ],\n  \"has_income\": true,\n  \"is_sufficient_data\": true,\n  \"reporting_period\": \"2026-11\",\n  \"savings\": 39000.0,\n  \"savings_rate\": 65.0,\n  \"total_expenses\": 21000.0,\n  \"total_income\": 60000.0\n}",
+  "llm_raw_text": "**🎯 The Quick Take**  \nYou’re pocketing ₹39,000 each month after covering all expenses. That means you’re actually *building* a safety net faster than you’re spending – you can stay afloat indefinitely as long as the income stream holds.\n\n---\n\n**📊 The Numbers**  \n• **Total Monthly Income:** ₹60,000  \n• **Total Monthly Expenses:** ₹21,000  \n• **Net Monthly Savings:** ₹39,000  \n• **Savings Rate:** 65 % of your earnings  \n\n---\n\n**💡 Smart Insights**  \n- Every ₹21,000 you have saved can cover one month of living costs. In other words, each month’s surplus gives you roughly **1.86 months** of “rain‑check” cash.  \n- Because your savings exceed your expenses, your cash cushion is *growing* each month, not shrinking.  \n- If you ever faced a temporary loss of income, the amount you’ve saved to date will determine how many months you can comfortably ride out the gap.\n\n---\n\n**🚀 What You Should Do Next**  \n1. **Set a runway goal** – aim for at least 3–6 months of expenses (₹63,000 – ₹126,000) in an easily accessible emergency fund.  \n2. **Automate the surplus** – direct the ₹39,000 you save each month into a high‑interest savings account or a low‑risk liquid fund to let it work for you.  \n3. **Review periodically** – revisit your income and expense picture every 6 months; any change in either will adjust how quickly your safety net expands.  \n\nYou’re on a solid path—keep that momentum, and you’ll have both peace of mind and flexibility for whatever comes next.",
+  "api_response": {
+    "query": "How long can I survive on my savings?",
+    "intent": "SAVINGS_ANALYSIS",
+    "entities": {
+      "intent": "SAVINGS_ANALYSIS",
+      "operation": "SAVINGS_ANALYSIS",
+      "category": null,
+      "merchant": null,
+      "amount": null,
+      "amount_min": null,
+      "amount_max": null,
+      "limit": null,
+      "sort_by": "date",
+      "sort_direction": "DESC",
+      "reporting_date": null,
+      "comparison_reporting_date": null,
+      "date_range": "start_date=None end_date=None reporting_period=None",
+      "comparison_date_range": null,
+      "trend_months": null,
+      "raw_query": "How long can I survive on my savings?",
+      "is_followup": false,
+      "needs_clarification": false,
+      "clarification_type": null,
+      "clarification_message": null,
+      "exclude_transfers": true,
+      "query_plan": "operation=<OperationType.SAVINGS_ANALYSIS: 'SAVINGS_ANALYSIS'> raw_query='How long can I survive on my savings?' date_range=DateRange(start_date=None, end_date=None, reporting_period=None) comparison_date_range=None trend_months=None category=None merchant=None amount=None amount_min=None amount_max=None sort_by='date' sort_direction='DESC' limit=None exclude_transfers=True is_followup=False needs_clarification=False clarification_type=None clarification_message=None",
+      "turn_type": "NEW_TOPIC",
+      "is_date_ambiguous": false
+    },
+    "math_result": {
+      "total_income": 60000.0,
+      "total_expenses": 21000.0,
+      "savings": 39000.0,
+      "savings_rate": 65.0,
+      "has_income": true,
+      "is_sufficient_data": true,
+      "reporting_period": "2026-11"
+    },
+    "evidence": [
+      {
+        "label": "Total Monthly Income",
+        "value": "₹60,000",
+        "source": "Income.amount",
+        "formula": "Sum of recorded income for period",
+        "source_node_ids": [
+          "Income:I001",
+          "Income:Salary"
+        ]
+      },
+      {
+        "label": "Total Monthly Expenses",
+        "value": "₹21,000",
+        "source": "Transaction.amount",
+        "formula": "Sum of expense transactions for period",
+        "source_node_ids": [
+          "Transaction:T001",
+          "Transaction:T002",
+          "Transaction:T003",
+          "Transaction:T004"
+        ]
+      },
+      {
+        "label": "Net Monthly Savings",
+        "value": "₹39,000",
+        "source": "Deterministic Math",
+        "formula": "Total Income - Total Expenses",
+        "source_node_ids": [
+          "Income:I001",
+          "Income:Salary",
+          "Transaction:T001",
+          "Transaction:T002",
+          "Transaction:T003",
+          "Transaction:T004"
+        ]
+      },
+      {
+        "label": "Savings Rate",
+        "value": "65.0%",
+        "source": "Savings Formula",
+        "formula": "(Net Savings / Total Income) × 100",
+        "source_node_ids": [
+          "Income:I001",
+          "Income:Salary",
+          "Transaction:T001",
+          "Transaction:T002",
+          "Transaction:T003",
+          "Transaction:T004"
+        ]
+      }
+    ],
+    "evidence_metadata": {
+      "reporting_period": "2026-11",
+      "data_freshness": "Verified through latest transaction (2026-11-09)",
+      "methodology_formula": "Savings Rate = ((Total Monthly Income - Total Monthly Expenses) / Total Monthly Income) × 100",
+      "calculation_method": "Cash flow delta analysis across verified income & ledger expenses.",
+      "caveats": [],
+      "is_sufficient_data": true
+    },
+    "source_identifiers": [
+      "Income:I001",
+      "Transaction:T001",
+      "Transaction:T002",
+      "Transaction:T003",
+      "Transaction:T004"
+    ],
+    "graph_paths": [],
+    "explanation": "**🎯 The Quick Take**  \nYou’re pocketing ₹39,000 each month after covering all expenses. That means you’re actually *building* a safety net faster than you’re spending – you can stay afloat indefinitely as long as the income stream holds.\n\n---\n\n**📊 The Numbers**  \n• **Total Monthly Income:** ₹60,000  \n• **Total Monthly Expenses:** ₹21,000  \n• **Net Monthly Savings:** ₹39,000  \n• **Savings Rate:** 65 % of your earnings  \n\n---\n\n**💡 Smart Insights**  \n- Every ₹21,000 you have saved can cover one month of living costs. In other words, each month’s surplus gives you roughly **1.86 months** of “rain‑check” cash.  \n- Because your savings exceed your expenses, your cash cushion is *growing* each month, not shrinking.  \n- If you ever faced a temporary loss of income, the amount you’ve saved to date will determine how many months you can comfortably ride out the gap.\n\n---\n\n**🚀 What You Should Do Next**  \n1. **Set a runway goal** – aim for at least 3–6 months of expenses (₹63,000 – ₹126,000) in an easily accessible emergency fund.  \n2. **Automate the surplus** – direct the ₹39,000 you save each month into a high‑interest savings account or a low‑risk liquid fund to let it work for you.  \n3. **Review periodically** – revisit your income and expense picture every 6 months; any change in either will adjust how quickly your safety net expands.  \n\nYou’re on a solid path—keep that momentum, and you’ll have both peace of mind and flexibility for whatever comes next.",
+    "prompt_version": "v1.1",
+    "is_followup": false,
+    "turn_type": "NEW_TOPIC",
+    "needs_clarification": false,
+    "clarification_type": null,
+    "recalculated_fresh": true,
+    "latency_breakdown": {
+      "nlu_ms": 0.4,
+      "graph_ms": 20.4,
+      "engine_ms": 0.1,
+      "llm_ms": 1940.3,
+      "total_ms": 1961.2
+    },
+    "tokens": {
+      "prompt": 902,
+      "completion": 765,
+      "total": 1667
+    }
+  },
+  "metadata_note": "Literal phrasing requested by user (parses to SAVINGS_ANALYSIS due to 'my savings')"
+}

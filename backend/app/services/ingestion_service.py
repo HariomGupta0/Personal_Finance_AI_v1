@@ -1,3 +1,4 @@
+from backend.app.core.money import normalize_rupees
 from backend.app.database.neo4j_service import Neo4jService
 from backend.app.nlu.transaction_extractor import extract_transaction
 from backend.app.engine.financial_engine import (
@@ -11,7 +12,9 @@ class IngestionService:
     def __init__(self, db=None):
         self.db = db or Neo4jService()
 
-    def ingest_transaction_from_text(self, text, user_id="U001", account_id=None):
+    def ingest_transaction_from_text(self, text, user_id: str, account_id=None):
+        if not user_id or not isinstance(user_id, str):
+            raise ValueError("user_id must be a non-empty string")
         extracted = extract_transaction(text)
         if not extracted:
             raise ValueError(f"Could not parse a valid transaction from input: '{text}'")
@@ -35,7 +38,10 @@ class IngestionService:
             date_str=extracted["date"]
         )
 
-    def ingest_transaction(self, user_id="U001", account_id=None, amount=0, description="", category_name="General", transaction_type="EXPENSE", date_str=None):
+    def ingest_transaction(self, user_id: str, account_id=None, amount=0, description="", category_name="General", transaction_type="EXPENSE", date_str=None):
+        if not user_id or not isinstance(user_id, str):
+            raise ValueError("user_id must be a non-empty string")
+        amount = normalize_rupees(amount)
         if transaction_type.upper() == "INCOME":
             return self.ingest_income(
                 user_id=user_id,
@@ -80,7 +86,10 @@ class IngestionService:
             "impact_summary": impact_summary
         }
 
-    def ingest_income(self, user_id="U001", source="Salary", amount=0, date_str=None, account_id=None):
+    def ingest_income(self, user_id: str, source="Salary", amount=0, date_str=None, account_id=None):
+        if not user_id or not isinstance(user_id, str):
+            raise ValueError("user_id must be a non-empty string")
+        amount = normalize_rupees(amount)
         before_ctx = self.db.get_financial_context(user_id)
         before_summary = generate_financial_summary(before_ctx) if before_ctx else None
 
@@ -110,7 +119,12 @@ class IngestionService:
             "impact_summary": impact_summary
         }
 
-    def ingest_goal(self, user_id="U001", name="Emergency Fund", target_amount=100000, current_amount=None, target_date=None):
+    def ingest_goal(self, user_id: str, name="Emergency Fund", target_amount=100000, current_amount=None, target_date=None):
+        if not user_id or not isinstance(user_id, str):
+            raise ValueError("user_id must be a non-empty string")
+        target_amount = normalize_rupees(target_amount)
+        if current_amount is not None:
+            current_amount = normalize_rupees(current_amount)
         goal_record = self.db.add_or_update_goal(
             user_id=user_id,
             name=name,
@@ -124,5 +138,18 @@ class IngestionService:
         return {
             "status": "SUCCESS",
             "goal": goal_record,
+            "metrics": after_summary
+        }
+
+    def remove_goal(self, user_id: str, name="Emergency Fund"):
+        if not user_id or not isinstance(user_id, str):
+            raise ValueError("user_id must be a non-empty string")
+        res = self.db.delete_goal(user_id=user_id, name=name)
+        after_ctx = self.db.get_financial_context(user_id)
+        after_summary = generate_financial_summary(after_ctx) if after_ctx else {}
+
+        return {
+            "status": "SUCCESS" if res.get("deleted") else "NOT_FOUND",
+            "deleted": res.get("deleted", False),
             "metrics": after_summary
         }

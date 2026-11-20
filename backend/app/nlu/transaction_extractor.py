@@ -1,13 +1,16 @@
 import re
 import json
 from datetime import date, timedelta
+from decimal import Decimal
+
+from backend.app.core.money import normalize_rupees
 
 CATEGORY_KEYWORDS = {
     "Housing": ["rent", "maintenance", "landlord", "apartment", "mortgage"],
     "Food": ["food", "groceries", "grocery", "restaurant", "swiggy", "zomato", "dinner", "lunch", "breakfast", "snacks", "cafe", "coffee"],
-    "Transport": ["travel", "bus", "auto", "metro", "cab", "uber", "ola", "petrol", "diesel", "fuel", "train", "flight", "taxi"],
+    "Transport": ["travel", "bus", "auto", "metro", "cab", "uber", "ola", "petrol", "diesel", "fuel", "train", "flight", "taxi", "car", "bike", "vehicle"],
     "Utilities": ["electricity", "water", "wifi", "internet", "gas", "recharge", "phone bill", "utility", "power bill"],
-    "Shopping": ["shopping", "clothes", "shirt", "shoes", "amazon", "flipkart", "electronics", "gadget", "laptop", "mobile"],
+    "Shopping": ["shopping", "clothes", "shirt", "shoes", "amazon", "flipkart", "electronics", "gadget", "laptop", "mobile", "phone", "smartphone", "iphone"],
     "Entertainment": ["movie", "cinema", "netflix", "prime", "hotstar", "game", "outing", "concert"],
     "Healthcare": ["doctor", "medicine", "pharmacy", "hospital", "clinic", "health", "dental"],
     "Education": ["tuition", "books", "course", "fees", "school", "college", "exam"]
@@ -24,7 +27,7 @@ EXPENSE_KEYWORDS = [
 def infer_category(text):
     text_lower = text.lower()
     for cat, keywords in CATEGORY_KEYWORDS.items():
-        if any(kw in text_lower for kw in keywords):
+        if cat.lower() in text_lower or any(kw in text_lower for kw in keywords):
             return cat
     return "Miscellaneous"
 
@@ -59,8 +62,9 @@ def extract_transaction_rules(text):
         return None
 
     try:
-        amount_val = float(amount_match.group(1).replace(",", ""))
-    except ValueError:
+        amount_clean = amount_match.group(1).replace(",", "")
+        amount_val = normalize_rupees(Decimal(amount_clean))
+    except (ValueError, Exception):
         return None
 
     if amount_val <= 0:
@@ -109,14 +113,19 @@ Input text: "{text}"
         raw_response = re.sub(r"^```json\s*", "", raw_response, flags=re.MULTILINE)
         raw_response = re.sub(r"```$", "", raw_response, flags=re.MULTILINE).strip()
         data = json.loads(raw_response)
-        if "amount" in data and float(data["amount"]) > 0:
-            return {
-                "amount": float(data["amount"]),
-                "description": str(data.get("description", "Transaction")).capitalize(),
-                "category": str(data.get("category", "Miscellaneous")),
-                "type": "INCOME" if str(data.get("type", "")).upper() == "INCOME" else "EXPENSE",
-                "date": str(data.get("date", today_str))
-            }
+        if "amount" in data:
+            try:
+                amt_val = normalize_rupees(Decimal(str(data["amount"])))
+            except Exception:
+                amt_val = None
+            if amt_val is not None and amt_val > 0:
+                return {
+                    "amount": amt_val,
+                    "description": str(data.get("description", "Transaction")).capitalize(),
+                    "category": str(data.get("category", "Miscellaneous")),
+                    "type": "INCOME" if str(data.get("type", "")).upper() == "INCOME" else "EXPENSE",
+                    "date": str(data.get("date", today_str))
+                }
     except Exception:
         pass
     return None

@@ -1,0 +1,138 @@
+{
+  "question": "What is my debt to income ratio?",
+  "intent": "DEBT_ANALYSIS",
+  "model": "openai/gpt-oss-120b",
+  "timestamp": "2026-11-01T04:08:25.531864+00:00",
+  "math_result": {
+    "total_outstanding_debt": 150000.0,
+    "monthly_emi": 10000.0,
+    "dti_ratio": 16.67,
+    "risk_level": "LOW",
+    "assessment": "Healthy debt level (under 20% of income).",
+    "has_income": true,
+    "is_sufficient_data": true,
+    "reporting_period": "2026-11"
+  },
+  "evidence_string": "{\n  \"_graph_paths\": [\n    \"(User:U001)-[:HAS_LOAN]->(Loan:L001)-[:HAS_EMI]->(EMI:E001)\",\n    \"(User:U001)-[:RECEIVED_INCOME]->(Income:Salary)\"\n  ],\n  \"_grounded_facts\": [\n    {\n      \"label\": \"Total Outstanding Loan Principal\",\n      \"node_ids\": [\n        \"Loan:L001\",\n        \"Loan:Personal Loan\"\n      ],\n      \"source\": \"Loan.outstanding\",\n      \"value\": \"₹150,000\"\n    },\n    {\n      \"label\": \"Pending Monthly EMI\",\n      \"node_ids\": [\n        \"EMI:E001\"\n      ],\n      \"source\": \"EMI.amount\",\n      \"value\": \"₹10,000\"\n    },\n    {\n      \"label\": \"Debt-to-Income (DTI) Ratio\",\n      \"node_ids\": [\n        \"EMI:E001\",\n        \"Income:I001\",\n        \"Income:Salary\"\n      ],\n      \"source\": \"DTI Formula\",\n      \"value\": \"16.67%\"\n    },\n    {\n      \"label\": \"Debt Risk Assessment\",\n      \"node_ids\": [\n        \"Loan:L001\",\n        \"Loan:Personal Loan\",\n        \"EMI:E001\"\n      ],\n      \"source\": \"Risk Classifier\",\n      \"value\": \"Healthy debt level (under 20% of income).\"\n    }\n  ],\n  \"_source_identifiers\": [\n    \"EMI:E001\",\n    \"Income:I001\",\n    \"Loan:L001\"\n  ],\n  \"assessment\": \"Healthy debt level (under 20% of income).\",\n  \"dti_ratio\": 16.67,\n  \"has_income\": true,\n  \"is_sufficient_data\": true,\n  \"monthly_emi\": 10000.0,\n  \"reporting_period\": \"2026-11\",\n  \"risk_level\": \"LOW\",\n  \"total_outstanding_debt\": 150000.0\n}",
+  "llm_raw_text": "**🎯 The Quick Take**  \nYour debt‑to‑income (DTI) ratio is **16.67%**, which places you comfortably in the “healthy debt” zone.\n\n---\n\n**📊 The Numbers**  \n• **Total outstanding loan principal:** ₹150,000  \n• **Monthly EMI you’re paying:** ₹10,000  \n• **Debt‑to‑Income (DTI) ratio:** 16.67%  \n• **Debt risk assessment:** Healthy debt level (under 20% of income) – **Low risk**\n\n---\n\n**💡 Smart Insights**  \n- A DTI below 20% means your loan payments are well‑within your earning capacity, giving you breathing room for savings or investments.  \n- With a monthly EMI of ₹10,000, you’re still retaining roughly 83% of your income for other expenses, emergencies, and wealth‑building activities.  \n- The low‑risk rating signals that lenders view your current debt profile as stable, which can help you secure better terms if you ever need additional credit.\n\n---\n\n**🚀 What You Should Do Next**  \n1. **Build an emergency fund** – aim for 3‑6 months of living expenses (including the EMI) in a liquid account.  \n2. **Consider extra payments** – even a modest pre‑payment on the loan can shave years off the term and reduce interest costs.  \n3. **Allocate surplus cash** – direct any extra income toward high‑return investments (e.g., diversified mutual funds or SIPs) to grow your net worth while keeping the loan manageable.  \n\nYou’re on solid footing—keep the momentum, and your financial future will keep getting brighter!",
+  "api_response": {
+    "query": "What is my debt to income ratio?",
+    "intent": "DEBT_ANALYSIS",
+    "entities": {
+      "intent": "DEBT_ANALYSIS",
+      "operation": "DEBT_ANALYSIS",
+      "category": null,
+      "merchant": null,
+      "amount": null,
+      "amount_min": null,
+      "amount_max": null,
+      "limit": null,
+      "sort_by": "date",
+      "sort_direction": "DESC",
+      "reporting_date": null,
+      "comparison_reporting_date": null,
+      "date_range": "start_date=None end_date=None reporting_period=None",
+      "comparison_date_range": null,
+      "trend_months": null,
+      "raw_query": "What is my debt to income ratio?",
+      "is_followup": false,
+      "needs_clarification": false,
+      "clarification_type": null,
+      "clarification_message": null,
+      "exclude_transfers": true,
+      "query_plan": "operation=<OperationType.DEBT_ANALYSIS: 'DEBT_ANALYSIS'> raw_query='What is my debt to income ratio?' date_range=DateRange(start_date=None, end_date=None, reporting_period=None) comparison_date_range=None trend_months=None category=None merchant=None amount=None amount_min=None amount_max=None sort_by='date' sort_direction='DESC' limit=None exclude_transfers=True is_followup=False needs_clarification=False clarification_type=None clarification_message=None",
+      "turn_type": "NEW_TOPIC",
+      "is_date_ambiguous": false
+    },
+    "math_result": {
+      "total_outstanding_debt": 150000.0,
+      "monthly_emi": 10000.0,
+      "dti_ratio": 16.67,
+      "risk_level": "LOW",
+      "assessment": "Healthy debt level (under 20% of income).",
+      "has_income": true,
+      "is_sufficient_data": true,
+      "reporting_period": "2026-11"
+    },
+    "evidence": [
+      {
+        "label": "Total Outstanding Loan Principal",
+        "value": "₹150,000",
+        "source": "Loan.outstanding",
+        "formula": "Sum of outstanding balances on all loans",
+        "source_node_ids": [
+          "Loan:L001",
+          "Loan:Personal Loan"
+        ]
+      },
+      {
+        "label": "Pending Monthly EMI",
+        "value": "₹10,000",
+        "source": "EMI.amount",
+        "formula": "Pending EMIs due in reporting month",
+        "source_node_ids": [
+          "EMI:E001"
+        ]
+      },
+      {
+        "label": "Debt-to-Income (DTI) Ratio",
+        "value": "16.67%",
+        "source": "DTI Formula",
+        "formula": "(Monthly Pending EMIs / Total Monthly Income) × 100",
+        "source_node_ids": [
+          "EMI:E001",
+          "Income:I001",
+          "Income:Salary"
+        ]
+      },
+      {
+        "label": "Debt Risk Assessment",
+        "value": "Healthy debt level (under 20% of income).",
+        "source": "Risk Classifier",
+        "formula": "DTI <= 20% (Low), <= 35% (Moderate), <= 50% (High), > 50% (Critical)",
+        "source_node_ids": [
+          "Loan:L001",
+          "Loan:Personal Loan",
+          "EMI:E001"
+        ]
+      }
+    ],
+    "evidence_metadata": {
+      "reporting_period": "2026-11",
+      "data_freshness": "Verified through latest transaction (2026-11-10)",
+      "methodology_formula": "Debt-to-Income (DTI) = (Monthly Pending EMIs / Total Monthly Income) × 100",
+      "calculation_method": "Fixed debt obligation burden analysis against recurring monthly inflow.",
+      "caveats": [],
+      "is_sufficient_data": true
+    },
+    "source_identifiers": [
+      "EMI:E001",
+      "Income:I001",
+      "Loan:L001"
+    ],
+    "graph_paths": [
+      "(User:U001)-[:HAS_LOAN]->(Loan:L001)-[:HAS_EMI]->(EMI:E001)",
+      "(User:U001)-[:RECEIVED_INCOME]->(Income:Salary)"
+    ],
+    "explanation": "**🎯 The Quick Take**  \nYour debt‑to‑income (DTI) ratio is **16.67%**, which places you comfortably in the “healthy debt” zone.\n\n---\n\n**📊 The Numbers**  \n• **Total outstanding loan principal:** ₹150,000  \n• **Monthly EMI you’re paying:** ₹10,000  \n• **Debt‑to‑Income (DTI) ratio:** 16.67%  \n• **Debt risk assessment:** Healthy debt level (under 20% of income) – **Low risk**\n\n---\n\n**💡 Smart Insights**  \n- A DTI below 20% means your loan payments are well‑within your earning capacity, giving you breathing room for savings or investments.  \n- With a monthly EMI of ₹10,000, you’re still retaining roughly 83% of your income for other expenses, emergencies, and wealth‑building activities.  \n- The low‑risk rating signals that lenders view your current debt profile as stable, which can help you secure better terms if you ever need additional credit.\n\n---\n\n**🚀 What You Should Do Next**  \n1. **Build an emergency fund** – aim for 3‑6 months of living expenses (including the EMI) in a liquid account.  \n2. **Consider extra payments** – even a modest pre‑payment on the loan can shave years off the term and reduce interest costs.  \n3. **Allocate surplus cash** – direct any extra income toward high‑return investments (e.g., diversified mutual funds or SIPs) to grow your net worth while keeping the loan manageable.  \n\nYou’re on solid footing—keep the momentum, and your financial future will keep getting brighter!",
+    "prompt_version": "v1.1",
+    "is_followup": false,
+    "turn_type": "NEW_TOPIC",
+    "needs_clarification": false,
+    "clarification_type": null,
+    "recalculated_fresh": true,
+    "latency_breakdown": {
+      "nlu_ms": 0.4,
+      "graph_ms": 301.4,
+      "engine_ms": 0.1,
+      "llm_ms": 1363.4,
+      "total_ms": 1665.3
+    },
+    "tokens": {
+      "prompt": 924,
+      "completion": 417,
+      "total": 1341
+    }
+  },
+  "metadata_note": "Debt analysis query"
+}

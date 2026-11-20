@@ -16,6 +16,7 @@ __pycache__/
 htmlcov/
 
 # Node & Frontend Build
+node_modules/
 frontend/node_modules/
 frontend/dist/
 frontend/.next/
@@ -35,3 +36,15 @@ yarn-debug.log*
 *.swo
 .DS_Store
 Thumbs.db
+
+# Personal data and generated files
+bankstatements.csv
+audit_with_claude.mjs
+claude_cli.mjs
+/package.json
+/package-lock.json
+benchmark_results.json
+evaluation_report.json
+backend/tests/test-data/
+
+*.rar

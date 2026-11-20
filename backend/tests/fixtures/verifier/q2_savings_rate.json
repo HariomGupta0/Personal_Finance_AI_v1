@@ -1,0 +1,144 @@
+{
+  "question": "What is my savings rate?",
+  "intent": "SAVINGS_ANALYSIS",
+  "model": "openai/gpt-oss-120b",
+  "timestamp": "2026-11-01T04:08:17.397244+00:00",
+  "math_result": {
+    "total_income": 60000.0,
+    "total_expenses": 21000.0,
+    "savings": 39000.0,
+    "savings_rate": 65.0,
+    "has_income": true,
+    "is_sufficient_data": true,
+    "reporting_period": "2026-11"
+  },
+  "evidence_string": "{\n  \"_graph_paths\": [],\n  \"_grounded_facts\": [\n    {\n      \"label\": \"Total Monthly Income\",\n      \"node_ids\": [\n        \"Income:I001\",\n        \"Income:Salary\"\n      ],\n      \"source\": \"Income.amount\",\n      \"value\": \"₹60,000\"\n    },\n    {\n      \"label\": \"Total Monthly Expenses\",\n      \"node_ids\": [\n        \"Transaction:T001\",\n        \"Transaction:T002\",\n        \"Transaction:T003\",\n        \"Transaction:T004\"\n      ],\n      \"source\": \"Transaction.amount\",\n      \"value\": \"₹21,000\"\n    },\n    {\n      \"label\": \"Net Monthly Savings\",\n      \"node_ids\": [\n        \"Income:I001\",\n        \"Income:Salary\",\n        \"Transaction:T001\",\n        \"Transaction:T002\",\n        \"Transaction:T003\",\n        \"Transaction:T004\"\n      ],\n      \"source\": \"Deterministic Math\",\n      \"value\": \"₹39,000\"\n    },\n    {\n      \"label\": \"Savings Rate\",\n      \"node_ids\": [\n        \"Income:I001\",\n        \"Income:Salary\",\n        \"Transaction:T001\",\n        \"Transaction:T002\",\n        \"Transaction:T003\",\n        \"Transaction:T004\"\n      ],\n      \"source\": \"Savings Formula\",\n      \"value\": \"65.0%\"\n    }\n  ],\n  \"_source_identifiers\": [\n    \"Income:I001\",\n    \"Transaction:T001\",\n    \"Transaction:T002\",\n    \"Transaction:T003\",\n    \"Transaction:T004\"\n  ],\n  \"has_income\": true,\n  \"is_sufficient_data\": true,\n  \"reporting_period\": \"2026-11\",\n  \"savings\": 39000.0,\n  \"savings_rate\": 65.0,\n  \"total_expenses\": 21000.0,\n  \"total_income\": 60000.0\n}",
+  "llm_raw_text": "**🎯 The Quick Take**  \nYou’re saving a solid 65 % of what you earn each month—₹39,000 tucked away from a ₹60,000 income. That’s an impressive cushion you can build on!\n\n---\n\n**📊 The Numbers**  \n• **Total Monthly Income:** ₹60,000  \n• **Total Monthly Expenses:** ₹21,000  \n• **Net Monthly Savings:** ₹39,000  \n• **Savings Rate:** 65.0 %\n\n---\n\n**💡 Smart Insights**  \n- A 65 % savings rate puts you well above the typical 20‑30 % benchmark, giving you flexibility for investments, emergencies, or big goals.  \n- With expenses at just 35 % of income, you have room to fine‑tune discretionary spending without jeopardizing your savings streak.  \n- Consistently saving ₹39,000 each month can accelerate wealth‑building—think of it as a fast‑track ticket to financial independence.\n\n---\n\n**🚀 What You Should Do Next**  \n1. **Automate the ₹39,000** – set up a standing transfer to a high‑interest savings or investment account the day you get paid.  \n2. **Review your expense categories** – identify any non‑essential items that could be trimmed further, freeing even more for growth.  \n3. **Allocate a portion to long‑term goals** – consider directing part of the saved amount into diversified assets (mutual funds, SIPs, or a retirement plan) to let your money work harder for you.  \n\nKeep the momentum—your disciplined savings habit is the foundation for a thriving financial future!",
+  "api_response": {
+    "query": "What is my savings rate?",
+    "intent": "SAVINGS_ANALYSIS",
+    "entities": {
+      "intent": "SAVINGS_ANALYSIS",
+      "operation": "SAVINGS_ANALYSIS",
+      "category": null,
+      "merchant": null,
+      "amount": null,
+      "amount_min": null,
+      "amount_max": null,
+      "limit": null,
+      "sort_by": "date",
+      "sort_direction": "DESC",
+      "reporting_date": null,
+      "comparison_reporting_date": null,
+      "date_range": "start_date=None end_date=None reporting_period=None",
+      "comparison_date_range": null,
+      "trend_months": null,
+      "raw_query": "What is my savings rate?",
+      "is_followup": false,
+      "needs_clarification": false,
+      "clarification_type": null,
+      "clarification_message": null,
+      "exclude_transfers": true,
+      "query_plan": "operation=<OperationType.SAVINGS_ANALYSIS: 'SAVINGS_ANALYSIS'> raw_query='What is my savings rate?' date_range=DateRange(start_date=None, end_date=None, reporting_period=None) comparison_date_range=None trend_months=None category=None merchant=None amount=None amount_min=None amount_max=None sort_by='date' sort_direction='DESC' limit=None exclude_transfers=True is_followup=False needs_clarification=False clarification_type=None clarification_message=None",
+      "turn_type": "NEW_TOPIC",
+      "is_date_ambiguous": false
+    },
+    "math_result": {
+      "total_income": 60000.0,
+      "total_expenses": 21000.0,
+      "savings": 39000.0,
+      "savings_rate": 65.0,
+      "has_income": true,
+      "is_sufficient_data": true,
+      "reporting_period": "2026-11"
+    },
+    "evidence": [
+      {
+        "label": "Total Monthly Income",
+        "value": "₹60,000",
+        "source": "Income.amount",
+        "formula": "Sum of recorded income for period",
+        "source_node_ids": [
+          "Income:I001",
+          "Income:Salary"
+        ]
+      },
+      {
+        "label": "Total Monthly Expenses",
+        "value": "₹21,000",
+        "source": "Transaction.amount",
+        "formula": "Sum of expense transactions for period",
+        "source_node_ids": [
+          "Transaction:T001",
+          "Transaction:T002",
+          "Transaction:T003",
+          "Transaction:T004"
+        ]
+      },
+      {
+        "label": "Net Monthly Savings",
+        "value": "₹39,000",
+        "source": "Deterministic Math",
+        "formula": "Total Income - Total Expenses",
+        "source_node_ids": [
+          "Income:I001",
+          "Income:Salary",
+          "Transaction:T001",
+          "Transaction:T002",
+          "Transaction:T003",
+          "Transaction:T004"
+        ]
+      },
+      {
+        "label": "Savings Rate",
+        "value": "65.0%",
+        "source": "Savings Formula",
+        "formula": "(Net Savings / Total Income) × 100",
+        "source_node_ids": [
+          "Income:I001",
+          "Income:Salary",
+          "Transaction:T001",
+          "Transaction:T002",
+          "Transaction:T003",
+          "Transaction:T004"
+        ]
+      }
+    ],
+    "evidence_metadata": {
+      "reporting_period": "2026-11",
+      "data_freshness": "Verified through latest transaction (2026-11-09)",
+      "methodology_formula": "Savings Rate = ((Total Monthly Income - Total Monthly Expenses) / Total Monthly Income) × 100",
+      "calculation_method": "Cash flow delta analysis across verified income & ledger expenses.",
+      "caveats": [],
+      "is_sufficient_data": true
+    },
+    "source_identifiers": [
+      "Income:I001",
+      "Transaction:T001",
+      "Transaction:T002",
+      "Transaction:T003",
+      "Transaction:T004"
+    ],
+    "graph_paths": [],
+    "explanation": "**🎯 The Quick Take**  \nYou’re saving a solid 65 % of what you earn each month—₹39,000 tucked away from a ₹60,000 income. That’s an impressive cushion you can build on!\n\n---\n\n**📊 The Numbers**  \n• **Total Monthly Income:** ₹60,000  \n• **Total Monthly Expenses:** ₹21,000  \n• **Net Monthly Savings:** ₹39,000  \n• **Savings Rate:** 65.0 %\n\n---\n\n**💡 Smart Insights**  \n- A 65 % savings rate puts you well above the typical 20‑30 % benchmark, giving you flexibility for investments, emergencies, or big goals.  \n- With expenses at just 35 % of income, you have room to fine‑tune discretionary spending without jeopardizing your savings streak.  \n- Consistently saving ₹39,000 each month can accelerate wealth‑building—think of it as a fast‑track ticket to financial independence.\n\n---\n\n**🚀 What You Should Do Next**  \n1. **Automate the ₹39,000** – set up a standing transfer to a high‑interest savings or investment account the day you get paid.  \n2. **Review your expense categories** – identify any non‑essential items that could be trimmed further, freeing even more for growth.  \n3. **Allocate a portion to long‑term goals** – consider directing part of the saved amount into diversified assets (mutual funds, SIPs, or a retirement plan) to let your money work harder for you.  \n\nKeep the momentum—your disciplined savings habit is the foundation for a thriving financial future!",
+    "prompt_version": "v1.1",
+    "is_followup": false,
+    "turn_type": "NEW_TOPIC",
+    "needs_clarification": false,
+    "clarification_type": null,
+    "recalculated_fresh": true,
+    "latency_breakdown": {
+      "nlu_ms": 3.2,
+      "graph_ms": 712.5,
+      "engine_ms": 0.2,
+      "llm_ms": 1516.6,
+      "total_ms": 2232.5
+    },
+    "tokens": {
+      "prompt": 899,
+      "completion": 447,
+      "total": 1346
+    }
+  },
+  "metadata_note": "Standard savings rate calculation"
+}

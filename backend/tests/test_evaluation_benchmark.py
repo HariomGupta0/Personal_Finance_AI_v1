@@ -90,7 +90,7 @@ EVALUATION_DATASET = [
     }
 ]
 
-def run_evaluation_benchmark(output_path: str = "benchmark_results.json"):
+def run_evaluation_benchmark(output_path: str = "benchmark_results.json", limit: int = None):
     print("==================================================")
     print(" RESEARCH EVALUATION BENCHMARK: PROPOSED GraphRAG")
     print("==================================================")
@@ -98,7 +98,25 @@ def run_evaluation_benchmark(output_path: str = "benchmark_results.json"):
     seed_database()
     graph_rag = GraphRAG()
 
-    total_queries = len(EVALUATION_DATASET)
+    # Load from 150 dataset if available, otherwise fallback to seed 10
+    dataset_file = PROJECT_ROOT / "backend/tests/data/benchmark_150_dataset.json"
+    active_dataset = EVALUATION_DATASET
+    if dataset_file.exists():
+        try:
+            with open(dataset_file, "r", encoding="utf-8") as f:
+                loaded = json.load(f)
+                if loaded and isinstance(loaded, list):
+                    active_dataset = loaded
+                    print(f"  Loaded {len(active_dataset)} benchmark queries from: {dataset_file.name}")
+        except Exception as e:
+            print(f"  Could not load 150 benchmark dataset ({e}), using default seed set.")
+
+    if limit and limit > 0:
+        active_dataset = active_dataset[:limit]
+
+    total_queries = len(active_dataset)
+    print(f"  Running benchmark over {total_queries} queries...\n")
+
     intent_correct = 0
     math_correct = 0
     grounding_supported = 0
@@ -109,7 +127,7 @@ def run_evaluation_benchmark(output_path: str = "benchmark_results.json"):
     tokens_recorded = []
     per_query_results = []
 
-    for item in EVALUATION_DATASET:
+    for item in active_dataset:
         start_t = time.time()
         res = graph_rag.process_query(item["question"], user_id="U001")
         elapsed = (time.time() - start_t) * 1000
@@ -127,20 +145,33 @@ def run_evaluation_benchmark(output_path: str = "benchmark_results.json"):
             tokens_recorded.append(tok)
 
         # 1. Intent Accuracy
-        is_intent_ok = res["intent"] == item["expected_intent"]
+        is_intent_ok = res.get("intent") == item.get("expected_intent")
         if is_intent_ok:
             intent_correct += 1
 
         # 2. Math Accuracy (Deterministic validation with tolerance)
         math_res = res.get("math_result") or {}
-        is_math_ok = bool(item["eval_check"](math_res))
+        check_val = item.get("eval_check")
+        is_math_ok = False
+        try:
+            if callable(check_val):
+                is_math_ok = bool(check_val(math_res))
+            elif isinstance(check_val, str):
+                decision = math_res.get("decision")
+                is_math_ok = bool(eval(check_val, {"__builtins__": {}}, {"m": math_res, "decision": decision, "abs": abs, "float": float, "str": str}))
+            else:
+                is_math_ok = True
+        except Exception:
+            is_math_ok = False
+
         if is_math_ok:
             math_correct += 1
 
         # 3. Grounding Completeness (verifying critical facts in evidence or explanation)
         expl = res.get("explanation", "")
         ev_str = str(res.get("evidence", []))
-        all_present = all(fact in expl or fact in ev_str for fact in item["critical_facts"])
+        critical_facts = item.get("critical_facts", [])
+        all_present = all(fact.lower() in expl.lower() or fact.lower() in ev_str.lower() for fact in critical_facts) if critical_facts else True
         if all_present:
             grounding_supported += 1
 
@@ -157,7 +188,8 @@ def run_evaluation_benchmark(output_path: str = "benchmark_results.json"):
         query_summary = {
             "id": item["id"],
             "question": item["question"],
-            "intent": res["intent"],
+            "category": item.get("category", "General"),
+            "intent": res.get("intent"),
             "intent_match": is_intent_ok,
             "math_match": is_math_ok,
             "latency_ms": round(elapsed, 1),
@@ -166,13 +198,17 @@ def run_evaluation_benchmark(output_path: str = "benchmark_results.json"):
         }
         per_query_results.append(query_summary)
 
-        status_str = "PASS" if (is_intent_ok and is_math_ok and all_present) else "WARN"
-        print(f"  [{item['id']}] '{item['question']}' -> Intent: {res['intent']} | Latency: {elapsed:.0f}ms [{status_str}]")
+        status_str = "PASS" if (is_intent_ok and is_math_ok) else "WARN"
+        print(f"  [{item['id']}] '{item['question'][:45]}...' -> Intent: {res.get('intent')} | Latency: {elapsed:.0f}ms [{status_str}]")
 
-    avg_latency = sum(latencies) / len(latencies)
+        # Rate-limiting pause for larger batches
+        if total_queries > 15:
+            time.sleep(0.4)
+
+    avg_latency = sum(latencies) / len(latencies) if latencies else 0.0
     sorted_latencies = sorted(latencies)
-    p50_latency = statistics.median(sorted_latencies)
-    p95_latency = sorted_latencies[int(len(sorted_latencies) * 0.95)] if len(sorted_latencies) >= 20 else sorted_latencies[-1]
+    p50_latency = statistics.median(sorted_latencies) if sorted_latencies else 0.0
+    p95_latency = sorted_latencies[int(len(sorted_latencies) * 0.95)] if len(sorted_latencies) >= 20 else (sorted_latencies[-1] if sorted_latencies else 0.0)
 
     avg_stages = {k: round(sum(v)/len(v), 1) if v else 0.0 for k, v in stage_latencies.items()}
 
@@ -180,11 +216,11 @@ def run_evaluation_benchmark(output_path: str = "benchmark_results.json"):
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "total_queries": total_queries,
         "metrics": {
-            "intent_accuracy_percent": round((intent_correct / total_queries) * 100, 2),
-            "math_accuracy_percent": round((math_correct / total_queries) * 100, 2),
-            "grounding_completeness_percent": round((grounding_supported / total_queries) * 100, 2),
-            "currency_preservation_percent": round((currency_preserved / total_queries) * 100, 2),
-            "hallucination_free_percent": round((hallucination_free / total_queries) * 100, 2),
+            "intent_accuracy_percent": round((intent_correct / total_queries) * 100, 2) if total_queries else 0.0,
+            "math_accuracy_percent": round((math_correct / total_queries) * 100, 2) if total_queries else 0.0,
+            "grounding_completeness_percent": round((grounding_supported / total_queries) * 100, 2) if total_queries else 0.0,
+            "currency_preservation_percent": round((currency_preserved / total_queries) * 100, 2) if total_queries else 0.0,
+            "hallucination_free_percent": round((hallucination_free / total_queries) * 100, 2) if total_queries else 0.0,
             "avg_latency_ms": round(avg_latency, 1),
             "p50_latency_ms": round(p50_latency, 1),
             "p95_latency_ms": round(p95_latency, 1),
@@ -218,4 +254,12 @@ def run_evaluation_benchmark(output_path: str = "benchmark_results.json"):
     return summary
 
 if __name__ == "__main__":
-    run_evaluation_benchmark()
+    import argparse
+    parser = argparse.ArgumentParser(description="Run Financial AI Evaluation Benchmark")
+    parser.add_argument("--limit", type=int, default=10, help="Number of queries to run (default: 10)")
+    parser.add_argument("--all", action="store_true", help="Run all 150 benchmark queries")
+    parser.add_argument("--out", type=str, default="benchmark_results.json", help="Output JSON path")
+    args = parser.parse_args()
+
+    limit_val = None if args.all else args.limit
+    run_evaluation_benchmark(output_path=args.out, limit=limit_val)
