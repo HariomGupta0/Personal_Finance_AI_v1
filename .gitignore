@@ -48,3 +48,6 @@ evaluation_report.json
 backend/tests/test-data/
 
 *.rar
+.thesis_backup/
+synthetic_personal_finance_dataset.csv
+demo_bank_statement_3_months.csv
