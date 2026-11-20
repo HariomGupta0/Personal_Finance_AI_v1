@@ -122,6 +122,7 @@ def signup(
         "user_id": user_id,
         "username": user_info["username"],
         "name": user_info["name"],
+        "onboarding_completed": False,
     }
 
 
@@ -142,6 +143,7 @@ def login(
                 "user_id": user["user_id"],
                 "username": user["username"],
                 "name": user["name"],
+                "onboarding_completed": bool(user.get("onboarding_completed", False)),
             }
     except Exception:
         pass
@@ -152,7 +154,12 @@ def login(
         valid_password = hmac.compare_digest(payload.password, APP_PASSWORD)
         if valid_username and valid_password:
             _set_session_cookie(response, create_session_token(APP_USER_ID))
-            return {"user_id": APP_USER_ID, "username": APP_USERNAME, "name": APP_USERNAME}
+            return {
+                "user_id": APP_USER_ID,
+                "username": APP_USERNAME,
+                "name": APP_USERNAME,
+                "onboarding_completed": True,
+            }
 
     raise HTTPException(status_code=401, detail="Invalid username or password")
 
@@ -173,7 +180,12 @@ def session(
 
     # Resolve display details
     if user_id == APP_USER_ID:
-        return {"user_id": APP_USER_ID, "username": APP_USERNAME, "name": APP_USERNAME}
+        return {
+            "user_id": APP_USER_ID,
+            "username": APP_USERNAME,
+            "name": APP_USERNAME,
+            "onboarding_completed": True,
+        }
 
     try:
         user = neo.get_user_by_id(user_id)
@@ -182,8 +194,14 @@ def session(
                 "user_id": user["user_id"],
                 "username": user["username"],
                 "name": user["name"],
+                "onboarding_completed": bool(user.get("onboarding_completed", False)),
             }
     except Exception:
         pass
 
-    return {"user_id": user_id, "username": user_id, "name": user_id}
+    return {
+        "user_id": user_id,
+        "username": user_id,
+        "name": user_id,
+        "onboarding_completed": True,
+    }

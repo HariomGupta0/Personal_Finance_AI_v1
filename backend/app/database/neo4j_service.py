@@ -1273,8 +1273,10 @@ class Neo4jService:
         query = """
         MATCH (u:User)
         WHERE toLower(u.username) = $username OR toLower(u.name) = $username
+        OPTIONAL MATCH (u)-[:HAS_ACCOUNT]->(a:Account)
+        WITH u, (coalesce(u.onboarding_completed, false) OR count(a) > 0) AS is_complete
         RETURN u.id AS user_id, u.username AS username, u.name AS name, u.password_hash AS password_hash, u.salt AS salt,
-               coalesce(u.onboarding_completed, false) AS onboarding_completed
+               is_complete AS onboarding_completed
         """
         with self.driver.session(database=self.database) as session:
             result = session.run(query, username=clean_username)
@@ -1296,8 +1298,10 @@ class Neo4jService:
     def get_user_by_id(self, user_id):
         query = """
         MATCH (u:User {id: $user_id})
+        OPTIONAL MATCH (u)-[:HAS_ACCOUNT]->(a:Account)
+        WITH u, (coalesce(u.onboarding_completed, false) OR count(a) > 0) AS is_complete
         RETURN u.id AS user_id, u.username AS username, u.name AS name,
-               coalesce(u.onboarding_completed, false) AS onboarding_completed
+               is_complete AS onboarding_completed
         """
         with self.driver.session(database=self.database) as session:
             result = session.run(query, user_id=user_id)

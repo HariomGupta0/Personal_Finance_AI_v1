@@ -23,7 +23,8 @@ def seed_database():
         name: 'Rahul',
         username: 'rahul',
         password_hash: '{pwd_hash}',
-        salt: '{salt}'
+        salt: '{salt}',
+        onboarding_completed: true
     }})
 
     // Create Account

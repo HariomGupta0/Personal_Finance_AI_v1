@@ -120,7 +120,7 @@ export default function App() {
         const userData = await response.json();
         setUser(userData);
         await fetchAllData();
-        if (userData && !userData.onboarding_completed) {
+        if (userData && userData.onboarding_completed === false) {
           setShowOnboardingModal(true);
         }
       } finally {
@@ -142,7 +142,7 @@ export default function App() {
     setUser(data);
     setLoading(true);
     await fetchAllData();
-    if (data && !data.onboarding_completed) {
+    if (data && data.onboarding_completed === false) {
       setShowOnboardingModal(true);
     }
   };
@@ -158,9 +158,7 @@ export default function App() {
     setUser(data);
     setLoading(true);
     await fetchAllData();
-    if (data && !data.onboarding_completed) {
-      setShowOnboardingModal(true);
-    }
+    setShowOnboardingModal(true);
   };
 
   const handleLogout = async () => {
