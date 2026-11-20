@@ -24,6 +24,47 @@
 
 ---
 
+## 🎥 Project Demonstration Video
+
+<div align="center">
+
+<!-- ==================================================================== -->
+<!-- DEMO VIDEO EMBED WINDOW                                               -->
+<!-- Replace 'demo_video.mp4' or the video link below with your recording -->
+<!-- ==================================================================== -->
+
+<table style="border: 2px solid #334155; border-radius: 12px; background: #0f172a; max-width: 860px; width: 100%;">
+  <tr>
+    <td align="center" style="padding: 24px;">
+      <a href="demo_statements/sample_demo_video.mp4">
+        <picture>
+          <source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/header/surface.svg?title=%E2%96%B6+Play+Full+Application+Demonstration&subtitle=Setu+Account+Aggregator+%E2%80%A2+In-Memory+PDF+Decryption+%E2%80%A2+GraphRAG+Advisory&logo=youtube&mode=dark" />
+          <img src="https://shieldcn.dev/header/surface.svg?title=%E2%96%B6+Play+Full+Application+Demonstration&subtitle=Setu+Account+Aggregator+%E2%80%A2+In-Memory+PDF+Decryption+%E2%80%A2+GraphRAG+Advisory&logo=youtube&mode=light" alt="Watch Demo Video" width="100%" />
+        </picture>
+      </a>
+      <p style="color: #94a3b8; font-size: 0.85rem; margin-top: 12px;">
+        <em>Click above to launch video walkthrough or drop your recorded video file into <code>demo_statements/</code></em>
+      </p>
+    </td>
+  </tr>
+</table>
+
+</div>
+
+<details>
+<summary><strong>⏱️ Demo Video Chapter Markers & Timestamps (Click to expand)</strong></summary>
+
+| Timestamp | Segment | Description | Key Talking Point |
+| :---: | :--- | :--- | :--- |
+| `00:00` | **Login & 2-Tier Dashboard** | Sign-in with session cookie auth; high-level KPI cards and 50/30/20 budget breakdown. | Zero-reload state restoration with `onboarding_completed` check. |
+| `01:05` | **Instant Connect (Setu AA)** | Live consent creation via Setu Sandbox, OTP verification (`123456`), and encrypted sync. | Direct integration with RBI-regulated Account Aggregator framework. |
+| `02:15` | **Smart Statement Upload** | Drag & drop encrypted HDFC statement; enter PAN password `RAHUL1234S`; preview clean table. | In-memory AES stream decryption—no unencrypted PDFs stored on disk. |
+| `03:20` | **AI Financial Twin (GraphRAG)** | Inquiring about purchase affordability and runway; grounded 4-part evidence card response. | LLM acts purely as natural language explainer with 0% math hallucination. |
+
+</details>
+
+---
+
 ## 📖 Executive Overview
 
 Managing personal finances requires rigorous mathematical precision, contextual historical awareness, and explainable recommendations. Standard LLM-based budgeting tools suffer from critical shortcomings: **arithmetic hallucinations**, **an inability to perform multi-hop relational reasoning**, and **vulnerability to prompt injection**. A language model should never calculate account balances, compound interest, or emergency runways independently.
@@ -68,99 +109,111 @@ When a user interacts with the AI Financial Twin, the system queries targeted su
 
 ## 🏛️ System Architecture
 
+The architecture is cleanly decoupled into 5 operational tiers, ensuring a strict unidirectional flow of verified facts into the presentation layer:
+
 ```mermaid
 flowchart TD
-    subgraph MultiChannelIngestion ["Multi-Channel Data Ingestion"]
+    %% TIER 1: INGESTION
+    subgraph T1 ["Tier 1: Multi-Channel Ingestion Layer"]
+        direction LR
         AA["Live Account Aggregator<br/>(Setu v2 OAuth 2.0 API)"]
         PDF["Bank Statement PDF<br/>(In-Memory AES Decryption)"]
         CSV["CSV / TSV Statements<br/>(Auto Dialect Detection)"]
         OCR["Receipt / Screenshot OCR<br/>(Groq Vision qwen3.8-27b)"]
     end
 
-    subgraph NormalizationPipeline ["Ingestion & Integrity Pipeline"]
-        Norm["Merchant Normalizer & Channel Classifier<br/>(UPI • POS • NEFT • IMPS • ATM • ACH)"]
-        Dedup["Transfer Detector & SHA-256 Fingerprinter<br/>(Intra-Batch & Retroactive Elimination)"]
+    %% TIER 2: INTEGRITY
+    subgraph T2 ["Tier 2: Ingestion & Integrity Pipeline"]
+        direction LR
+        Norm["Merchant Normalizer<br/>(Channel Classifier & Category Rules)"]
+        Dedup["Integrity & Transfer Engine<br/>(Intra-Batch Matching & SHA-256 Fingerprint)"]
+        Norm --> Dedup
     end
 
-    subgraph GraphStorage ["Knowledge Graph Layer"]
-        Neo4j[("Neo4j Property Graph<br/>(:User)-[:HAS_ACCOUNT]->(:Account)<br/>-[:MADE_TRANSACTION]->(:Transaction)")]
+    %% TIER 3: GRAPH STORAGE
+    subgraph T3 ["Tier 3: Core Knowledge Graph Layer"]
+        Neo4j[("Neo4j Property Knowledge Graph<br/>(:User)-[:HAS_ACCOUNT]->(:Account)<br/>-[:MADE_TRANSACTION]->(:Transaction)")]
     end
 
-    subgraph AnalyticalEngine ["Deterministic Computational Engine"]
-        Engine["Python Paise Engine<br/>• 50/30/20 Budgeting<br/>• Emergency Runway<br/>• Debt Avalanche/Snowball<br/>• Financial Health Score (0-100)"]
+    %% TIER 4: COMPUTATION & RETRIEVAL
+    subgraph T4 ["Tier 4: Deterministic Math & GraphRAG Retrieval"]
+        direction LR
+        Math["Python Paise Engine<br/>• 50/30/20 Budgeting<br/>• Emergency Runway<br/>• Health Score (0-100)"]
+        RAG["Targeted GraphRAG<br/>• Subgraph Traversal<br/>• XML-Bounded Evidence Card"]
+        Math <--> RAG
     end
 
-    subgraph AdvisoryEngine ["GraphRAG Advisory Engine"]
-        NLU["NLU Question Parser<br/>(Intent Classification • Date Ambiguity)"]
-        GraphRAG["Targeted Subgraph Traversal<br/>(Authorized Cypher Subgraphs)"]
-        Builder["Evidence Card Builder<br/>(Facts • Formulas • Source Node IDs)"]
-        LLM["Grounded LLM Reasoning<br/>(XML Isolation • Strict ₹ Currency)"]
+    %% TIER 5: PRESENTATION
+    subgraph T5 ["Tier 5: Grounded Explanation & Presentation"]
+        direction LR
+        LLM["Grounded LLM Reasoning<br/>(Groq Cloud • Strict ₹ Currency)"]
+        UI["React 18 + Vite Dashboard<br/>(KPI Cards • Modals • AI Chat)"]
+        LLM --> UI
     end
 
-    subgraph PresentationLayer ["Frontend User Interface"]
-        UI["React 18 + Vite Dashboard<br/>• 2-Tier Financial Metrics<br/>• Dual-Tab Bank Connect Modal<br/>• AI Financial Twin Drawer<br/>• Transaction Workbench"]
-    end
-
-    AA --> Norm
-    PDF --> Norm
-    CSV --> Norm
-    OCR --> Norm
-
-    Norm --> Dedup
-    Dedup -->|Mutate & Propagate| Neo4j
-
-    UI <-->|REST API| NLU
-    NLU --> GraphRAG
-    Neo4j <-->|Traverse Subgraph| GraphRAG
-    GraphRAG --> Engine
-    Engine --> Builder
-    Builder --> LLM
-    LLM --> UI
+    %% INTER-TIER CONNECTIONS
+    T1 -->|Raw Input Stream| T2
+    T2 -->|Mutate & Propagate Balances| T3
+    T3 <-->|Authorized Subgraph Queries| T4
+    T4 -->|Structured Immutable Evidence| T5
+    UI -.->|REST API Request| T4
 ```
 
 ---
 
-## 🔄 End-to-End Data Flow
+## 🔄 End-to-End Operational Workflows
+
+To ensure clarity, the system divides workflows into two discrete pipelines: **Data Ingestion** and **Conversational Advisory**.
+
+### Pipeline A: Bank Ingestion & Knowledge Graph Mutation
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor User as User / Client
     participant UI as React Vite Frontend
-    participant API as FastAPI Backend
-    participant Pipe as Ingestion Pipeline
+    participant API as FastAPI Ingestion Router
+    participant Pipe as Integrity Pipeline
     participant DB as Neo4j Graph DB
-    participant Engine as Deterministic Math Engine
-    participant LLM as LLM / GraphRAG
 
-    rect rgb(240, 245, 255)
-    Note over User, DB: Bank Statement Ingestion & Knowledge Graph Mutation
-    User->>UI: Uploads password-protected PDF (e.g. HDFC/SBI)
-    UI->>API: POST /api/import/csv (multipart form + password)
-    API->>Pipe: In-memory AES decrypt & multi-line text extraction
-    Pipe->>Pipe: Normalize merchants (UPI/DR -> Swiggy) & assign categories
-    Pipe->>Pipe: Compute SHA-256 fingerprints & detect internal transfers
-    Pipe->>DB: Batch match existing transactions for duplicates
-    API-->>UI: Return parsed rows with confidence scores & preview
-    User->>UI: Clicks "Confirm & Save to Graph"
-    UI->>API: POST /api/import/confirm (validated payload)
-    API->>DB: Mutate nodes (:Account)-[:MADE_TRANSACTION]->(:Transaction)
-    API-->>UI: 200 OK (Graph Updated)
-    end
+    User->>UI: Selects Bank Statement PDF (e.g. HDFC/SBI)
+    UI->>API: POST /api/import/csv (File Bytes + Password)
+    API->>Pipe: In-memory AES Decryption (No disk writes)
+    Pipe->>Pipe: Clean banking noise (UPI/DR/123 -> Swiggy)
+    Pipe->>Pipe: 4-Tier Categorization Heuristic (Confidence 0.40–0.95)
+    Pipe->>Pipe: Detect intra-batch & retroactive self-transfers
+    Pipe->>DB: Batch match existing SHA-256 fingerprints
+    DB-->>API: Duplicate Status & Flagged Candidates
+    API-->>UI: Return parsed rows preview with confidence badges
+    User->>UI: Reviews & Clicks "Confirm & Save to Graph"
+    UI->>API: POST /api/import/confirm (Approved Rows)
+    API->>DB: Batch mutate (:Account)-[:MADE_TRANSACTION]->(:Transaction)
+    DB-->>UI: Update Dashboard Balances & KPIs
+```
 
-    rect rgb(245, 255, 245)
-    Note over User, LLM: GraphRAG Financial Inquiry
+### Pipeline B: GraphRAG Financial Advisory & Query Execution
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as User / Client
+    participant UI as React Vite Frontend
+    participant NLU as Question Parser
+    participant DB as Neo4j Graph DB
+    participant Math as Deterministic Math Engine
+    participant LLM as Grounded LLM Client
+
     User->>UI: "Can I afford a ₹45,000 laptop this month?"
-    UI->>API: POST /api/assistant/chat (message + session)
-    API->>LLM: NLU Intent Classifier -> PURCHASE_SAFETY (₹45,000)
-    API->>DB: Targeted Cypher query (Liquid Balances + Pending EMIs + Monthly Runway)
-    DB-->>API: Authorized Subgraph
-    API->>Engine: Run purchase_evaluator.py (Math & Risk Level)
-    Engine-->>API: Result: NOT_SAFE (Deficit: ₹12,400, Runway: 1.4 mos)
-    API->>LLM: Prompt with <financial_evidence> + XML constraints
-    LLM-->>API: Structured 4-part advice card grounded in evidence
-    API-->>UI: Render Executive Advice Card with source tags
-    end
+    UI->>NLU: POST /api/assistant/chat (Natural Language Query)
+    NLU->>NLU: Classify Intent -> PURCHASE_SAFETY (Amount: ₹45,000)
+    NLU->>DB: Targeted Cypher (Liquid Balances + Pending EMIs + 3-Mo Expenses)
+    DB-->>Math: Return Authorized Subgraph Facts
+    Math->>Math: Execute purchase_evaluator.py (Paise Math)
+    Note over Math: Result: NOT_SAFE (Deficit: ₹12,400, Runway: 1.4 mos)
+    Math->>LLM: Construct <financial_evidence> + Strict XML Directives
+    Note over LLM: Zero arithmetic allowed; explain verified facts only
+    LLM-->>UI: Return Structured 4-Part Card (Take, Breakdown, Insights, Action)
+    UI-->>User: Render Executive Card with Node ID References
 ```
 
 ---
@@ -294,7 +347,7 @@ Every advisory response is generated in a predictable, high-clarity structure:
 
 The repository includes **10 authentic Indian bank statement PDFs** and **10 CSV datasets** across **5 distinct lifestyle personas** in [`demo_statements/`](demo_statements/):
 
-| Profile Name | Bank & Template | Lifestyle / Persona | PDF Password (PAN) | 90-Day Txns | Closing Balance |
+| Profile Name | Bank & Template | Lifestyle / Persona | PDF Password (PAN) | 90D Txns | Closing Balance |
 | :--- | :--- | :--- | :---: | :---: | :---: |
 | **Rahul Sharma** | **HDFC Bank** (Navy) | Tech Lead: ₹95k salary, Zerodha SIP, Rent, Swiggy, Uber | `RAHUL1234S` | 85 | ₹1,89,323.00 |
 | **Priya Nair** | **ICICI Bank** (Maroon) | Homemaker: Family budget, BigBasket, DMart, School fees | `PRIYA1234N` | 85 | ₹49,120.00 |
