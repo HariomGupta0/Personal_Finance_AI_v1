@@ -27,28 +27,14 @@
 ## 🎥 Project Demonstration Video
 
 <div align="center">
-
-<!-- ==================================================================== -->
-<!-- DEMO VIDEO EMBED WINDOW                                               -->
-<!-- Replace 'demo_video.mp4' or the video link below with your recording -->
-<!-- ==================================================================== -->
-
-<table style="border: 2px solid #334155; border-radius: 12px; background: #0f172a; max-width: 860px; width: 100%;">
-  <tr>
-    <td align="center" style="padding: 24px;">
-      <a href="demo_statements/sample_demo_video.mp4">
-        <picture>
-          <source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/header/surface.svg?title=%E2%96%B6+Play+Full+Application+Demonstration&subtitle=Setu+Account+Aggregator+%E2%80%A2+In-Memory+PDF+Decryption+%E2%80%A2+GraphRAG+Advisory&logo=youtube&mode=dark" />
-          <img src="https://shieldcn.dev/header/surface.svg?title=%E2%96%B6+Play+Full+Application+Demonstration&subtitle=Setu+Account+Aggregator+%E2%80%A2+In-Memory+PDF+Decryption+%E2%80%A2+GraphRAG+Advisory&logo=youtube&mode=light" alt="Watch Demo Video" width="100%" />
-        </picture>
-      </a>
-      <p style="color: #94a3b8; font-size: 0.85rem; margin-top: 12px;">
-        <em>Click above to launch video walkthrough or drop your recorded video file into <code>demo_statements/</code></em>
-      </p>
-    </td>
-  </tr>
-</table>
-
+  <a href="https://www.youtube.com/watch?v=s9GUiOyo3RM" target="_blank" rel="noopener noreferrer">
+    <img src="https://img.youtube.com/vi/s9GUiOyo3RM/maxresdefault.jpg" alt="Explainable Personal Finance Copilot Demo Video" width="100%" style="max-width: 860px; border-radius: 12px; border: 1px solid #334155; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);" />
+  </a>
+  <p style="margin-top: 14px;">
+    <a href="https://www.youtube.com/watch?v=s9GUiOyo3RM" target="_blank" rel="noopener noreferrer">
+      <img src="https://shieldcn.dev/badge/YouTube-Watch%20Full%20Demo%20Walkthrough-red.svg?variant=secondary&logo=youtube" alt="Watch Demo on YouTube" />
+    </a>
+  </p>
 </div>
 
 <details>
