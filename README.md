@@ -115,50 +115,71 @@ When a user interacts with the AI Financial Twin, the system queries targeted su
   <img src="https://shieldcn.dev/badge/Graph%20Engine-Neo4j%20Cypher-008CC1.svg?variant=secondary" alt="Neo4j Cypher" />
 </p>
 
-The architecture is cleanly decoupled into 5 operational tiers, ensuring a strict unidirectional flow of verified facts into the presentation layer:
+The architecture is cleanly decoupled into **5 color-coded operational tiers**, ensuring a strict unidirectional flow of verified facts into the presentation layer:
 
 ```mermaid
 flowchart TD
-    %% TIER 1: INGESTION
-    subgraph Tier1 ["1. Multi-Channel Ingestion"]
-        AA["Live Account Aggregator (Setu v2 OAuth 2.0)"]
-        PDF["Bank Statement PDF (In-Memory AES Decryption)"]
-        CSV["CSV / TSV Statements (Auto Dialect Detection)"]
-        OCR["Receipt / Screenshot OCR (Groq Vision)"]
+    %% TIER 1: INGESTION (SKY BLUE)
+    subgraph Tier1 ["🟦 Tier 1: Multi-Channel Ingestion Layer"]
+        AA["🏦 Live Account Aggregator<br/>Setu v2 OAuth 2.0 API"]
+        PDF["📄 Bank Statement PDF<br/>In-Memory AES Decryption"]
+        CSV["📊 CSV / TSV Statements<br/>Auto Dialect Detection"]
+        OCR["📸 Receipt / Screenshot OCR<br/>Groq Vision qwen3.8-27b"]
     end
 
-    %% TIER 2: INTEGRITY
-    subgraph Tier2 ["2. Ingestion & Integrity Engine"]
-        Norm["Merchant Normalizer & 4-Tier Categorizer"]
-        Dedup["Transfer Detector & SHA-256 Deduplication"]
+    %% TIER 2: INTEGRITY (EMERALD GREEN)
+    subgraph Tier2 ["🟩 Tier 2: Ingestion & Integrity Pipeline"]
+        Norm["🏷️ Merchant Normalizer<br/>Channel Classifier & 4-Tier Categorizer"]
+        Dedup["🛡️ Integrity & Transfer Engine<br/>Intra-Batch Matching & SHA-256 Dedup"]
         Norm --> Dedup
     end
 
-    %% TIER 3: GRAPH STORAGE
-    subgraph Tier3 ["3. Core Knowledge Graph Layer"]
-        Neo4j[("Neo4j Property Knowledge Graph")]
+    %% TIER 3: GRAPH STORAGE (CYAN / TEAL)
+    subgraph Tier3 ["🔷 Tier 3: Core Knowledge Graph Layer"]
+        Neo4j[("🌐 Neo4j Property Knowledge Graph<br/>:User → :Account → :Transaction → :Category")]
     end
 
-    %% TIER 4: COMPUTATION & RETRIEVAL
-    subgraph Tier4 ["4. Deterministic Math & GraphRAG Retrieval"]
-        Math["Python Paise Engine (50/30/20, Runway, Health Score)"]
-        RAG["Targeted GraphRAG (Subgraph Traversal & Evidence Builder)"]
+    %% TIER 4: COMPUTATION & RETRIEVAL (AMBER & INDIGO)
+    subgraph Tier4 ["🟧 Tier 4: Deterministic Math & GraphRAG Retrieval"]
+        Math["🧮 Python Paise Engine<br/>50/30/20 Budget • Runway • Health Score"]
+        RAG["🔍 Targeted GraphRAG Engine<br/>Subgraph Traversal & XML Evidence Builder"]
         Math --- RAG
     end
 
-    %% TIER 5: PRESENTATION
-    subgraph Tier5 ["5. Grounded Explanation & Presentation"]
-        LLM["Grounded LLM Reasoning (Groq Cloud)"]
-        UI["React 18 + Vite Dashboard (KPI Cards & AI Chat)"]
+    %% TIER 5: PRESENTATION (PURPLE / VIOLET)
+    subgraph Tier5 ["🟪 Tier 5: Grounded Explanation & Presentation"]
+        LLM["🤖 Grounded LLM Reasoning<br/>Groq Cloud • Strict ₹ Currency"]
+        UI["💻 React 18 + Vite Dashboard<br/>2-Tier KPI Cards • Modals • AI Chat Drawer"]
         LLM --> UI
     end
 
     %% INTER-TIER CONNECTIONS
-    Tier1 -->|Raw Input Stream| Tier2
-    Tier2 -->|Mutate & Propagate Balances| Tier3
-    Tier3 <-->|Authorized Subgraph Queries| Tier4
-    Tier4 -->|Structured Immutable Evidence| LLM
-    UI -.->|Natural Language Inquiries| Tier4
+    Tier1 ==>|Raw Financial Stream| Tier2
+    Tier2 ==>|Mutate & Propagate Balances| Tier3
+    Tier3 <==>|Authorized Subgraph Queries| Tier4
+    Tier4 ==>|Immutable Grounded Evidence| LLM
+    UI -.->|Natural Language Query| Tier4
+
+    %% CUSTOM COLOR PALETTE
+    classDef blueNode fill:#0284c7,stroke:#38bdf8,stroke-width:2px,color:#ffffff,font-weight:bold;
+    classDef emeraldNode fill:#059669,stroke:#34d399,stroke-width:2px,color:#ffffff,font-weight:bold;
+    classDef cyanNode fill:#0891b2,stroke:#22d3ee,stroke-width:2.5px,color:#ffffff,font-weight:bold;
+    classDef amberNode fill:#d97706,stroke:#fbbf24,stroke-width:2px,color:#ffffff,font-weight:bold;
+    classDef indigoNode fill:#4f46e5,stroke:#818cf8,stroke-width:2px,color:#ffffff,font-weight:bold;
+    classDef purpleNode fill:#7c3aed,stroke:#c084fc,stroke-width:2px,color:#ffffff,font-weight:bold;
+
+    class AA,PDF,CSV,OCR blueNode;
+    class Norm,Dedup emeraldNode;
+    class Neo4j cyanNode;
+    class Math amberNode;
+    class RAG indigoNode;
+    class LLM,UI purpleNode;
+
+    style Tier1 fill:#0b1329,stroke:#0284c7,stroke-width:1.5px,stroke-dasharray: 4 4,color:#e2e8f0;
+    style Tier2 fill:#071a17,stroke:#059669,stroke-width:1.5px,stroke-dasharray: 4 4,color:#e2e8f0;
+    style Tier3 fill:#082229,stroke:#0891b2,stroke-width:2px,color:#e2e8f0;
+    style Tier4 fill:#1f1305,stroke:#d97706,stroke-width:1.5px,stroke-dasharray: 4 4,color:#e2e8f0;
+    style Tier5 fill:#190b2e,stroke:#7c3aed,stroke-width:1.5px,stroke-dasharray: 4 4,color:#e2e8f0;
 ```
 
 ---
