@@ -69,6 +69,20 @@ def build_deterministic_fallback(financial_result: dict | Any, error_note: str |
             f"Your current emergency runway is **{float(runway_months):.1f} months**, "
             f"representing the time you can comfortably sustain baseline living expenses."
         )
+    elif "category_spent" in financial_result or "requested_category" in financial_result:
+        cat = financial_result.get("requested_category", "Category")
+        c_spent = float(financial_result.get("category_spent", 0))
+        c_pct = float(financial_result.get("percentage_of_total", 0))
+        quick_take = (
+            f"You have spent **₹{c_spent:,.2f}** on **{cat}** this period, which represents **{c_pct:.1f}%** of your total monthly expenditure."
+        )
+    elif "total_spent" in financial_result and "merchant" in financial_result:
+        merch = financial_result.get("merchant", "Merchant")
+        m_spent = float(financial_result.get("total_spent", 0))
+        m_count = financial_result.get("transaction_count", 0)
+        quick_take = (
+            f"You have spent **₹{m_spent:,.2f}** across **{m_count}** transaction(s) with **{merch}**."
+        )
     else:
         quick_take = "Your financial health metrics have been verified deterministically by the Python engine."
 
@@ -110,6 +124,18 @@ def build_deterministic_fallback(financial_result: dict | Any, error_note: str |
             num_lines.append(f"• Savings Rate: {float(savings_rate):.1f}%")
         if runway_months is not None and "runway_months" not in evidence:
             num_lines.append(f"• Emergency Runway: {float(runway_months):.1f} months")
+        if "category_spent" in financial_result or "requested_category" in financial_result:
+            cat = financial_result.get("requested_category", "Category")
+            num_lines.append(f"• Total Spend on {cat}: ₹{float(financial_result.get('category_spent', 0)):,.2f}")
+            num_lines.append(f"• Share of Total Expenses: {float(financial_result.get('percentage_of_total', 0)):.1f}%")
+            if "total_expenses" in financial_result:
+                num_lines.append(f"• Total Monthly Expenses: ₹{float(financial_result.get('total_expenses', 0)):,.2f}")
+        if "total_spent" in financial_result and "merchant" in financial_result:
+            merch = financial_result.get("merchant", "Merchant")
+            num_lines.append(f"• Total Spent at {merch}: ₹{float(financial_result.get('total_spent', 0)):,.2f}")
+            num_lines.append(f"• Transaction Count: {financial_result.get('transaction_count', 0)} transaction(s)")
+            if "average_spend" in financial_result:
+                num_lines.append(f"• Average per Transaction: ₹{float(financial_result.get('average_spend', 0)):,.2f}")
 
     if not num_lines:
         num_lines.append("• Verified amounts are recorded in the accompanying evidence card.")
@@ -142,6 +168,26 @@ def build_deterministic_fallback(financial_result: dict | Any, error_note: str |
         action = (
             "• Maintain steady recurring expenses to stabilize monthly savings.\n"
             "• Import statement records for any unavailable months to ensure complete trend accuracy."
+        )
+    elif "category_spent" in financial_result or "requested_category" in financial_result:
+        cat = financial_result.get("requested_category", "Category")
+        insights = (
+            f"• Spending on {cat} represents a verified ledger proportion from your bank statements.\n"
+            f"• Keeping living expenses within targeted 50% needs allocations safeguards your savings rate."
+        )
+        action = (
+            f"• Review your recent {cat} transactions to identify potential subscription or recurring charges.\n"
+            f"• Maintain a weekly spending ceiling to keep overall monthly outgoings within budget."
+        )
+    elif "total_spent" in financial_result and "merchant" in financial_result:
+        merch = financial_result.get("merchant", "Merchant")
+        insights = (
+            f"• Historical spending with {merch} is tracked directly from normalized merchant descriptors.\n"
+            f"• Tracking frequent merchant expenditures helps spot recurring micro-transactions."
+        )
+        action = (
+            f"• Check your recurring transaction schedule for {merch} to optimize subscription tiers.\n"
+            f"• Set a monthly cap on discretionary merchant spending."
         )
     elif decision == "NOT_SAFE":
         insights = (
